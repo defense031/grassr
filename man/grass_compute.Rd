@@ -41,6 +41,14 @@ Computes Cohen's kappa, PABAK, Gwet's AC1, positive and negative agreement,
 Byrt prevalence and bias indices, and two confidence intervals for kappa
 (Wald, and a logit-transformed Wilson-type interval).
 }
+\section{Deprecated}{
+
+\code{grass_compute()} is deprecated in grass 0.2.0. The new headline API is
+\code{grass_report(ratings = Y)} returning a \code{grass_card} object. The full
+coefficient panel is available via \code{summary()} or \code{as.data.frame()}. See
+\code{vignette("reporting-card")} and \code{\link[=grass_report]{grass_report()}}.
+}
+
 \examples{
 # 2x2 counts (Cohen 1960 Table 1)
 tab <- matrix(c(88, 10, 14, 88), nrow = 2,

@@ -11,6 +11,12 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
 ```
 
+> **Note (v0.2.0 update):** This vignette describes a workflow from the
+> earlier framework version. The current canonical workflow is the
+> Report Card via `grass_report(ratings = Y)`. See
+> `vignette("reporting-card", package = "grass")`. The content here
+> may be retired in a future version.
+
 ## One package, one entry point
 
 `grass` is a single package with a single user-facing reporting call:

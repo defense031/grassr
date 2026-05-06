@@ -1,43 +1,34 @@
+# NOTE (v0.2.0): grass_report() was breaking-changed for the Target-2
+# Report Card. The OLD signature `grass_report(data, format = "matrix",
+# spec, reference, prevalence)` and its `grass_result` regime / distance /
+# reference-level outputs are retired. Tests for that pre-Target-2 API
+# are skipped under v0.2.0; the new flow is exercised in
+# `test-grass_report-card.R`. See grass/design/v0.2.0_paper_alignment.md.
+#
+# This file retains the substrate-level checks that still apply:
+#   * grass_prevalence() still works (not changed in v0.2.0)
+# and skips the OLD-framework regime / reference / distance assertions.
+
 source(test_path("fixtures", "published-tables.R"))
 
 test_that("grass_report returns a grass_result with expected slots", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  expect_s3_class(r, "grass_result")
-  expect_s3_class(r$metrics, "grass_metrics")
-  expect_true(r$regime %in% c("balanced", "prevalence-dominated",
-                              "bias-dominated", "mixed"))
-  expect_s3_class(r$reference, "grass_reference")
-  expect_s3_class(r$distance, "data.frame")
-  expect_setequal(r$distance$metric, c("kappa", "PABAK", "AC1"))
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("grass_report has no verdict column anywhere", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  expect_null(r$verdict)
-  expect_false("verdict" %in% names(r$distance))
-  expect_false("verdict" %in% names(as.data.frame(r)))
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("Regime classification matches the PI / BI structure", {
-  r_bal  <- grass_report(fixture_cohen_1960, format = "matrix")
-  r_prev <- grass_report(fixture_fc_highP,   format = "matrix")
-  r_ext  <- grass_report(fixture_bbc_1993,   format = "matrix")
-
-  expect_equal(r_bal$regime,  "balanced")
-  expect_equal(r_prev$regime, "prevalence-dominated")
-  expect_equal(r_ext$regime,  "prevalence-dominated")
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("reference = 'none' drops the reference curve and distance", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix", reference = "none")
-  expect_null(r$reference)
-  expect_null(r$distance)
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("User-supplied prevalence overrides the marginal estimate", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix", prevalence = 0.1)
-  expect_equal(r$prevalence, 0.1)
-  expect_equal(r$prevalence_source, "user_supplied")
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("grass_prevalence agrees with the internal estimator", {
@@ -46,7 +37,5 @@ test_that("grass_prevalence agrees with the internal estimator", {
 })
 
 test_that("Distance column is a signed numeric, not a category", {
-  r <- grass_report(fixture_fc_highP, format = "matrix")
-  expect_true(is.numeric(r$distance$distance))
-  expect_equal(length(r$distance$distance), 3)
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })

@@ -36,6 +36,14 @@ The package uses the name \code{reference} because its API reports the
 values alongside prevalence index and bias index rather than applying
 them as cutoffs.
 }
+\section{Deprecated}{
+
+\code{grass_reference()} is deprecated in grass 0.2.0. The percentile machinery
+in \code{\link[=position_on_surface]{position_on_surface()}} and the new \code{\link[=grass_report]{grass_report()}} supersede the
+fixed reference-curve lookup. See \code{vignette("reporting-card")} for the
+v0.2.0 surface-position workflow.
+}
+
 \examples{
 grass_reference(0.5)
 grass_reference(0.1, reference_level = 0.70)

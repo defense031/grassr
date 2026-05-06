@@ -45,6 +45,15 @@ precisely enough to drop into a manuscript methods section.
 character string and honour the \code{format} argument.
 }
 
+\section{Deprecated}{
+
+\code{grass_methods()} is deprecated in grass 0.2.0. The Target-2 reporting
+workflow does not generate a regime/PI-BI methods paragraph; the
+published methods text now references \code{position_on_surface()} and
+\code{check_asymmetry()} directly. See \code{vignette("reporting-card")} and
+\code{\link[=grass_report]{grass_report()}}.
+}
+
 \examples{
 tab <- matrix(c(88, 10, 14, 88), nrow = 2,
               dimnames = list(R1 = c("0","1"), R2 = c("0","1")))

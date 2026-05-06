@@ -18,6 +18,12 @@ knitr::opts_chunk$set(
 library(grass)
 ```
 
+> **Note (v0.2.0 update):** This vignette describes a workflow from the
+> earlier framework version. The current canonical workflow is the
+> Report Card via `grass_report(ratings = Y)`. See
+> `vignette("reporting-card", package = "grass")`. The content here
+> may be retired in a future version.
+
 ## What `grass` does
 
 `grass` computes Cohen's κ, PABAK, and Gwet's AC1 for binary inter-rater

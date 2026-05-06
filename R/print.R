@@ -39,6 +39,22 @@ print.grass_reference <- function(x, digits = 4, ...) {
   invisible(x)
 }
 
+# --------------------------------------------------------------------------
+# print.grass_card -- v0.2.0 Target-2 Report Card
+# --------------------------------------------------------------------------
+# Renders the four-field card matching paper Figure 2 right panel
+# character-for-character. When `flag` is "aligned" or "caution", shows only
+# the primary coefficient line + delta + band/qualifier. When "divergent",
+# shows ALL panel coefficients with their percentiles + delta(divergent) +
+# band=suppressed + per-rater table (if non-NULL).
+
+#' @export
+print.grass_card <- function(x, digits = 2, ...) {
+  lines <- format(x, digits = digits, ...)
+  cat(paste(lines, collapse = "\n"), "\n", sep = "")
+  invisible(x)
+}
+
 #' @export
 print.grass_result <- function(x, digits = 4, ...) {
   v <- x$metrics$values

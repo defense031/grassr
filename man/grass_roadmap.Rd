@@ -5,91 +5,128 @@
 \alias{grass-roadmap}
 \title{The grass ecosystem roadmap}
 \description{
-\code{grass} is a single package with a single entry point — \code{\link[=grass_report]{grass_report()}} —
-that dispatches to a metric family based on a \code{grass_spec} object. Each
-metric family covers one scale type for inter-rater or test-retest
-reliability, and each is paired with its own prevalence-conditioned
-reference curve. Today only the binary family is implemented. The rest
-of the ecosystem is documented here so users can read the API and
-understand the broader framework without having to track release notes.
+\code{grass} is the binary categorical-agreement submodule of the MEADOW
+framework. Its single headline entry point — \code{\link[=grass_report]{grass_report()}} — takes
+an \verb{N x k} binary rating matrix and returns a \code{grass_card}: a four-field
+Report Card carrying the sample summary, primary coefficient with its
+surface-position percentile, the four-band qualitative label, and the
+cross-coefficient asymmetry diagnostic \code{delta_hat} with its three-tier
+stability flag. The full panel of coefficients, percentiles, bootstrap
+CIs, and reference-surface artifacts ride along on the same object for
+\code{summary()}, \code{as.data.frame()}, and \code{plot()} access.
 }
 \section{Framework foundation}{
 
 
-A core idea animates every family: \strong{fixed interpretation bands
+A core idea animates the framework: \strong{fixed interpretation bands
 (Landis-Koch 1977 and its descendants) are mathematically invalid
-across prevalences and across scale types.} The reference curve a
-result is compared against must be conditioned on the actual study
-parameters (prevalence, design, scale). \code{grass} is being built as a
-single authoritative framework that applies this principle uniformly
-across scale types — binary, nominal, ordinal, continuous,
-test-retest, internal consistency. The ecosystem complements rather
-than replaces existing packages (\code{psych}, \code{irrCAC}, \code{irr},
-\code{SimplyAgree}); where those packages compute coefficients, \code{grass}
-attaches a prevalence-aware reference and a methods-paragraph
-scaffold that carries through to the manuscript.
+across prevalences, sample sizes, and rater counts.} The Target-2
+principle of MEADOW is \emph{context-conditioned reporting}: the percentile
+a coefficient lands at and the qualitative band that label maps to are
+both conditioned on the actual study \verb{(k, N, pi_hat)}, computed by
+inverting a calibrated reference surface rather than read off a fixed
+table. \code{grass} ships the binary submodule; FIELD is planned to ship
+alongside Paper 3 with the same Target-2 contract for variance-component
+reliability on continuous outcomes.
 }
 
-\section{Framework taxonomy}{
+\section{MEADOW submodules}{
 
 
-Four framework labels appear in the paper and in this documentation.
-They are organising concepts, not function prefixes. The user-facing
-API never exposes them — every family is accessed through
-\code{\link[=grass_report]{grass_report()}} with the appropriate spec.
+MEADOW is the umbrella; each submodule covers one scale type. The
+user-facing API of each submodule is the same — a single rating
+matrix in, a Report Card out — so user code that works on a binary
+panel today will work on a continuous panel once FIELD ships.
 
 \tabular{lll}{
-\strong{Label} \tab \strong{Metric family} \tab \strong{Status in 0.1.2} \cr
-GRASS \tab Binary, two raters (Cohen's kappa, PABAK, Gwet's AC1). Prevalence-conditioned reference curves at Se = Sp in \{0.70, 0.80, 0.85, 0.90\}. \tab \strong{implemented} — see \code{\link[=grass_spec_binary]{grass_spec_binary()}} \cr
-TURF  \tab Ordinal, two raters (weighted Cohen's kappa with linear and quadratic weights, Gwet's AC2, ordinal Krippendorff's alpha). \tab planned — \code{\link[=grass_spec_ordinal]{grass_spec_ordinal()}} placeholder only \cr
-MEADOW \tab Nominal, more than two raters (Fleiss' kappa, nominal Krippendorff's alpha). \tab planned — \code{\link[=grass_spec_multirater]{grass_spec_multirater()}} placeholder only \cr
-FIELD  \tab Continuous (Shrout-Fleiss ICC forms, Lin's concordance correlation, Bland-Altman limits with parametric and non-parametric bounds, standard error of measurement, generalisability-theory variance components). \tab planned — \code{\link[=grass_spec_continuous]{grass_spec_continuous()}} placeholder only \cr
+\strong{Submodule} \tab \strong{Scope} \tab \strong{Status} \cr
+GRASS \tab Binary categorical agreement (Cohen's kappa, PABAK, AC1,
+Fleiss kappa, Krippendorff alpha, observed ICC for binary). Surface
+positioning calibrated over \verb{k in \{2,3,5,8,15,25\}} and
+\verb{N in \{50,200,1000\}}. \tab \strong{implemented} in grass v0.2.0 — see
+\code{\link[=grass_report]{grass_report()}} \cr
+FIELD \tab Continuous variance-component reliability (Shrout-Fleiss
+ICC family, Lin's CCC, Bland-Altman bounds, generalisability-theory
+variance components). Same Target-2 surface-positioning contract as
+GRASS. \tab planned for v1.0.0 alongside Paper 3 — see
+\code{\link[=grass_spec_continuous]{grass_spec_continuous()}} placeholder \cr
 }
+
+Earlier drafts of the roadmap referenced TURF and a separate MEADOW
+submodule for nominal multi-rater agreement. Those are retired: GRASS
+now covers the binary multi-rater case (Fleiss kappa, Krippendorff
+alpha, observed ICC) directly, and the framework taxonomy collapses
+to MEADOW = GRASS + FIELD.
 }
 
 \section{Stable API}{
 
 
-The same verbs work across every family. When the planned families
-ship, existing user code does not change — the only thing that
-changes is the spec constructor called. This is what "one package,
-one entry point" buys the user.
+The Target-2 contract is the same across submodules:
 \itemize{
-\item \code{\link[=grass_report]{grass_report()}} with the appropriate spec — compute and attach
-the family's reference.
-\item \code{\link[=grass_methods]{grass_methods()}} — GRRAS-compliant manuscript methods paragraph
-pre-filled with study numbers.
-\item \code{\link[=grass_format_report]{grass_format_report()}} — one-line paper-ready summary.
-\item \code{plot()} — landing plot on the family's reference curve.
-\item \code{\link[broom:reexports]{broom::tidy()}} — long-form data.frame of estimates, references,
-and distances.
+\item \code{\link[=grass_report]{grass_report()}} — primary entry point; rating matrix in,
+\code{grass_card} out. The \code{grass_card} carries the four-field summary
+(sample, primary coefficient with surface percentile, four-band
+label, \code{delta_hat} with stability flag), the full panel of
+coefficients with their bootstrap CIs, and the reference-surface
+artifacts.
+\item \code{\link[=position_on_surface]{position_on_surface()}} — granular access to a single coefficient's
+surface percentile, four-band label, and qualifier.
+\item \code{\link[=check_asymmetry]{check_asymmetry()}} — granular access to the cross-coefficient
+\code{delta_hat} and three-tier stability flag.
+\item \code{\link[=latent_class_fit]{latent_class_fit()}} — per-rater Se/Sp via Dawid-Skene EM (k >= 3)
+or Hui-Walter bounds (k = 2), populated automatically in the
+divergent branch of \code{\link[=grass_report]{grass_report()}}.
+\item \code{summary()}, \code{as.data.frame()}, \code{plot()} — layered access to the
+full underlying panel and the surface-position visualization.
+}
+}
+
+\section{Target-2 vocabulary}{
+
+
+These terms, used throughout the package documentation and printed
+Report Card, come from the merged GRASS binary-rater-reliability
+paper (§§3-4):
+\itemize{
+\item \strong{context-conditioned reporting convention} — the principle that
+the percentile and band reported for a coefficient must condition on
+\verb{(k, N, pi_hat)}, not on a fixed table.
+\item \strong{surface-position percentile} — the empirical percentile of the
+observed coefficient against the calibrated reference surface at
+the study's \verb{(k, N, pi_hat)}.
+\item \strong{four-band label} — the qualitative tier (\code{Poor} / \code{Moderate} /
+\code{Strong} / \code{Excellent}) mapped from \code{q_hat} (the operating-quality
+projection onto the \code{Se = Sp} diagonal) via the partition
+\code{c(0.5, 0.625, 0.75, 0.875, 1.0)}.
+\item \strong{delta-hat (\code{delta_hat}) stability flag} — the cross-coefficient
+percentile spread (in pp) with three tiers \code{aligned} / \code{caution} /
+\code{divergent} at NP-motivated size-alpha thresholds \code{c(9.25, 11.75)} (paper §3.2,
+App G operating characteristics). When \code{divergent}, the band is
+suppressed and per-rater Se/Sp from a latent-class fit are
+reported instead.
 }
 }
 
 \section{What is not yet implemented}{
 
 
-Until the ordinal, multirater, and continuous families land,
-constructing one of the placeholder specs
-(\code{\link[=grass_spec_ordinal]{grass_spec_ordinal()}}, \code{\link[=grass_spec_multirater]{grass_spec_multirater()}},
-\code{\link[=grass_spec_continuous]{grass_spec_continuous()}}) is legal so users can write code ready
-for the release, but passing one to \code{\link[=grass_report]{grass_report()}} or
-\code{\link[=grass_methods]{grass_methods()}} errors with a pointer back here. The research
-roadmap for each family includes: non-parametric confidence intervals
-(logit-transformed Wilson for kappa, Harrell-Davis and
-Sfakianakis-Verginis quantiles for Bland-Altman), Matthews
-correlation coefficient and specific-agreement fallbacks in the
-binary family for rare-event diagnostics, and generalisability
-theory variance components in the continuous family.
+Constructing one of the placeholder specs (\code{\link[=grass_spec_continuous]{grass_spec_continuous()}},
+\code{\link[=grass_spec_multirater]{grass_spec_multirater()}}, \code{\link[=grass_spec_ordinal]{grass_spec_ordinal()}}) is legal so users
+can write code ready for FIELD or for future GRASS extensions.
+Passing a placeholder spec to a dispatching function errors with a
+pointer back here. The placeholders are kept so that a paper or a
+user-side script that already names a future submodule by spec
+continues to parse.
 }
 
 \section{Paper}{
 
 
-The foundational paper for the framework and the binary family is in
-review (Semmel 202X). FIELD / TURF / MEADOW papers will follow,
-citing the GRASS paper as the methodological precedent. Each paper
-accompanies a minor release of this package rather than a new
-package.
+The foundational paper for MEADOW and the GRASS submodule is in
+review (Semmel 202X, \emph{Context-Conditioned Reporting for Binary Rater
+Reliability}). The FIELD paper will follow, citing the GRASS paper as
+the methodological precedent. Each paper accompanies a minor or major
+release of this package rather than a new package.
 }
 

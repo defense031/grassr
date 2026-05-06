@@ -1,21 +1,22 @@
+# NOTE (v0.2.0): grass_report() was breaking-changed for the Target-2
+# Report Card. The `print.grass_result` / `as.data.frame.grass_result`
+# tests below depend on grass_report returning a `grass_result`. They now
+# fail because grass_report returns a `grass_card`. Tests of the OLD
+# `grass_result` printing pipeline are skipped under v0.2.0; the new flow
+# is exercised in test-grass_report-card.R via `print.grass_card` /
+# `as.data.frame.grass_card`. See grass/design/v0.2.0_paper_alignment.md.
+#
+# Tests of the surviving artifacts (`print.grass_metrics`,
+# `print.grass_reference`) are kept as-is.
+
 source(test_path("fixtures", "published-tables.R"))
 
 test_that("print.grass_result shows metrics, skew diagnostics, and regime", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  out <- capture.output(print(r))
-  full <- paste(out, collapse = "\n")
-  expect_match(full, "grass report")
-  expect_match(full, "Skew diagnostics")
-  expect_match(full, "Regime")
-  expect_false(grepl("\\[ABOVE\\]|\\[BELOW\\]", full))
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("print.grass_result runs on all fixtures", {
-  for (nm in names(all_fixtures)) {
-    tab <- all_fixtures[[nm]]
-    r <- suppressWarnings(grass_report(tab, format = "matrix"))
-    expect_output(print(r), "grass report", info = nm)
-  }
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("print.grass_metrics shows the 2x2 table", {
@@ -29,11 +30,5 @@ test_that("print.grass_reference labels curves as references", {
 })
 
 test_that("as.data.frame.grass_result returns context columns, no verdict", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  df <- as.data.frame(r)
-  expect_s3_class(df, "data.frame")
-  expect_true(all(c("N", "prevalence", "regime",
-                    "kappa", "PABAK", "AC1",
-                    "prevalence_index", "bias_index") %in% names(df)))
-  expect_false("verdict" %in% names(df))
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })

@@ -19,19 +19,18 @@
 # harder on the ladder).
 .grass_use_case_order <- c("research", "screening", "diagnostic", "clinical")
 
-#' Return the GRASS use-case tolerance ladder
-#'
-#' Returns the illustrative defaults from the merged GRASS binary-rater-
-#' reliability paper. The MEADOW Field Guide is the canonical source;
-#' practitioners may declare custom tolerances per study with explicit
-#' disclosure.
+#' Return the GRASS use-case tolerance ladder (retired)
 #'
 #' @return A data.frame with columns `use_case`, `tolerance`, and `source`.
-#' @export
-#'
-#' @examples
-#' grass_use_case_ladder()
+#' @keywords internal
+#' @noRd
 grass_use_case_ladder <- function() {
+  .Deprecated(msg = paste0(
+    "`grass_use_case_ladder()` is retired in grass 0.2.0. ",
+    "The Column B / use-case-ladder / declared-tolerance machinery ",
+    "was removed when the framework adopted surface-position reporting. ",
+    "See `?grass_report` for the v0.2.0 reporting workflow."
+  ))
   data.frame(
     use_case = .grass_use_case_order,
     tolerance = vapply(.grass_use_case_order,
@@ -58,27 +57,21 @@ grass_use_case_ladder <- function() {
 
 # ---- EMR_panel helper --------------------------------------------------
 
-#' Panel-level misclassification rate under k-rater majority vote
-#'
-#' Under the Se = Sp = q diagonal (GRASS Tier 1), the panel's majority
-#' vote across `k` raters agrees with the latent class with probability
-#' `P(Bin(k, q) >= ceiling(k/2))`. `emr_panel()` returns `1 -` that
-#' probability, which is the rate at which the panel's decision
-#' misclassifies a randomly drawn subject.
-#'
-#' Only odd `k` is supported in this release; even `k` requires a
-#' tie-breaking rule that the framework has not yet declared.
+#' Panel-level misclassification rate under k-rater majority vote (retired)
 #'
 #' @param q Numeric scalar or vector in `[0, 1]`. Per-rater accuracy
 #'   (`Se = Sp = q`).
 #' @param k Integer, odd, `>= 3`. Number of raters voting.
 #' @return Numeric vector of EMR_panel values, same length as `q`.
-#' @export
-#'
-#' @examples
-#' emr_panel(q = 0.85, k = 5)
-#' emr_panel(q = c(0.80, 0.85, 0.90, 0.95), k = 5)
+#' @keywords internal
+#' @noRd
 emr_panel <- function(q, k) {
+  .Deprecated(msg = paste0(
+    "`emr_panel()` is retired in grass 0.2.0. ",
+    "The Column B / use-case-ladder / declared-tolerance machinery ",
+    "was removed when the framework adopted surface-position reporting. ",
+    "See `?grass_report` for the v0.2.0 reporting workflow."
+  ))
   if (!is.numeric(q) || any(!is.finite(q))) {
     stop("`q` must be a finite numeric vector.", call. = FALSE)
   }
@@ -97,80 +90,21 @@ emr_panel <- function(q, k) {
 
 # ---- classify() ---------------------------------------------------------
 
-#' Column B of the Reporting Card: use-case tier on EMR_panel
-#'
-#' `classify()` assigns the use-case tier — one of `"Fails"`,
-#' `"Indeterminate"`, `"Meets"`, `"Met with distinction"`, or `"Exceeds"` —
-#' given the 95% CI on EMR_panel and a declared tolerance `T`. This is
-#' Column B of the §8 Reporting Card in the merged GRASS binary-rater-
-#' reliability paper.
-#'
-#' The label sits on EMR_panel (a rate, a function of `q̂`, `F̂`, `k`, and
-#' the voting rule) rather than on any individual agreement coefficient.
-#' That is what makes the label system regime-conditioned, metric-agnostic,
-#' and operationally consequential — the four specific defects of
-#' Landis-Koch (1977) and Koo-Li (2016). See `paper2/review/framework_notes.md`
-#' §0.6.5 for the full argument.
-#'
-#' Tier partition (on the 95% CI `[L, U]` of EMR_panel, with tolerance
-#' `T`):
-#'
-#' | Tier | Arithmetic | Meaning |
-#' | :--- | :--- | :--- |
-#' | `Exceeds` | `U < T_next` | Would pass a more demanding use case |
-#' | `Met with distinction` | `U < T/2` (and not Exceeds) | Passes with a safety margin within the declared use case |
-#' | `Meets` | `T/2 <= U < T` | Passes the declared use case |
-#' | `Indeterminate` | `L < T <= U` | CI straddles T; data too thin to call |
-#' | `Fails` | `L >= T` | CI entirely at or above T; panel fails the declared use case |
-#'
-#' If `emr_lower` is `NA` the `Fails` tier collapses into `Indeterminate`
-#' (without a lower bound the function cannot distinguish "CI straddles"
-#' from "CI entirely above").
+#' Column B of the Reporting Card: use-case tier on EMR_panel (retired)
 #'
 #' @param emr_upper Numeric scalar. Upper bound of the 95% CI on EMR_panel.
 #' @param emr_lower Optional numeric scalar. Lower bound of the 95% CI on
 #'   EMR_panel. `NA` or `NULL` collapses `Fails` into `Indeterminate`.
 #' @param use_case One of `"research"`, `"screening"`, `"diagnostic"`,
-#'   `"clinical"`, or `"custom"`. Sets the default tolerance `T` from
-#'   [grass_use_case_ladder()]; `"custom"` requires `tolerance`.
+#'   `"clinical"`, or `"custom"`.
 #' @param tolerance Optional numeric scalar. Overrides the use-case default.
-#'   Required when `use_case = "custom"`.
-#' @param tolerance_next Optional numeric scalar. Overrides `T_next`
-#'   (used by the `Exceeds` tier). Defaults to the next harder use case on
-#'   the ladder; `NA` at the top of the ladder disables `Exceeds`.
+#' @param tolerance_next Optional numeric scalar. Overrides `T_next`.
 #' @param emr_point Optional numeric scalar. EMR_panel point estimate.
-#'   Stored on the output for the citation sentence; not used in tier
-#'   assignment.
-#' @param regime Optional `grass_asymmetry` object from [check_asymmetry()].
-#'   Attached so that a Reporting Card row carries both Column A and
-#'   Column B together.
+#' @param regime Optional `grass_asymmetry` object.
 #'
-#' @return An S3 object of class `grass_classification` with fields:
-#' - `tier`: character tier label
-#' - `tolerance`: `T` used (with source)
-#' - `tolerance_next`: `T_next` used (or `NA`)
-#' - `emr_upper`, `emr_lower`, `emr_point`: inputs, echoed for reporting
-#' - `margin`: `T - emr_upper` (positive means the panel sits below T)
-#' - `use_case`: the use-case label
-#' - `regime`: attached Column A (or `NULL`)
-#'
-#' @seealso [check_asymmetry()] for Column A; [emr_panel()] to compute the
-#'   EMR_panel point estimate from `q̂` and `k` under the Tier 1 diagonal.
-#' @export
-#'
-#' @examples
-#' # A screening panel, symmetric raters, tight CI
-#' asym <- check_asymmetry(se = c(0.86, 0.88, 0.84, 0.87, 0.85),
-#'                         sp = c(0.85, 0.87, 0.86, 0.86, 0.87))
-#' classify(emr_upper = 0.07, emr_lower = 0.05, use_case = "screening",
-#'          emr_point = 0.06, regime = asym)
-#'
-#' # Same panel held to the diagnostic tolerance — indeterminate
-#' classify(emr_upper = 0.07, emr_lower = 0.03, use_case = "diagnostic",
-#'          emr_point = 0.05)
-#'
-#' # Custom tolerance
-#' classify(emr_upper = 0.04, use_case = "custom", tolerance = 0.08)
+#' @return An S3 object of class `grass_classification`.
+#' @keywords internal
+#' @noRd
 classify <- function(emr_upper,
                      emr_lower = NA_real_,
                      use_case = c("research", "screening", "diagnostic",
@@ -179,6 +113,12 @@ classify <- function(emr_upper,
                      tolerance_next = NULL,
                      emr_point = NA_real_,
                      regime = NULL) {
+  .Deprecated(msg = paste0(
+    "`classify()` is retired in grass 0.2.0. ",
+    "The Column B / use-case-ladder / declared-tolerance machinery ",
+    "was removed when the framework adopted surface-position reporting. ",
+    "See `?grass_report` for the v0.2.0 reporting workflow."
+  ))
   use_case <- match.arg(use_case)
 
   if (!is.numeric(emr_upper) || length(emr_upper) != 1L || !is.finite(emr_upper)) {

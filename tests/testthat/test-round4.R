@@ -1,3 +1,10 @@
+# NOTE (v0.2.0): grass_report() was breaking-changed for the Target-2
+# Report Card. Tests calling the OLD `grass_report(data, format = "matrix")`
+# API or consuming the OLD `grass_result` (e.g., `grass_format_report`,
+# `tidy.grass_result`, `grass_report_by`) now fail and are skipped under
+# v0.2.0. The new flow is exercised in test-grass_report-card.R. See
+# grass/design/v0.2.0_paper_alignment.md.
+
 source(test_path("fixtures", "published-tables.R"))
 
 # ---- response = alias ------------------------------------------------
@@ -49,67 +56,27 @@ test_that("`response =` works in long format as alias for `rating =`", {
 # ---- ci_width on grass_format_report ---------------------------------
 
 test_that("ci_width = TRUE appends width and descriptor", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  s <- grass_format_report(r, ci_width = TRUE)
-  expect_true(grepl("CI width =", s))
-  expect_true(grepl("tight|moderate|wide", s))
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("ci_width = FALSE (default) does not append width", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  s <- grass_format_report(r)
-  expect_false(grepl("CI width", s))
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 # ---- tidy.grass_result long form -------------------------------------
 
 test_that("tidy.grass_result returns 9 rows with expected schema", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  tdf <- grass:::tidy.grass_result(r)
-  expect_s3_class(tdf, "data.frame")
-  expect_equal(nrow(tdf), 9)
-  expect_setequal(tdf$metric, c("kappa", "PABAK", "AC1"))
-  expect_setequal(tdf$quantity, c("estimate", "reference", "distance"))
-  expect_true(all(c("metric", "quantity", "value", "conf.low",
-                    "conf.high", "n", "prevalence") %in% names(tdf)))
-  # conf.low / conf.high are populated only for kappa estimate
-  kappa_est <- tdf[tdf$metric == "kappa" & tdf$quantity == "estimate", ]
-  expect_false(is.na(kappa_est$conf.low))
-  pabak_ref <- tdf[tdf$metric == "PABAK" & tdf$quantity == "reference", ]
-  expect_true(is.na(pabak_ref$conf.low))
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 # ---- grass_report_by -------------------------------------------------
 
 test_that("grass_report_by returns one row per group with .cohort column", {
-  set.seed(3)
-  df <- data.frame(
-    xray_id = sprintf("CXR-%03d", 1:60),
-    rater_A = sample(c("abnormal", "normal"), 60, replace = TRUE),
-    rater_B = sample(c("abnormal", "normal"), 60, replace = TRUE),
-    cohort  = rep(c("site1", "site2", "site3"), each = 20)
-  )
-  out <- suppressWarnings(
-    grass_report_by(df, cohort, id_col = "xray_id", positive = "abnormal")
-  )
-  expect_s3_class(out, "data.frame")
-  expect_equal(nrow(out), 3)
-  expect_true(".cohort" %in% names(out))
-  expect_setequal(out$.cohort, c("site1", "site2", "site3"))
-  # regime_note should be absent (compact = TRUE inside)
-  expect_false("regime_note" %in% names(out))
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("grass_report_by accepts a string for `group`", {
-  set.seed(4)
-  df <- data.frame(
-    r1 = rbinom(30, 1, 0.3),
-    r2 = rbinom(30, 1, 0.3),
-    cohort = rep(c("A", "B", "C"), each = 10)
-  )
-  out <- suppressWarnings(grass_report_by(df, "cohort"))
-  expect_equal(nrow(out), 3)
-  expect_setequal(out$.cohort, c("A", "B", "C"))
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 # ---- id_col hint in wide-format error --------------------------------

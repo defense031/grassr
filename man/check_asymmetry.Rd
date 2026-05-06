@@ -2,89 +2,134 @@
 % Please edit documentation in R/asymmetry.R
 \name{check_asymmetry}
 \alias{check_asymmetry}
-\title{Column A of the Reporting Card: model-safety tier from rater asymmetry}
+\title{Cross-coefficient panel asymmetry diagnostic}
 \usage{
 check_asymmetry(
-  se,
-  sp,
-  rater = NULL,
-  threshold_caution = 0.05,
-  threshold_unsafe = 0.1,
-  summary = c("max", "mean")
+  ratings,
+  axis = c("inter", "intra"),
+  occasion = NULL,
+  delta_thresholds = c(9.25, 11.75),
+  ...
 )
 }
 \arguments{
-\item{se}{Numeric vector, one per rater. Per-rater sensitivity estimates
-in \verb{[0, 1]}.}
+\item{ratings}{User input: an \verb{N x k} binary matrix, an \code{N} x \code{k}
+data.frame whose columns are 0/1 / logical / 2-level factor, or a
+list of two equal-length 0/1 vectors (k = 2 paired form). See
+\code{?normalize_ratings} for accepted shapes.}
 
-\item{sp}{Numeric vector, one per rater. Per-rater specificity estimates
-in \verb{[0, 1]}. Same length as \code{se}.}
+\item{axis}{\code{"inter"} (default) or \code{"intra"}. Selects the surface
+family.}
 
-\item{rater}{Optional character vector of rater labels, same length as
-\code{se}. Defaults to \code{"R1"}, \code{"R2"}, ... .}
+\item{occasion}{Reserved for \code{axis = "intra"} (a vector / factor
+identifying viewing occasion); ignored when \code{axis = "inter"}.}
 
-\item{threshold_caution}{Boundary between Tier 1 (\code{ok}) and Tier 2
-(\code{caution}). Default \code{0.05}.}
+\item{delta_thresholds}{Length-2 numeric vector \code{c(caution, divergent)}
+in percentile points. Default \code{c(9.25, 11.75)} from paper §3.2 (NP
+optimum at alpha = 0.05 / 0.01).}
 
-\item{threshold_unsafe}{Boundary between Tier 2 (\code{caution}) and Tier 3
-(\code{unsafe}). Default \code{0.10}.}
-
-\item{summary}{How to reduce per-rater gaps to the scalar \verb{δ̂}. \code{"max"}
-(default, conservative tripwire — any single rater above the threshold
-triggers escalation) or \code{"mean"} (panel-average asymmetry). The
-framework uses \code{"max"}; \code{"mean"} is provided for sensitivity checks.}
+\item{...}{Forwarded to \code{\link[=position_on_surface]{position_on_surface()}} (e.g. \code{bands},
+\code{band_labels}, \code{reference_type}).}
 }
 \value{
-An S3 object of class \code{grass_asymmetry} with fields:
+An S3 object of class \code{grass_asymmetry_panel} with fields:
 \itemize{
-\item \code{per_rater}: data.frame of \code{rater}, \code{se}, \code{sp}, and \verb{gap = |se − sp|}
-\item \code{delta_hat}: the scalar \verb{δ̂} summary
-\item \code{summary}: which summary statistic was used (\code{"max"} or \code{"mean"})
-\item \code{tier}: integer tier (\code{1}, \code{2}, or \code{3})
-\item \code{regime}: character regime label (\code{"ok"}, \code{"caution"}, or \code{"unsafe"})
-\item \code{thresholds}: named list of the caution and unsafe cutoffs
+\item \code{delta_hat}: scalar percentile-spread in pp
+\item \code{flag}: one of \code{"aligned"}, \code{"caution"}, \code{"divergent"}
+\item \code{thresholds}: named numeric vector of the (caution, divergent)
+cutoffs, in pp
+\item \code{panel}: data.frame with \code{coefficient}, \code{observed}, \code{percentile_pp}
+\item \code{notes}: character vector of unique caveats from the underlying
+surface positioning calls (e.g. nearest-neighbor gaps, ICC
+unavailability)
 }
 }
 \description{
-\code{check_asymmetry()} takes per-rater sensitivity and specificity estimates,
-computes the per-rater gap \verb{|Ŝe_j − Ŝp_j|}, reduces them to a scalar
-\verb{δ̂}, and assigns the model-safety tier that governs whether \verb{q̂} (the
-GRASS operating-quality projection onto the Se = Sp diagonal) is
-trustworthy as the primary summary. This is the Column A output of the
-§8 Reporting Card in the merged GRASS binary-rater-reliability paper.
+\code{check_asymmetry()} takes an N x k binary ratings matrix and returns a
+scalar \code{delta_hat} (in percentile points, "pp") summarising the spread
+across the panel of agreement coefficients (PABAK, AC1, Fleiss kappa,
+Krippendorff alpha, ICC) when each is positioned on its calibrated
+reference surface. A wide spread signals that the panel is reporting
+inconsistent stories about the same data — a structural symptom of
+shared rater bias or other Se != Sp asymmetry — and routes the user to
+the per-rater latent-class diagnostic.
 }
 \details{
-Tier thresholds follow the three-tier architecture:
+Each coefficient is positioned on its reference surface via
+\code{\link[=position_on_surface]{position_on_surface()}}, yielding a percentile in \verb{[0, 100]} pp. The
+panel diagnostic is \code{delta_hat = max(percentile) - min(percentile)},
+computed over coefficients whose observed value sits within the
+achievable range of their reference surface (see \emph{Surface-envelope
+clamp} below).
+}
+\section{Surface-envelope clamp (v0.2.1+)}{
+
+If an observed coefficient value falls outside the achievable range of
+its reference surface at the study's design \verb{(pi_hat, k, N)}, the
+inversion to \code{q_hat} clamps to the boundary and the percentile lands
+at exactly \code{0} or \code{100}. Including such clamped percentiles in the
+max-min \code{delta_hat} would inflate the panel-spread purely because of
+the clamp, not because the panel disagrees on percentile. Since
+v0.2.1 the function therefore \emph{excludes} clamped coefficients from
+\code{delta_hat} whenever at least two unclamped coefficients remain. The
+affected coefficients are still shown in the returned \code{panel}
+data.frame with \code{clamped = TRUE} and surface percentile \code{0} or \code{100},
+and a note in \verb{$notes} names which coefficients were excluded. This
+matters most often for ICC at \code{N > 200} (the bundled fitted-ICC
+reference is calibrated through \code{N = 200}; beyond that the function
+falls back to the oracle reference, which over-predicts the
+practitioner's GLMM-fit ICC and therefore clamps). The behavior
+guarantees that a \code{divergent} flag always reflects genuine
+cross-coefficient surface-percentile disagreement rather than an
+envelope artifact; the trade-off is that a coefficient with no
+calibrated reference at the user's design contributes nothing to
+the diagnostic. If fewer than two unclamped coefficients remain,
+\code{delta_hat} falls back to the raw spread including clamped values
+and the note records the fallback.
+
+Tier thresholds default to \code{c(9.25, 11.75)} pp, the Neyman-Pearson-motivated
+size-alpha cutoffs at \code{alpha = 0.05} and \code{alpha = 0.01} from §3.2 of the
+GRASS paper (see also App G operating characteristics). The construction is
+NP-optimal within the test class of threshold rules on \code{delta_hat}; it is
+not a likelihood-ratio test on the joint distribution of the panel
+coefficients (\code{delta_hat} is a paired-margin difference, not a likelihood
+ratio). The three flags are:
 \itemize{
-\item \strong{Tier 1 — \code{ok}} (\verb{δ̂ < 0.05}): diagonal default. Report \verb{q̂ ± SE}
-plus EDR and EMR_panel without per-rater disclosure.
-\item \strong{Tier 2 — \code{caution}} (\verb{0.05 ≤ δ̂ < 0.10}): diagonal + diagnostic.
-Report \verb{q̂ ± SE} with a caution flag and the \verb{δ̂} value; EDR / EMR_panel
-carry a footnote that rater asymmetry is non-negligible.
-\item \strong{Tier 3 — \code{unsafe}} (\verb{δ̂ ≥ 0.10}): full latent-class. \verb{q̂} is withheld
-as primary; report per-rater \verb{(Ŝe_j, Ŝp_j)} via a Hui-Walter / Dawid-
-Skene fit. PABAK's prevalence-flatness was conditional on Se = Sp; at
-Tier 3 that condition is visibly broken.
+\item \strong{\code{aligned}} (\code{delta_hat < 9.25} pp): the panel agrees on the
+surface position. Any single coefficient is a stable summary; the
+primary coefficient (Table 2) carries the headline.
+\item \strong{\code{caution}} (\verb{9.25 <= delta_hat < 11.75} pp): the panel is mildly
+inconsistent. Report the primary coefficient with a caution flag and
+the \code{delta_hat} value.
+\item \strong{\code{divergent}} (\code{delta_hat >= 11.75} pp): no single coefficient is a
+stable summary. Use \code{\link[=latent_class_fit]{latent_class_fit()}} to recover per-rater
+\verb{(Se, Sp)} and report those instead.
 }
 
-\code{se} and \code{sp} are not identifiable from a single 2-rater binary table
-without external ground truth. Supply them from: (a) a simulation with
-known truth, (b) a Hui-Walter / Dawid-Skene latent-class fit under
-\verb{k ≥ 3} and prevalence heterogeneity, or (c) a reference-standard
-comparison. Passing raw \code{table()} off-diagonals as \code{se} / \code{sp} is
-\strong{wrong} and the function cannot detect the error.
+The new \code{check_asymmetry(ratings, ...)} signature replaces the
+v0.1.x \code{check_asymmetry(se, sp, ...)} per-rater signature. For
+backward compatibility, calling \code{check_asymmetry()} with \code{se = ...}
+and \code{sp = ...} named arguments emits a one-time deprecation hint and
+routes the call to \code{\link[=check_rater_asymmetry]{check_rater_asymmetry()}}. Supplying both
+\code{ratings = ...} and per-rater \verb{se =} / \verb{sp =} is an error.
 }
+
 \examples{
-# Tier 1: symmetric raters — safe to use q̂ as primary
-check_asymmetry(se = c(0.86, 0.88, 0.84), sp = c(0.85, 0.87, 0.86))
-
-# Tier 2: one rater pressing the Se = Sp assumption
-check_asymmetry(se = c(0.90, 0.88, 0.92), sp = c(0.82, 0.86, 0.85))
-
-# Tier 3: within-rater Se-favoring regime — requires latent-class fit
-check_asymmetry(se = c(0.95, 0.93, 0.94), sp = c(0.78, 0.80, 0.79))
+\donttest{
+set.seed(1)
+# Build a 5x200 symmetric panel — should print as 'aligned'.
+Y <- matrix(rbinom(5 * 200, 1, 0.30), nrow = 200, ncol = 5)
+check_asymmetry(Y)
+}
+}
+\references{
+Neyman, J. and Pearson, E. S. (1933). On the problem of the most
+efficient tests of statistical hypotheses. \emph{Philosophical Transactions
+of the Royal Society of London A}, 231, 289-337.
 }
 \seealso{
-\code{\link[=classify]{classify()}} for the companion Column B tier (use-case fit on
-EMR_panel).
+\code{\link[=check_rater_asymmetry]{check_rater_asymmetry()}} for the per-rater Se/Sp companion;
+\code{\link[=latent_class_fit]{latent_class_fit()}} for the divergent-branch recovery of per-rater
+\verb{(Se, Sp)}; \code{\link[=position_on_surface]{position_on_surface()}} for the underlying surface
+positioning.
 }

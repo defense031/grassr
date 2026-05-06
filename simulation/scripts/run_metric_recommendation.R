@@ -30,14 +30,22 @@ scenario_means <- results[, .(
 scenario_means <- merge(scenario_means, grid, by = "scenario_id")
 
 # ------------------------------------------------------------------
-# 3. Define prevalence-conditioned thresholds (from Table 1 in paper)
+# 3. Define prevalence-conditioned reference values (grass v0.1.2)
 # ------------------------------------------------------------------
-# These are the ROC-optimal thresholds for "High" quality classification
+# Analytical expected metric values on the Se = Sp = 0.85 diagonal under
+# conditional independence. See grass::grass_reference_table(0.85) and
+# Appendix C of the paper for the derivation.
 thresholds <- data.table(
-  prevalence = c(0.01, 0.05, 0.10, 0.20, 0.50, 0.80, 0.90, 0.95, 0.99),
-  kappa_thresh  = c(0.060, 0.240, 0.385, 0.492, 0.612, 0.482, 0.376, 0.241, 0.060),
-  PABAK_thresh  = c(0.639, 0.639, 0.636, 0.638, 0.637, 0.638, 0.638, 0.639, 0.640),
-  AC1_thresh    = c(0.759, 0.759, 0.740, 0.704, 0.640, 0.703, 0.730, 0.759, 0.759)
+  prevalence    = c(0.01, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45,
+                    0.48, 0.50, 0.52, 0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85,
+                    0.90, 0.95, 0.99),
+  kappa_thresh  = c(0.037, 0.154, 0.257, 0.329, 0.381, 0.419, 0.447, 0.466, 0.480, 0.487,
+                    0.490, 0.490, 0.490, 0.487, 0.480, 0.466, 0.447, 0.419, 0.381, 0.329,
+                    0.257, 0.154, 0.037),
+  PABAK_thresh  = rep(0.490, 23),
+  AC1_thresh    = c(0.653, 0.635, 0.612, 0.589, 0.566, 0.546, 0.527, 0.512, 0.500, 0.492,
+                    0.490, 0.490, 0.490, 0.492, 0.500, 0.512, 0.527, 0.546, 0.566, 0.589,
+                    0.612, 0.635, 0.653)
 )
 
 # Merge thresholds

@@ -2,98 +2,107 @@
 % Please edit documentation in R/evaluate.R
 \name{grass_report}
 \alias{grass_report}
-\title{Report agreement metrics in their prevalence and bias context}
+\title{Generate a GRASS Report Card from a rating matrix}
 \usage{
 grass_report(
-  data,
-  format = c("wide", "matrix", "long", "paired"),
-  positive = NULL,
-  prevalence = NULL,
-  spec = grass_spec_binary(),
-  reference = NULL,
+  ratings,
+  axis = c("inter", "intra"),
+  metric = "auto",
+  occasion = NULL,
+  bands = c(0.5, 0.625, 0.75, 0.875, 1),
+  band_labels = c("Poor", "Moderate", "Strong", "Excellent"),
+  delta_thresholds = c(9.25, 11.75),
+  bootstrap_B = 1000L,
+  verbose = FALSE,
   ...
 )
 }
 \arguments{
-\item{data}{Input data. Form depends on \code{format}:
-\itemize{
-\item \code{"matrix"} — a 2x2 integer count matrix with \code{R1} rows, \code{R2} columns.
-\item \code{"wide"} — a data.frame with exactly two rater columns (or pass
-\code{rater_cols = c("r1", "r2")} if the data contains extra columns).
-\item \code{"long"} — a data.frame with \code{subject}, \code{rater}, and \code{rating} columns
-(names configurable via \verb{subject =}, \verb{rater =}, \verb{rating =}). Must
-contain exactly two distinct raters.
-\item \code{"paired"} — a list of two equal-length rating vectors, a 2-column
-matrix, or a 2-column data.frame.
-}}
+\item{ratings}{User input: an \verb{N x k} binary matrix, an \verb{N x k} data.frame
+whose columns are 0/1 / logical / 2-level factor, or a list of two
+equal-length 0/1 vectors (\code{k = 2} paired form). See
+\code{?normalize_ratings} for accepted shapes.}
 
-\item{format}{One of \code{"matrix"}, \code{"wide"}, \code{"long"}, \code{"paired"}.}
+\item{axis}{One of \code{"inter"} (default) or \code{"intra"}. Selects the surface
+family. The intra-axis path uses \code{occasion} to identify viewings.}
 
-\item{positive}{Optional character string naming the level to treat as the
-positive (=1) class. Defaults to \code{"yes"} if present among levels, then
-\code{"1"} / \code{"true"} / \code{"positive"} / \code{"case"}, then first-encountered.}
+\item{metric}{One of \code{"auto"} (default; calls \code{\link[=pick_primary_coefficient]{pick_primary_coefficient()}}
+per Table 2), \code{"pabak"}, \code{"ac1"}, \code{"fleiss_kappa"}, \code{"krippendorff_a"},
+\code{"icc"}. Selects which coefficient is the headline in the printed Report
+Card; the full panel is always populated.}
 
-\item{prevalence}{Optional override for the prevalence used for the
-reference curve lookup. If \code{NULL} (the default), prevalence is estimated
-from rater marginals via \code{\link[=grass_prevalence]{grass_prevalence()}}.}
+\item{occasion}{Reserved for \code{axis = "intra"}; ignored when \code{axis = "inter"}.}
 
-\item{spec}{A \code{grass_spec} object selecting the metric family and any
-family-specific parameters. Defaults to \code{grass_spec_binary()}
-(reference_level = 0.85). See \code{\link[=grass_spec_binary]{grass_spec_binary()}} for the
-\code{reference_level} choices, and \code{?grass_roadmap} for the planned
-ordinal / multirater / continuous specs.}
+\item{bands}{Numeric length-5 partition on \verb{q in [0.5, 1]}. Default
+\code{c(0.5, 0.625, 0.75, 0.875, 1.0)}.}
 
-\item{reference}{Deprecated in 0.1.2 in favour of the spec. Accepts
-\code{"high"} → \code{reference_level = 0.85}, \code{"medium"} → \code{0.70}, \code{"none"}
-→ no reference attached. Emits a one-time soft deprecation warning.}
+\item{band_labels}{Character length-4 labels for the bands. Default
+\code{c("Poor", "Moderate", "Strong", "Excellent")}.}
 
-\item{...}{Format-specific arguments: \code{rater_cols} for \code{"wide"};
-\code{subject}, \code{rater}, \code{rating} for \code{"long"}.}
+\item{delta_thresholds}{Length-2 numeric vector \code{c(caution, divergent)}
+in percentile points. Default \code{c(9.25, 11.75)} (paper §3.2, NP-motivated size-alpha).}
+
+\item{bootstrap_B}{Integer; bootstrap replicates for the divergent-branch
+latent-class CIs. Default \code{1000L}. Set lower for fast tests.}
+
+\item{verbose}{Logical; emit progress messages on long calls. Default
+\code{FALSE}.}
+
+\item{...}{Reserved for future extension.}
 }
 \value{
-A \code{grass_result} S3 object with components:
-\itemize{
-\item \code{metrics} — a \code{grass_metrics} object
-\item \code{spec} — the \code{grass_spec} used
-\item \code{prevalence}, \code{prevalence_source}
-\item \code{regime} — one of \code{"balanced"}, \code{"prevalence-dominated"},
-\code{"bias-dominated"}, \code{"mixed"}
-\item \code{regime_note} — short description of the regime's structural implication
-\item \code{reference} — a \code{grass_reference} object (or \code{NULL} if the spec
-has \code{reference_level = NULL})
-\item \code{distance} — data.frame of metric, observed value, reference value,
-signed distance (observed - reference).
-}
+An object of class \code{c("grass_card", "list")} with fields
+\code{sample}, \code{coefficient}, \code{delta}, \code{panel}, \code{per_rater}, \code{surface},
+\code{call}, \code{grass_version}, \code{timestamp}, \code{inputs}, \code{notes}. See the
+v0.2.0 paper-alignment design doc §3.1 for the full structure.
+
+\strong{Percentile units.} \code{card$coefficient$surface_percentile} and
+\code{card$panel$surface_percentile} are reported on the 0-100 scale
+(e.g., \code{46.3} means the 46th percentile). The underlying
+\code{position_on_surface()} returns \code{percentile} on the 0-1 fraction
+scale; \code{grass_report()} multiplies by 100 to match the paper's
+prose convention. The \code{print} and \code{format} methods use ordinal
+notation ("46th percentile").
 }
 \description{
-Computes the full metric panel, estimates prevalence, and assembles a
-contextual profile: observed values and CIs; the prevalence index (PI) and
-bias index (BI) describing the skew structure of the 2x2 table; the
-regime classification (\code{"balanced"}, \code{"prevalence-dominated"},
-\code{"bias-dominated"}, or \code{"mixed"}) derived from PI and BI; and the signed
-distance of each metric from the GRASS reference curve at the observed
-prevalence.
+\code{grass_report()} is the headline entry point for the v0.2.0 Target-2
+framework. It takes an \verb{N x k} binary rating matrix and returns a
+four-field Report Card: the sample summary \verb{(k, N, pi_hat)}, the primary
+coefficient and its surface position, the cross-coefficient asymmetry
+diagnostic \code{delta_hat} and flag, and (when \code{flag == "divergent"}) the
+per-rater latent-class fit. The full panel of coefficients, surface
+percentiles, band probabilities, and reference-surface artifacts ride
+along on the same object for \code{summary()}, \code{as.data.frame()}, and
+\code{plot()} access.
 }
-\section{Sample size caveats}{
-
-Two distinct small-N signals, kept separate:\tabular{lll}{
-   Threshold \tab Channel \tab Meaning \cr
-   \code{N < 10} \tab \code{warning()} at compute \tab The metrics themselves are unreliable; CIs near the bounds. \cr
-   \code{N < 30} \tab print-time note \tab Metrics are defensible but reference deltas are sensitive to noise. \cr
+\details{
+The body, in order:
+\enumerate{
+\item Normalize \code{ratings} to a canonical \verb{N x k} integer matrix \code{Y} and
+derive \code{pi_hat = mean(Y)}, \code{k = ncol(Y)}, \code{N = nrow(Y)}. Validate
+\code{k >= 2}; warn at \code{N < 10}; note at \code{N < 30}.
+\item Compute the panel of observed coefficients
+(\code{\link[=compute_panel]{compute_panel()}} internal): at \code{k = 2}, PABAK / AC1 / Cohen's
+kappa / Krippendorff alpha; at \code{k >= 3}, PABAK / AC1 / Fleiss kappa /
+Krippendorff alpha / ICC.
+\item For each panel coefficient, position the observed value on its
+DGP-calibrated reference surface via \code{\link[=position_on_surface]{position_on_surface()}}.
+\item Pick the primary coefficient via Table 2 (\code{metric = "auto"}) or accept
+the user's override.
+\item Compute the cross-coefficient percentile spread \code{delta_hat} (in pp)
+via \code{\link[=check_asymmetry]{check_asymmetry()}} and tier into \code{aligned} /  \code{caution} /
+\code{divergent}.
+\item If \code{flag == "divergent"}: run a \code{\link[=latent_class_fit]{latent_class_fit()}} (Dawid-Skene EM
+at \code{k >= 3}; Hui-Walter bounds at \code{k = 2}) and attach the per-rater
+\verb{(Se_j, Sp_j)} table.
+\item Assemble the \code{grass_card} S3 object.
 }
-
-
-A study at N = 20 returns defensible kappa / PABAK / AC1 but prints a
-caveat next to the reference comparison. A study at N = 8 also gets the
-compute-level warning on top.
 }
-
 \examples{
-tab <- matrix(c(88, 10, 14, 88), nrow = 2,
-              dimnames = list(R1 = c("0", "1"), R2 = c("0", "1")))
-grass_report(tab, format = "matrix")
-
-# Select a different reference band via the spec:
-grass_report(tab, format = "matrix",
-             spec = grass_spec_binary(reference_level = 0.80))
+set.seed(1)
+Y <- matrix(rbinom(1000, 1, 0.3), nrow = 200, ncol = 5)
+card <- grass_report(ratings = Y)
+card                       # print
+summary(card)              # full panel + per-rater
+as.data.frame(card)        # tidy long-format
 }

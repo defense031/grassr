@@ -1,31 +1,27 @@
+# NOTE (v0.2.0): grass_report() was breaking-changed for the Target-2
+# Report Card. The OLD `grass_format_report()` consumes a `grass_result`
+# (returned by the OLD grass_report API). Those calls now fail because
+# grass_report returns a `grass_card`. Tests of the OLD `grass_format_report`
+# pipeline are skipped under v0.2.0; the new flow is exercised in
+# test-grass_report-card.R via `print.grass_card` / `format.grass_card`.
+# See grass/design/v0.2.0_paper_alignment.md.
+
 source(test_path("fixtures", "published-tables.R"))
 
 test_that("grass_format_report returns a single character string", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  s <- grass_format_report(r)
-  expect_type(s, "character")
-  expect_length(s, 1)
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("grass_format_report includes all expected components", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  s <- grass_format_report(r)
-  for (tok in c("PABAK", "AC1", "PI", "BI", "N", "prevalence", "regime")) {
-    expect_true(grepl(tok, s, fixed = TRUE), info = tok)
-  }
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("ascii = TRUE emits 'kappa' instead of Unicode", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  s <- grass_format_report(r, ascii = TRUE)
-  expect_true(grepl("kappa", s, fixed = TRUE))
-  expect_false(grepl("\u03ba", s, fixed = TRUE))
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("ascii = FALSE emits Unicode kappa", {
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  s <- grass_format_report(r, ascii = FALSE)
-  expect_true(grepl("\u03ba", s, fixed = TRUE))
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("grass_format_report errors on non-grass_result input", {

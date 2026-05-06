@@ -5,6 +5,13 @@
 #' `as.data.frame(..., compact = TRUE)` output (drops the multi-line
 #' `regime_note` that wraps poorly in bound frames).
 #'
+#' @section Deprecated:
+#' `grass_report_by()` is deprecated in grass 0.2.0. The new
+#' `grass_report(ratings = Y)` headline API takes a single rating matrix and
+#' returns a `grass_card`; for cohort-by-cohort analysis, loop over
+#' subsets and bind the resulting cards via `do.call(rbind,
+#' lapply(parts, function(Y) as.data.frame(grass_report(ratings = Y))))`.
+#'
 #' @param data A data.frame.
 #' @param group Grouping column. Accepts either a bare symbol (e.g.,
 #'   `cohort`) or a character string (e.g., `"cohort"`).
@@ -43,6 +50,15 @@
 #' }
 grass_report_by <- function(data, group, ..., .cohort_col = ".cohort",
                             .parallel = FALSE) {
+  msg_once(
+    "deprecate_grass_report_by",
+    paste0(
+      "`grass_report_by()` is deprecated in grass 0.2.0. ",
+      "The new `grass_report(ratings = Y)` API takes a single rating matrix; ",
+      "for cohort splits, loop over subsets and bind the resulting cards. ",
+      "See `vignette('reporting-card')` and `?grass_report`."
+    )
+  )
   if (!is.data.frame(data)) {
     stop("`data` must be a data.frame.", call. = FALSE)
   }

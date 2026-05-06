@@ -14,6 +14,13 @@
 #' `.grass_spec_continuous`). Every method must return a single
 #' character string and honour the `format` argument.
 #'
+#' @section Deprecated:
+#' `grass_methods()` is deprecated in grass 0.2.0. The Target-2 reporting
+#' workflow does not generate a regime/PI-BI methods paragraph; the
+#' published methods text now references `position_on_surface()` and
+#' `check_asymmetry()` directly. See `vignette("reporting-card")` and
+#' [grass_report()].
+#'
 #' @param result A `grass_result` object (from [grass_report()]).
 #' @param format One of `"markdown"` (default), `"latex"`, or
 #'   `"plain"`. Controls emphasis markers and a small amount of
@@ -34,6 +41,15 @@
 #' cat(grass_methods(r))
 grass_methods <- function(result, format = c("markdown", "latex", "plain"),
                           digits = 2, ...) {
+  msg_once(
+    "deprecate_grass_methods",
+    paste0(
+      "`grass_methods()` is deprecated in grass 0.2.0. ",
+      "The new reporting workflow renders its own methods text via ",
+      "`print(grass_report(ratings = Y))`. ",
+      "See `vignette('reporting-card')` and `?grass_report`."
+    )
+  )
   if (!inherits(result, "grass_result")) {
     stop("`result` must be a grass_result, as returned by grass_report().",
          call. = FALSE)

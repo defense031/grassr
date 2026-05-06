@@ -30,6 +30,14 @@ manuscript line or a results table cell. Contains the three agreement
 metrics (with a confidence interval on kappa), the skew diagnostics
 (PI, BI), sample size, and regime.
 }
+\section{Deprecated}{
+
+\code{grass_format_report()} is deprecated in grass 0.2.0. The Target-2
+Report Card is rendered by \code{\link[=print.grass_card]{print.grass_card()}} / \code{\link[=format.grass_card]{format.grass_card()}}
+on the object returned by \code{grass_report(ratings = Y)}. See
+\code{vignette("reporting-card")} and \code{\link[=grass_report]{grass_report()}}.
+}
+
 \examples{
 tab <- matrix(c(88, 10, 14, 88), nrow = 2,
               dimnames = list(R1 = c("0", "1"), R2 = c("0", "1")))

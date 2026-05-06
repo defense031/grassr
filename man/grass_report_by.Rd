@@ -37,6 +37,14 @@ the per-group results into a single tidy data.frame using the compact
 \code{as.data.frame(..., compact = TRUE)} output (drops the multi-line
 \code{regime_note} that wraps poorly in bound frames).
 }
+\section{Deprecated}{
+
+\code{grass_report_by()} is deprecated in grass 0.2.0. The new
+\code{grass_report(ratings = Y)} headline API takes a single rating matrix and
+returns a \code{grass_card}; for cohort-by-cohort analysis, loop over
+subsets and bind the resulting cards via \code{do.call(rbind, lapply(parts, function(Y) as.data.frame(grass_report(ratings = Y))))}.
+}
+
 \examples{
 set.seed(1)
 df <- data.frame(

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>The GRASS Reporting Card: two-column tier labels</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">The GRASS Reporting Card: two-column tier
+labels</h1>
+
+
+
+<p><em>Preview vignette for the §8 Reporting Card of the merged GRASS
+binary- rater-reliability paper. The two functions exercised below —
+<code>check_asymmetry()</code> and <code>classify()</code> — ship with
+<code>grass</code> 0.2.x. Tier definitions follow
+<code>paper2/review/framework_notes.md</code> §0.6 (Column A, three-tier
+model safety) and §0.6.5 (“Labels without re-creating Landis-Koch”;
+Column B, five-tier use-case fit).</em></p>
+<div id="what-a-reporting-card-row-looks-like" class="section level2">
+<h2>What a Reporting Card row looks like</h2>
+<p>Every panel reported under the GRASS framework carries <strong>two
+orthogonal tier columns</strong> alongside the arithmetic:</p>
+<ul>
+<li><strong>Column A (model safety)</strong> — is <code>q̂</code>
+trustworthy as the primary summary? Assigned by
+<code>check_asymmetry()</code> from per-rater <code>(Ŝe_j, Ŝp_j)</code>
+estimates: <code>ok</code> (δ̂ &lt; 0.05), <code>caution</code>
+(0.05–0.10), or <code>unsafe</code> (≥ 0.10). At Tier 3 the Se = Sp
+diagonal is visibly broken and the panel needs a latent-class fit rather
+than a single <code>q̂</code>.</li>
+<li><strong>Column B (use-case fit)</strong> — does the panel meet its
+<em>declared</em> use case? Assigned by <code>classify()</code> from the
+95% CI on <strong>EMR_panel</strong> (the expected rate at which the
+panel’s majority-vote decision disagrees with the latent class) against
+a tolerance <code>T</code> drawn from the use-case ladder. Five tiers:
+<code>Fails</code>, <code>Indeterminate</code>, <code>Meets</code>,
+<code>Met with distinction</code> (upper CI below <code>T/2</code>),
+<code>Exceeds</code> (upper CI below the next harder use case’s
+tolerance).</li>
+</ul>
+<p>The columns are independent: a panel can be
+<code>ok + Met with distinction</code> (the common case),
+<code>caution + Meets</code> (asymmetry-flagged but still passes), or
+<code>unsafe + Exceeds</code> (latent-class fit needed, but the panel
+already clears a harder use case once the fit is trusted).</p>
+</div>
+<div id="worked-example-1-a-screening-panel-symmetric-raters" class="section level2">
+<h2>Worked example 1: a screening panel, symmetric raters</h2>
+<p>Five radiologists independently score the same 50 chest films for a
+binary screening-eligibility endpoint. A simulation-calibrated latent-
+class fit gives per-rater sensitivity and specificity:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>se <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">R1 =</span> <span class="fl">0.88</span>, <span class="at">R2 =</span> <span class="fl">0.86</span>, <span class="at">R3 =</span> <span class="fl">0.89</span>, <span class="at">R4 =</span> <span class="fl">0.87</span>, <span class="at">R5 =</span> <span class="fl">0.85</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>sp <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">R1 =</span> <span class="fl">0.86</span>, <span class="at">R2 =</span> <span class="fl">0.87</span>, <span class="at">R3 =</span> <span class="fl">0.88</span>, <span class="at">R4 =</span> <span class="fl">0.85</span>, <span class="at">R5 =</span> <span class="fl">0.86</span>)</span></code></pre></div>
+<div id="column-a-is-the-se-sp-diagonal-defensible" class="section level3">
+<h3>Column A: is the Se = Sp diagonal defensible?</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>safety <span class="ot">&lt;-</span> <span class="fu">check_asymmetry</span>(<span class="at">se =</span> se, <span class="at">sp =</span> sp, <span class="at">rater =</span> <span class="fu">names</span>(se))</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>safety</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a><span class="co">#&gt; grass asymmetry diagnostic (Column A of Reporting Card)</span></span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#&gt;   raters              : 5</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a><span class="co">#&gt;   per-rater gaps |Se-Sp|</span></span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a><span class="co">#&gt;     R1        Se = 0.880   Sp = 0.860   gap = 0.020</span></span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a><span class="co">#&gt;     R2        Se = 0.860   Sp = 0.870   gap = 0.010</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a><span class="co">#&gt;     R3        Se = 0.890   Sp = 0.880   gap = 0.010</span></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a><span class="co">#&gt;     R4        Se = 0.870   Sp = 0.850   gap = 0.020</span></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#&gt;     R5        Se = 0.850   Sp = 0.860   gap = 0.010</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a><span class="co">#&gt;   delta_hat (max)    : 0.020</span></span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a><span class="co">#&gt;   thresholds           : caution = 0.050,  unsafe = 0.100</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a><span class="co">#&gt;   tier                 : 1  (ok)</span></span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a><span class="co">#&gt;   reporting guidance   : Diagonal default: report q_hat plus EDR / EMR_panel.</span></span></code></pre></div>
+<p>The largest per-rater gap is 0.03, below the <code>caution</code>
+threshold of 0.05, so the panel sits at <strong>Tier 1
+(<code>ok</code>)</strong>. We may report <code>q̂ ± SE</code> plus EDR
+and EMR_panel without per-rater disclosure; PABAK’s prevalence-flatness
+assumption holds.</p>
+</div>
+<div id="column-b-does-the-panel-meet-the-screening-use-case" class="section level3">
+<h3>Column B: does the panel meet the screening use case?</h3>
+<p>Under Tier 1 the panel’s operating quality is <code>q̂ ≈ 0.87</code>
+with SE ≈ 0.02 (Wilson-logit); the panel-level misclassification rate
+under 5-rater majority vote and its 95% CI are derived from
+<code>q̂</code> and <code>k</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>q_hat <span class="ot">&lt;-</span> <span class="fl">0.87</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>emr_point <span class="ot">&lt;-</span> <span class="fu">emr_panel</span>(<span class="at">q =</span> q_hat, <span class="at">k =</span> <span class="dv">5</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co"># Rough 95% CI on EMR via propagating q_hat ± 1.96 * 0.02 through emr_panel()</span></span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>emr_lo <span class="ot">&lt;-</span> <span class="fu">emr_panel</span>(<span class="at">q =</span> q_hat <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> <span class="fl">0.02</span>, <span class="at">k =</span> <span class="dv">5</span>)  <span class="co"># lower EMR = upper q</span></span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>emr_hi <span class="ot">&lt;-</span> <span class="fu">emr_panel</span>(<span class="at">q =</span> q_hat <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> <span class="fl">0.02</span>, <span class="at">k =</span> <span class="dv">5</span>)  <span class="co"># upper EMR = lower q</span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="fu">c</span>(<span class="at">point =</span> emr_point, <span class="at">lower =</span> emr_lo, <span class="at">upper =</span> emr_hi)</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt;       point       lower       upper </span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; 0.017908626 0.006503554 0.036977730</span></span></code></pre></div>
+<p>Hold the panel to the declared screening tolerance
+<code>T = 0.10</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>verdict <span class="ot">&lt;-</span> <span class="fu">classify</span>(<span class="at">emr_upper =</span> emr_hi, <span class="at">emr_lower =</span> emr_lo,</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>                    <span class="at">emr_point =</span> emr_point,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>                    <span class="at">use_case =</span> <span class="st">&quot;screening&quot;</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>                    <span class="at">regime =</span> safety)</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>verdict</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a><span class="co">#&gt; grass classification (Column B of Reporting Card)</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a><span class="co">#&gt;   use case             : screening</span></span>
+<span id="cb4-8"><a href="#cb4-8" tabindex="-1"></a><span class="co">#&gt;   tolerance T          : 0.10   (Clinical screening (USPSTF-style))</span></span>
+<span id="cb4-9"><a href="#cb4-9" tabindex="-1"></a><span class="co">#&gt;   T_next (harder use)  : 0.05</span></span>
+<span id="cb4-10"><a href="#cb4-10" tabindex="-1"></a><span class="co">#&gt;   EMR_panel (point)    : 0.018</span></span>
+<span id="cb4-11"><a href="#cb4-11" tabindex="-1"></a><span class="co">#&gt;   EMR_panel 95% CI     : [0.007, 0.037]</span></span>
+<span id="cb4-12"><a href="#cb4-12" tabindex="-1"></a><span class="co">#&gt;   margin T - U         : +0.063</span></span>
+<span id="cb4-13"><a href="#cb4-13" tabindex="-1"></a><span class="co">#&gt;   tier                 : Exceeds</span></span>
+<span id="cb4-14"><a href="#cb4-14" tabindex="-1"></a><span class="co">#&gt;   Column A (model safe): tier 1  (ok, delta_hat = 0.020)</span></span>
+<span id="cb4-15"><a href="#cb4-15" tabindex="-1"></a><span class="co">#&gt;   action               : Proceed; consider promoting the panel&#39;s use case one step up the ladder.</span></span></code></pre></div>
+<p><code>Exceeds</code>: the upper CI on EMR_panel (0.037) lies below
+the diagnostic tolerance <code>T_next = 0.05</code>, so the panel would
+also clear the next step up the ladder. <code>Exceeds</code> is the only
+tier that licenses <em>promoting</em> the panel’s declared use case —
+the label points to a specific operational consequence, not an
+adjective.</p>
+</div>
+<div id="the-citation-sentence" class="section level3">
+<h3>### The citation sentence</h3>
+<p>Every label must appear with its arithmetic — that is what keeps the
+label system citable without repeating the Landis-Koch error of
+stipulative, regime-free cutoffs:</p>
+<blockquote>
+<p><em>“The rater panel exceeded the GRASS screening tier (q_hat = 0.87
++/- 0.02; EMR_panel = 0.018 at k = 5 majority vote, 95% CI [0.007,
+0.037]; declared tolerance T = 0.10, margin 0.063; panel would also
+clear the diagnostic tolerance T_next = 0.05; inter-rater axis; N = 50;
+Tier 1 model safety per check_asymmetry() delta_hat = 0.020).”</em></p>
+</blockquote>
+<p>Reads like a qualitative verdict; every adjective is
+reconstructible.</p>
+</div>
+</div>
+<div id="worked-example-2-smaller-pilot-flagged-asymmetry-harder-use-case" class="section level2">
+<h2>Worked example 2: smaller pilot, flagged asymmetry, harder use
+case</h2>
+<p>Now suppose the same five readers have been re-fielded for a
+<em>diagnostic</em> use case (tolerance <code>T = 0.05</code>). Two
+changes: the calibration pilot is only <code>N = 20</code> films (so SE
+on <code>q̂</code> is roughly doubled to <code>0.04</code>), and one
+rater has drifted into a visible Se-favoring asymmetry (a known quirk of
+the reading protocol when on shift &gt; 10 hours).</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>se2 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">R1 =</span> <span class="fl">0.88</span>, <span class="at">R2 =</span> <span class="fl">0.86</span>, <span class="at">R3 =</span> <span class="fl">0.93</span>, <span class="at">R4 =</span> <span class="fl">0.87</span>, <span class="at">R5 =</span> <span class="fl">0.85</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>sp2 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">R1 =</span> <span class="fl">0.86</span>, <span class="at">R2 =</span> <span class="fl">0.87</span>, <span class="at">R3 =</span> <span class="fl">0.84</span>, <span class="at">R4 =</span> <span class="fl">0.85</span>, <span class="at">R5 =</span> <span class="fl">0.86</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>safety2 <span class="ot">&lt;-</span> <span class="fu">check_asymmetry</span>(<span class="at">se =</span> se2, <span class="at">sp =</span> sp2, <span class="at">rater =</span> <span class="fu">names</span>(se2))</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a>safety2</span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="co">#&gt; grass asymmetry diagnostic (Column A of Reporting Card)</span></span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="co">#&gt;   raters              : 5</span></span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="co">#&gt;   per-rater gaps |Se-Sp|</span></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co">#&gt;     R1        Se = 0.880   Sp = 0.860   gap = 0.020</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt;     R2        Se = 0.860   Sp = 0.870   gap = 0.010</span></span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt;     R3        Se = 0.930   Sp = 0.840   gap = 0.090</span></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt;     R4        Se = 0.870   Sp = 0.850   gap = 0.020</span></span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;     R5        Se = 0.850   Sp = 0.860   gap = 0.010</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt;   delta_hat (max)    : 0.090</span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt;   thresholds           : caution = 0.050,  unsafe = 0.100</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt;   tier                 : 2  (caution)</span></span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="co">#&gt;   reporting guidance   : Diagonal + diagnostic: report q_hat with caution flag and delta_hat.</span></span></code></pre></div>
+<p>R3’s gap of 0.09 is below the <code>unsafe</code> threshold but above
+<code>caution</code>, so the panel sits at <strong>Tier 2</strong>.
+<code>q̂</code> remains reportable as the primary summary but must carry
+a caution flag and the <code>δ̂</code> value; R3’s asymmetry is disclosed
+so readers can weigh it.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co"># Wider CI from the smaller pilot</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>emr_lo2 <span class="ot">&lt;-</span> <span class="fu">emr_panel</span>(<span class="at">q =</span> q_hat <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> <span class="fl">0.04</span>, <span class="at">k =</span> <span class="dv">5</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>emr_hi2 <span class="ot">&lt;-</span> <span class="fu">emr_panel</span>(<span class="at">q =</span> q_hat <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> <span class="fl">0.04</span>, <span class="at">k =</span> <span class="dv">5</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a><span class="fu">c</span>(<span class="at">lower =</span> emr_lo2, <span class="at">upper =</span> emr_hi2)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a><span class="co">#&gt;       lower       upper </span></span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a><span class="co">#&gt; 0.001269737 0.064574605</span></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>verdict2 <span class="ot">&lt;-</span> <span class="fu">classify</span>(<span class="at">emr_upper =</span> emr_hi2, <span class="at">emr_lower =</span> emr_lo2,</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>                     <span class="at">emr_point =</span> emr_point,</span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>                     <span class="at">use_case =</span> <span class="st">&quot;diagnostic&quot;</span>,</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>                     <span class="at">regime =</span> safety2)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>verdict2</span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; grass classification (Column B of Reporting Card)</span></span>
+<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a><span class="co">#&gt;   use case             : diagnostic</span></span>
+<span id="cb6-15"><a href="#cb6-15" tabindex="-1"></a><span class="co">#&gt;   tolerance T          : 0.05   (Clinical test validation (CLSI-style))</span></span>
+<span id="cb6-16"><a href="#cb6-16" tabindex="-1"></a><span class="co">#&gt;   T_next (harder use)  : 0.02</span></span>
+<span id="cb6-17"><a href="#cb6-17" tabindex="-1"></a><span class="co">#&gt;   EMR_panel (point)    : 0.018</span></span>
+<span id="cb6-18"><a href="#cb6-18" tabindex="-1"></a><span class="co">#&gt;   EMR_panel 95% CI     : [0.001, 0.065]</span></span>
+<span id="cb6-19"><a href="#cb6-19" tabindex="-1"></a><span class="co">#&gt;   margin T - U         : -0.015</span></span>
+<span id="cb6-20"><a href="#cb6-20" tabindex="-1"></a><span class="co">#&gt;   tier                 : Indeterminate</span></span>
+<span id="cb6-21"><a href="#cb6-21" tabindex="-1"></a><span class="co">#&gt;   Column A (model safe): tier 2  (caution, delta_hat = 0.090)</span></span>
+<span id="cb6-22"><a href="#cb6-22" tabindex="-1"></a><span class="co">#&gt;   action               : Collect more data (increase N) or add raters (increase k).</span></span></code></pre></div>
+<p><code>Indeterminate</code>: the 95% CI on EMR_panel straddles
+<code>T = 0.05</code> — the point estimate is good, but the pilot is too
+thin to resolve whether the panel is below or above the diagnostic
+tolerance. The operational action is <strong>not</strong> “fail” — it is
+“collect more data”. Either more subjects (tighten the CI) or more
+raters (raise k, drop EMR_panel). The same panel that
+<code>Exceeds</code> the screening tolerance can be honestly called
+<code>Indeterminate</code> for diagnostic use; that is exactly the
+regime-conditioned behaviour the Landis-Koch scheme cannot express.</p>
+</div>
+<div id="assembling-a-two-row-reporting-card" class="section level2">
+<h2>Assembling a two-row Reporting Card</h2>
+<p>Both verdicts bind cleanly into a single results table:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>card <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="at">row_label =</span> <span class="st">&quot;Screening (N = 50)&quot;</span>, <span class="fu">as.data.frame</span>(verdict)),</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="fu">cbind</span>(<span class="at">row_label =</span> <span class="st">&quot;Diagnostic pilot (N = 20)&quot;</span>, <span class="fu">as.data.frame</span>(verdict2))</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>)</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>card[, <span class="fu">c</span>(<span class="st">&quot;row_label&quot;</span>, <span class="st">&quot;use_case&quot;</span>, <span class="st">&quot;tolerance&quot;</span>, <span class="st">&quot;emr_upper&quot;</span>,</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>         <span class="st">&quot;margin&quot;</span>, <span class="st">&quot;tier&quot;</span>, <span class="st">&quot;column_a_tier&quot;</span>, <span class="st">&quot;column_a_regime&quot;</span>)]</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a><span class="co">#&gt;                   row_label   use_case tolerance  emr_upper      margin</span></span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a><span class="co">#&gt; 1        Screening (N = 50)  screening      0.10 0.03697773  0.06302227</span></span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a><span class="co">#&gt; 2 Diagnostic pilot (N = 20) diagnostic      0.05 0.06457461 -0.01457461</span></span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="co">#&gt;            tier column_a_tier column_a_regime</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a><span class="co">#&gt; 1       Exceeds             1              ok</span></span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a><span class="co">#&gt; 2 Indeterminate             2         caution</span></span></code></pre></div>
+<p>That data.frame is the literal object the §8 Reporting Card renders
+in the paper.</p>
+</div>
+<div id="what-the-framework-commits-to" class="section level2">
+<h2>What the framework commits to</h2>
+<ol style="list-style-type: decimal">
+<li><strong>Labels live on EMR_panel</strong>, not on any individual
+agreement coefficient. κ / PABAK / AC1 / α / ICC all feed <code>q̂</code>
+upstream; <code>q̂</code> and <code>k</code> feed EMR_panel; only
+EMR_panel’s CI against <code>T</code> assigns the use-case tier.</li>
+<li><strong>T is declared, not stipulated</strong>, and comes from
+use-case precedent (see <a href="../reference/grass_use_case_ladder.html"><code>grass_use_case_ladder()</code></a>)
+or from the practitioner with explicit disclosure.</li>
+<li><strong>“With distinction” means margin within the declared use
+case</strong>; <strong>“Exceeds” means the panel would pass a harder use
+case</strong>. The distinction is load-bearing, not cosmetic — only
+<code>Exceeds</code> licenses promoting the panel one step up the
+ladder.</li>
+<li><strong>Every label appears with its arithmetic.</strong> A reviewer
+who asks <em>“with distinction under what conditions?”</em> finds the
+answer in the parenthetical.</li>
+</ol>
+</div>
+<div id="further-reading" class="section level2">
+<h2>Further reading</h2>
+<ul>
+<li><code>paper2/review/framework_notes.md</code> §0.6, §0.6.5 — the
+argument for why a label system that sits on EMR_panel with declared
+tolerances does not re-create Landis-Koch (1977) or Koo-Li (2016).</li>
+<li><code>paper2/review/merged_paper_scope.md</code> — §8 Reporting Card
+in the full paper scope.</li>
+<li><code>vignette(&quot;grass-intro&quot;)</code> — the Column-A-free inter-rater
+workflow that the Reporting Card slots on top of.</li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

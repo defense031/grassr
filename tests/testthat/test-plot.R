@@ -1,13 +1,12 @@
+# NOTE (v0.2.0): grass_report() was breaking-changed for the Target-2
+# Report Card. plot() on a `grass_result` is retired; `plot.grass_card` is
+# implemented separately by Phase 4B. The OLD-API plot test below is
+# skipped under v0.2.0. See grass/design/v0.2.0_paper_alignment.md.
+
 source(test_path("fixtures", "published-tables.R"))
 
 test_that("plot methods return ggplot objects when ggplot2 is available", {
-  skip_if_not_installed("ggplot2")
-  r <- grass_report(fixture_cohen_1960, format = "matrix")
-  expect_s3_class(plot(r),                              "ggplot")
-  expect_s3_class(plot(r, type = "regime"),             "ggplot")
-  expect_s3_class(plot(r, labels = "inline"),           "ggplot")
-  expect_s3_class(plot(r, labels = "legend"),           "ggplot")
-  expect_s3_class(plot(r$reference),                    "ggplot")
+  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })
 
 test_that("plot.grass_metrics errors with a redirect message", {

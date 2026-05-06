@@ -1,0 +1,190 @@
+---
+title: "GRASS methods companion: notation, calibration detail, and auxiliary diagnostics"
+author:
+  - Austin Semmel
+  - Rachel Gidaro
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{GRASS methods companion: notation, calibration detail, and auxiliary diagnostics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.5,
+  dpi = 110,
+  eval = FALSE   # populate to TRUE per-chunk as content lands
+)
+library(grass)
+```
+
+## Scope of this companion
+
+This vignette accompanies the GRASS methods paper. It is a parallel
+reference: the paper is self-contained for review, while this companion
+carries the procedural detail and auxiliary diagnostics a practitioner
+running `grass` may want at hand. Section numbering does not parallel
+the paper.
+
+Content moved here from earlier paper appendices during the 2026-05-04
+appendix consolidation. **The paper does not cite this vignette**; this
+is a free-standing artifact for `grass` users.
+
+---
+
+## 1. Notation glossary
+
+> **Status:** stub. Populate with the full notation table that previously
+> opened paper App A.
+
+Symbols used throughout the package and the paper:
+
+- `Y` --- the $N \times k$ binary rating matrix; rows are subjects,
+  columns are raters.
+- `pi_hat` --- observed marginal positive rate.
+- `tau2_hat` --- between-subject variance of the per-subject mean call
+  rate (sample-side, computed from `Y`).
+- `Se_j`, `Sp_j` --- per-rater sensitivity and specificity, inferred
+  from the rating matrix, not against external truth.
+- `q` --- diagonal-DGP rater quality; $\mathrm{Se}_j = \mathrm{Sp}_j = q$
+  for every rater under the diagonal case the surfaces are calibrated on.
+- `q_hat` --- internal scaffolding only. Used by `position_on_surface()`
+  to select the sampling distribution from which the percentile is
+  read; not exposed on the Report Card.
+- `delta_hat` --- cross-coefficient surface-percentile spread.
+
+---
+
+## 2. Recovering $\hat q$ from an observed coefficient
+
+> **Status:** stub. Populate with the procedural detail previously in
+> paper App A.6.
+
+For each agreement coefficient, `position_on_surface()` inverts the
+closed-form expectation curve to recover $\hat q$ at the observed
+coefficient value.
+
+- **PABAK**: algebraic inverse, $\hat q = \tfrac{1}{2}(1 + \sqrt{\mathrm{PABAK}})$.
+- **Fleiss $\kappa$, Krippendorff $\alpha$, AC1, ICC**: 501-point
+  $q$-grid lookup with linear interpolation between the two nearest
+  grid points where the curve crosses the observed value.
+- **Out-of-range observations**: clamped to the boundary $q$ value
+  with a `clamped = TRUE` flag.
+
+---
+
+## 3. ICC variant selection
+
+> **Status:** stub. Expand the one-paragraph paper App E pointer into a
+> practitioner-readable walkthrough.
+
+Variant selection follows \citet{koo2016guideline} on both the
+inter-rater and intra-rater axes. The package exposes each ICC variant
+through the `metric` argument of `position_on_surface()`. This section
+walks through the four-question decision tree (same-rater-set / rater
+sampling / type / definition) with a worked example per branch.
+
+---
+
+## 4. Coefficient recovery: the full diagnostic
+
+> **Status:** stub. Populate with figures and tables that didn't make
+> the lean App F print version (k=5 vs k=25 best-metric map,
+> asymmetry-cost figures across the full grid, oracle-vs-fitted-ICC
+> head-to-head detail).
+
+The paper's App F carries the lead recovery table
+(`tab:best_metric_fitted_k`) plus the asymmetry-cost figures. This
+companion expands the same dataset across the full grid.
+
+---
+
+## 5. $\hat\delta$ operating-characteristic sensitivity
+
+> **Status:** stub. Populate with the sensitivity tables, ROC figures,
+> small-$N$ floor caveat, and same-sign comparison detail beyond what
+> App G keeps in print.
+
+Paper App G carries the threshold calibration, the adopted-thresholds
+table, the by-$k$ summary, and the same-sign vs mixed-sign comparison
+table. This companion adds:
+
+- Full sensitivity strip across candidate thresholds (5, 10, 12, 15,
+  20 pp) at every $(k, N, A)$ cell.
+- Per-$k$ ROC curves at $N = 50, 200, 500$.
+- Small-$N$ floor: $k = 2$, $N = 50$ diagonal-null $\hat\delta$
+  distribution detail.
+- Sign-cancellation detail: same-sign vs mixed-sign vs balanced-sign
+  per cell.
+
+---
+
+## 6. Worked code examples per Report Card branch
+
+> **Status:** stub. Populate with three runnable examples that each
+> produce the corresponding Report Card output: aligned panel,
+> divergent panel, $k = 2$ counterexample.
+
+```{r aligned-example}
+# §4.1 aligned case: Se = Sp = 0.85, k = 5, N = 1000, seed = 5
+# (TODO: populate with the simulate-and-call sequence and walk through
+# the returned grass_card object field by field)
+```
+
+```{r divergent-example}
+# §4.2 divergent case: op_strong panel at k = 5, N = 1000, seed = 6
+# (TODO: populate; show pairwise + pooled-reference + LCA outputs)
+```
+
+```{r k2-example}
+# §4.3 k=2 counterexample: q = 0.97, k = 2, N = 200, seed = 17
+# (TODO: populate; show envelope-ceiling clamp behavior)
+```
+
+---
+
+## 7. Audit pass-rate detail
+
+> **Status:** stub. Populate with the per-coefficient audit pass-rate
+> tables across (q, F-key, k, N) that previously sat in paper App C.
+
+The paper's App B (Reproducibility, grids, and DGPs) summarizes audit
+pass rates at Bonferroni-corrected $|z| < 4.80$. This companion lists
+the per-cell audit results for reviewers wanting to verify any
+specific corner.
+
+---
+
+## 8. Confidence-interval methods detail
+
+> **Status:** stub. Populate with the procedural detail moved out of
+> paper App D — Wilson-logit construction, delta-method SE on $\hat q$
+> for reviewer audit, bootstrap CI procedure for per-rater
+> $(\hat\Se_j, \hat\Sp_j)$.
+
+The paper App B carries the load-bearing CI numbers (Monte-Carlo error
+on percentile, nearest-neighbour cost, bootstrap coverage at one
+calibration point). This companion adds the implementation detail.
+
+---
+
+## References
+
+The paper's bibliography is the authoritative source. Key
+methodological references this companion leans on:
+
+- Byrt, Bishop, Carlin (1993) — PABAK derivation.
+- Cohen (1960), Fleiss (1971) — $\kappa$ family.
+- Gwet (2008) — AC1.
+- Krippendorff (2011, 2019) — $\alpha$.
+- Koo & Li (2016) — ICC variant selection.
+- Hui & Walter (1980) — $k = 2$ identifiability bounds.
+- Dawid & Skene (1979) — latent-class fit.
+- Neyman & Pearson (1933) — size-controlled testing.
+
+(Full citations in `references.bib` next to the paper source.)

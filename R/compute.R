@@ -4,6 +4,12 @@
 #' Byrt prevalence and bias indices, and two confidence intervals for kappa
 #' (Wald, and a logit-transformed Wilson-type interval).
 #'
+#' @section Deprecated:
+#' `grass_compute()` is deprecated in grass 0.2.0. The new headline API is
+#' `grass_report(ratings = Y)` returning a `grass_card` object. The full
+#' coefficient panel is available via `summary()` or `as.data.frame()`. See
+#' `vignette("reporting-card")` and [grass_report()].
+#'
 #' @param data Input data. Form depends on `format`:
 #'   * `"matrix"` — a 2x2 integer count matrix with `R1` rows, `R2` columns.
 #'   * `"wide"` — a data.frame with exactly two rater columns (or pass
@@ -35,6 +41,14 @@
 #' grass_compute(list(r1, r2), format = "paired")
 grass_compute <- function(data, format = c("wide", "matrix", "long", "paired"),
                           positive = NULL, ...) {
+  msg_once(
+    "deprecate_grass_compute",
+    paste0(
+      "`grass_compute()` is deprecated in grass 0.2.0. ",
+      "The new headline API is `grass_report(ratings = Y)`. ",
+      "See `vignette('reporting-card')` and `?grass_report`."
+    )
+  )
   format <- match.arg(format)
   call <- match.call()
   norm <- normalize_input(data, format = format, positive = positive, ...)

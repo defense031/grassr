@@ -1,20 +1,22 @@
 Package: grass
 Type: Package
-Title: Prevalence-Aware Interpretation of Binary Inter-Rater Agreement
-Version: 0.2.0.9000
+Title: Context-Conditioned Reporting for Binary Rater Reliability
+Version: 0.5.0
 Authors@R: c(
     person("Austin", "Semmel", email = "runfast031@gmail.com",
            role = c("aut", "cre")),
     person("Rachel", "Gidaro", role = "aut"))
-Description: Computes Cohen's kappa, PABAK (prevalence- and bias-adjusted
-    kappa), and Gwet's AC1 for binary inter-rater agreement, and interprets
-    them against simulation-derived, prevalence-conditioned thresholds from
-    the GRASS framework (Guide for Rater Agreement under Structural Skew).
-    Standard interpretation schemes, such as Landis and Koch (1977), apply a
-    single fixed threshold regardless of prevalence; this is known to misclassify
-    rater quality at skewed prevalences. The package provides compute, evaluate,
-    plot, and threshold-lookup functions with a single interface that accepts
-    wide, long, paired, or 2x2 count input.
+Description: Generates a four-field Report Card for binary inter-rater
+    agreement from an N x k rating matrix. Each candidate coefficient
+    (Cohen's kappa, PABAK, Gwet's AC1, Fleiss kappa, Krippendorff alpha,
+    observed ICC) is positioned on a calibrated reference surface
+    conditioned on the study's rater count, sample size, and prevalence,
+    yielding a surface-position percentile, a four-band qualitative label,
+    and a Neyman-Pearson-motivated delta-hat stability flag from
+    cross-coefficient spread. When the panel is divergent, per-rater sensitivity and
+    specificity are recovered from a Dawid-Skene latent-class fit
+    (Hui-Walter bounds at k = 2). The package implements the GRASS
+    submodule of the MEADOW framework (Semmel 202X).
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: false
@@ -27,10 +29,15 @@ Suggests:
     broom,
     future,
     future.apply,
+    irr,
+    irrCAC,
+    patchwork,
     progressr,
     knitr,
+    lme4 (>= 1.1-30),
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    viridisLite
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 RoxygenNote: 7.3.2

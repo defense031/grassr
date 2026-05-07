@@ -1,3 +1,54 @@
+# grass 0.5.1
+
+Cosmetic and documentation release. No internal-logic, sysdata, or
+test changes; the `0 FAIL across 194 test files` posture from v0.5.0
+is unchanged.
+
+## Behavioral change
+
+- **Print marker rename: `[F-shape sensitive]` → `[distribution-sensitive]`.**
+  The earlier label collided with the F-statistic / ANOVA reading.
+  The marker references the full subject-prevalence distribution F,
+  not an F-statistic; the rename matches the merged GRASS paper's
+  manuscript wording. Affects the `print` method on `grass_card` and
+  `grass_asymmetry_panel` objects only. ICC panel rows now print as
+  `no [distribution-sensitive]` in the `in_delta_hat` column.
+  Downstream code that parses print output (rare) needs an update;
+  return values, sysdata, and signatures are unchanged.
+
+- **Print format simplified: separate `band = ...` line dropped.**
+  The percentile and qualifier now appear inline as
+  `Nth pct (decisive)` per the manifesto-locked Report Card format.
+  The internal `card$coefficient$band` field is still computed and
+  remains in the object slot for callers that need it; only the
+  printed rendering changed. Divergent panels print
+  `panel-agg. = suppressed (divergent)` instead of `band = suppressed`.
+
+## Vignette
+
+- **`methods-companion.Rmd` expanded** by ~120 lines absorbing
+  Tier-1-cut content from the merged GRASS paper:
+  - §3 *ICC and the subject-prevalence distribution* — full
+    distribution-sensitivity discussion, bundled-grid coverage,
+    Koo-Li variant decision tree.
+  - §5 *δ̂ thresholds and operating characteristics* — Neyman-Pearson
+    threshold derivation, snap-to-cell behavior, k = 2 collapse,
+    shared-vs-split-bias detection comparison.
+  - §5b *Pairwise PABAK and pooled-reference recovery* — structural
+    why-PABAK-at-pair-level argument, identifiability conditional,
+    54-cell recovery numbers (94% direction recovery / 90-97%
+    rank correlation / 98% in-majority direction / Se-tilde mean
+    bias 0.012).
+  The vignette is the canonical landing for practitioners wanting
+  depth beyond the published paper.
+
+## Documentation
+
+- README.md updated with v0.5.1 wording, refreshed example output,
+  and a `ref = "v0.5.1"` install pin.
+- `man/*.Rd` regenerated from roxygen blocks to reflect the marker
+  text change throughout function-level documentation.
+
 # grass 0.5.0
 
 Three substantive landings drive this release. (1) **Cross-coefficient

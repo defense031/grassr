@@ -69,7 +69,8 @@ against the reference curve at \code{pi_hat}.
 
 This function uses the closed-form non-ICC surfaces only (PABAK,
 Fleiss kappa, mean-pairwise AC1, Krippendorff alpha). ICC surfaces
-depend on the full F-shape and the GLMM-gap-corrected fitted reference;
+depend on the full subject-prevalence distribution F and the
+GLMM-gap-corrected fitted reference;
 those are accessed via \code{\link[=position_on_surface]{position_on_surface()}} with \code{metric = "icc"}
 and (if available) a fitted card via \code{plot.grass_card(type = "surface")}.
 }

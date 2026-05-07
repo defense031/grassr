@@ -78,16 +78,42 @@ coefficient value.
 
 ---
 
-## 3. ICC variant selection
+## 3. ICC and the subject-prevalence distribution
 
-> **Status:** stub. Expand the one-paragraph paper App E pointer into a
-> practitioner-readable walkthrough.
+The Report Card prints ICC alongside PABAK, AC1, Fleiss $\kappa$, and
+Krippendorff $\alpha$, but with a `[distribution-sensitive]` marker,
+and ICC is excluded from the cross-coefficient stability signal
+$\hat\delta$ by construction. This section explains why.
 
-Variant selection follows \citet{koo2016guideline} on both the
-inter-rater and intra-rater axes. The package exposes each ICC variant
-through the `metric` argument of `position_on_surface()`. This section
-walks through the four-question decision tree (same-rater-set / rater
-sampling / type / definition) with a worked example per branch.
+The four agreement-family coefficients each have a closed-form
+expectation that depends only on the panel marginal $\hat\pi_+$ and
+the rater quality $q$. ICC depends additionally on the full
+distribution $F$ of subject-level positive probabilities $p_i$ across
+the rated subjects --- the shape of how the underlying positive rate
+varies from one subject to the next. Two studies can both have an
+overall positive rate of 30% and yet differ on whether that 30% comes
+from a clear class of obvious-positives (high between-subject variance)
+or from a mass of borderline-50/50 cases (low between-subject
+variance). The agreement-family coefficients can't tell those two
+studies apart at the panel level. ICC can, and so its reference
+surface must commit to a specific $F$.
+
+The bundled `grass` reference covers a 48-point logit-normal grid in
+$(\mu, \tau^2)$ plus four discrete-mixture profiles (uniform,
+bimodal-low-high, skew-rare-positive, and similar shapes). A panel
+whose true $F$ sits cleanly inside that grid reads ICC's surface
+percentile faithfully. A panel whose $F$ sits between grid points or
+under a different family carries a distribution-mismatch cost that the
+agreement-family percentiles do not. This is why ICC carries a `[distribution-sensitive]`
+marker on the Report Card and does not enter $\hat\delta$.
+
+**Variant selection** (ICC(1,1), ICC(2,1), ICC(3,1)) follows the
+\citet{koo2016guideline} decision tree on both the inter-rater and
+intra-rater axes. The package exposes each variant through the
+`metric` argument of `position_on_surface()`. The four-question
+decision tree (same-rater-set / rater sampling / type / definition)
+is reproduced with worked examples per branch in the package help
+files.
 
 ---
 
@@ -104,23 +130,107 @@ companion expands the same dataset across the full grid.
 
 ---
 
-## 5. $\hat\delta$ operating-characteristic sensitivity
+## 5. $\hat\delta$ thresholds and operating characteristics
 
-> **Status:** stub. Populate with the sensitivity tables, ROC figures,
-> small-$N$ floor caveat, and same-sign comparison detail beyond what
-> App G keeps in print.
+The paper's Appendix~D carries the per-$(k, N)$ calibrated threshold
+table, the adopted-thresholds at the modal applied design, the
+TPR-by-asymmetry-magnitude tables for both caution and divergent
+flags, and the shared-bias vs split-bias detection comparison. This
+section populates the practitioner-facing detail that didn't make
+the paper.
 
-Paper App G carries the threshold calibration, the adopted-thresholds
-table, the by-$k$ summary, and the same-sign vs mixed-sign comparison
-table. This companion adds:
+**How the thresholds are derived.** At each $(k, N)$ design point,
+the cuts are size-$\alpha$ calibrated against the diagonal-symmetric
+null distribution of $\hat\delta$ following the Neyman-Pearson
+construction: pick the smallest $t$ such that
+$P(\hat\delta > t \mid \text{symmetric panel at } (k, N)) \leq \alpha$
+on the calibration grid, with $\alpha = 0.05$ for caution and
+$\alpha = 0.01$ for divergent. The thresholds are therefore a function
+of $(k, N)$, not a fixed pair. At the modal applied design ($k = 5$,
+$N \approx 200$) the cuts are $(9.25, 11.75)$ pp; at smaller $(k, N)$
+they shift upward (e.g., $13.75$ pp caution at $k = 5$, $N = 50$).
 
-- Full sensitivity strip across candidate thresholds (5, 10, 12, 15,
-  20 pp) at every $(k, N, A)$ cell.
-- Per-$k$ ROC curves at $N = 50, 200, 500$.
-- Small-$N$ floor: $k = 2$, $N = 50$ diagonal-null $\hat\delta$
-  distribution detail.
-- Sign-cancellation detail: same-sign vs mixed-sign vs balanced-sign
-  per cell.
+**Small-design behavior.** At $k = 2$ and at $k = 3$ with
+$N \leq 30$, the diagonal-null distribution of $\hat\delta$ has heavy
+tails that no size-$\alpha$ cut controls. The lookup snaps such
+panels to the nearest fully-calibrated cell on the
+$(k, \log_{10} N)$ grid and surfaces the snap on the Report Card; this
+is an optimistic lower bound rather than a calibrated cut at the
+user's design. At $k = 2$ the snap collapses to $k = 3$ at the same
+$N$, because the panel-level coefficient battery at $k = 2$ (PABAK,
+AC1, Fleiss-$\kappa$-equivalent, ICC) measures effectively the same
+agreement structure under both the symmetric null and the asymmetric
+alternatives. This is why the framework's $k = 2$ prescription routes
+to direct pairwise reporting and identifiable bounds on per-rater
+$(\Se_j, \Sp_j)$ rather than relying on $\hat\delta$ to fire.
+
+**What $\hat\delta$ targets.** $\hat\delta$ targets cross-coefficient
+surface-percentile inversion --- the asymmetry pattern in which
+different chance-correction baselines respond differently to per-rater
+heterogeneity. Independently-drawn-sign asymmetry produces this
+inversion; uniform shared bias, conditional dependence, and other
+panel pathologies that move all coefficients together do not. The
+shared-vs-split-bias detection comparison in paper Appendix~D shows
+the gap: at $k = 5$, $N = 200$, $A = 0.20$, divergent TPR is $0.082$
+under shared-bias and $0.315$ under split-bias.
+
+Future versions of this companion will add: full sensitivity strip
+across candidate thresholds (5, 10, 12, 15, 20 pp) at every
+$(k, N, A)$ cell; per-$k$ ROC curves at $N = 50, 200, 500$; small-$N$
+floor diagnostics.
+
+---
+
+## 5b. Pairwise PABAK and pooled-reference recovery
+
+When the divergent flag fires, the Report Card abandons the
+panel-aggregate summary and routes to a pairwise PABAK matrix plus
+per-rater pooled-reference $(\widetilde\Se_j, \widetilde\Sp_j)$. This
+section documents the construction and the empirical recovery
+characteristics that the paper cites in summary form.
+
+**Why PABAK at the pair level.** PABAK is the framework's pairwise
+coefficient because under symmetric raters its closed-form expectation
+reduces to $E[\PABAK] = (2q-1)^2$, a function of rater quality $q$
+alone --- independent of prevalence and of the subject-prevalence
+distribution $F$. Pairwise
+reading needs that property because every rater pair has its own
+observed marginal $\hat\pi_{+, ij}$, and those per-pair marginals can
+move substantially with rater asymmetry. Cohen's $\kappa$ at the pair
+level is prevalence-attenuated (the $\kappa$ paradox of
+\citet{byrt1993bias}, the original motivation for PABAK); AC1's chance
+term carries a milder but non-zero prevalence dependence; ICC at
+$k = 2$ is degenerate because one pair of raters per subject leaves
+the variance decomposition under-identified.
+
+**Pooled-reference identifiability.** The pooled-reference estimates
+are label-flip clean conditional on the panel-majority direction
+matching the truth direction: the reference is the observable panel
+majority rather than a latent class, so the estimates do not depend on
+which mode an EM solver lands in. They read each rater's profile
+relative to whichever direction dominates the panel. Under a 2:3
+panel where the minority direction happens to be the truth direction,
+the pooled-reference inverts and reads each rater's profile backwards.
+
+**Empirical recovery (54-cell Monte Carlo).** A sweep over
+$k \in \{3, 5, 7\}$, $\pi \in \{0.10, 0.30, 0.50\}$, asymmetry
+magnitude $A \in \{0.10, 0.20, 0.30\}$, and both shared-bias and
+split-bias configurations at $N = 200$ with $500$ replications per
+cell:
+
+- Pooled-reference recovers each rater's true bias direction in $94\%$
+  of split-bias in-majority-direction rater-replicates (rate improving
+  in $k$ from $90\%$ at $k = 3$ to $97\%$ at $k = 7$).
+- Correctly inverts the direction in $98\%$ of minority-direction
+  rater-replicates --- exactly as the conditional predicts.
+- Mean bias on $\widetilde\Se_j$ is $0.06$ and on $\widetilde\Sp_j$ is
+  $0.03$ at $A \geq 0.20$.
+
+The pooled-reference summary is meaningful only at $k \geq 3$ (no
+rest-of-panel to pool against at $k = 2$) and is noisier on subjects
+where the panel is split. The package reports the per-rater pool size
+$\widetilde n_j$ alongside each pooled estimate so the reader can see
+how much information backs each one.
 
 ---
 

@@ -342,10 +342,10 @@ grass_report <- function(ratings,
 
   # in_delta_hat = TRUE for agreement-family coefficients (PABAK, AC1, Fleiss,
   # alpha) which contribute to delta_hat under the v0.5.0 scope decision; ICC
-  # is always FALSE because its reference surface depends on the full F-shape
-  # rather than (q, pi_+) and would inflate delta_hat under F-shape
-  # misspecification. See asymmetry.R `.DELTA_AGREEMENT_COEFS` for the source
-  # of truth on the coefficient set.
+  # is always FALSE because its reference surface depends on the full
+  # subject-prevalence distribution F rather than (q, pi_+) and would
+  # inflate delta_hat under distribution misspecification. See asymmetry.R
+  # `.DELTA_AGREEMENT_COEFS` for the source of truth on the coefficient set.
   in_delta_set <- names(panel_obs) %in% c("pabak", "mean_ac1",
                                           "fleiss_kappa", "krippendorff_a")
   panel_df <- data.frame(

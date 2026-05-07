@@ -19,11 +19,11 @@
 # -- because each has a closed-form reference depending on (q, pi_+) only and
 # is therefore DGP-robust at the panel level. ICC is reported alongside on
 # the panel rows but does NOT enter delta_hat: ICC's reference surface
-# depends on the full F-shape variance structure, and a panel whose true F
-# does not match the bundled logit-normal reference incurs surface-percentile
-# drift on the order of 20 pp at small designs (sanity probe, 2026-05-05).
-# The agreement family is mutually F-shape-robust, so cross-family spread is
-# a clean asymmetry detector.
+# depends on the full subject-prevalence distribution F, and a panel whose
+# true F does not match the bundled logit-normal reference incurs surface-
+# percentile drift on the order of 20 pp at small designs (sanity probe,
+# 2026-05-05). The agreement family is mutually distribution-robust, so
+# cross-family spread is a clean asymmetry detector.
 
 # Coefficients that enter delta_hat. Anything else (currently just `icc`) is
 # reported on the panel with `in_delta_hat = FALSE`.
@@ -504,13 +504,13 @@ check_asymmetry <- function(ratings,
     ]
     if (length(excluded_for_clamp)) {
       clamp_note <- sprintf(
-        "delta_hat over %d agreement-family coefficients; excluded due to surface-envelope clamp: %s. (ICC is always reported but never enters delta_hat per the v0.5.0 scope note; its surface percentile depends on the full F-shape and is reported separately.)",
+        "delta_hat over %d agreement-family coefficients; excluded due to surface-envelope clamp: %s. (ICC is always reported but never enters delta_hat per the v0.5.0 scope note; its surface percentile depends on the full subject-prevalence distribution F and is reported separately.)",
         sum(in_delta_set),
         paste(excluded_for_clamp, collapse = ", ")
       )
     } else if ("icc" %in% names(positions)) {
       # No clamps; just remind that ICC isn't in delta_hat.
-      clamp_note <- "delta_hat is computed over the agreement family (PABAK, AC1, Fleiss, alpha). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference surface is F-shape-dependent and does not share the (q, pi_+) sufficient statistic the agreement family does)."
+      clamp_note <- "delta_hat is computed over the agreement family (PABAK, AC1, Fleiss, alpha). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference surface depends on the full subject-prevalence distribution F and does not share the (q, pi_+) sufficient statistic the agreement family does)."
     }
   } else {
     # Fall back to all available agreement-family percentiles, even if
@@ -581,7 +581,7 @@ print.grass_asymmetry_panel <- function(x, digits = 1, ...) {
   for (i in seq_len(nrow(pn))) {
     in_d <- if (isTRUE(pn$in_delta_hat[i])) "yes"
             else if (identical(pn$coefficient[i], "icc"))
-              "no [F-shape sensitive]"
+              "no [distribution-sensitive]"
             else "no"
     cat(sprintf("    %-18s %.2f       %.*f             %s\n",
                 pn$coefficient[i],

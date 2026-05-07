@@ -117,7 +117,8 @@ check_patchwork <- function() {
 #'
 #' This function uses the closed-form non-ICC surfaces only (PABAK,
 #' Fleiss kappa, mean-pairwise AC1, Krippendorff alpha). ICC surfaces
-#' depend on the full F-shape and the GLMM-gap-corrected fitted reference;
+#' depend on the full subject-prevalence distribution F and the
+#' GLMM-gap-corrected fitted reference;
 #' those are accessed via [position_on_surface()] with `metric = "icc"`
 #' and (if available) a fitted card via `plot.grass_card(type = "surface")`.
 #'

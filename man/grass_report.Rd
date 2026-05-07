@@ -11,8 +11,9 @@ grass_report(
   occasion = NULL,
   bands = c(0.5, 0.625, 0.75, 0.875, 1),
   band_labels = c("Poor", "Moderate", "Strong", "Excellent"),
-  delta_thresholds = c(9.25, 11.75),
+  delta_thresholds = NULL,
   bootstrap_B = 1000L,
+  bootstrap_delta_B = 0L,
   verbose = FALSE,
   ...
 )

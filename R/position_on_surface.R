@@ -68,7 +68,7 @@
 #' function uses `pi_hat` as a plug-in for `pi_+` and inverts the observed
 #' value on a 501-point q-grid on `[0.5, 1]` (matching
 #' `paper2/code/12_q_inversion.R` resolution). ICC requires the full
-#' F-shape; in the absence of `surface_data` containing an ICC lookup, ICC
+#' subject-prevalence distribution F; in the absence of `surface_data` containing an ICC lookup, ICC
 #' requests fall through to a warning-noted delta-method approximation using
 #' the caller-supplied `q_hat_override` / `se_q_hat_override` if present, or
 #' stop with a clear message.
@@ -294,8 +294,8 @@ position_on_surface <- function(obs_value = NULL,
 
   # `method = "empirical"` is serviced by the bundled empirical q_hat
   # surface when `surface_data` is NULL. The ICC branch still requires a
-  # caller-supplied reference curve because its closed form is F-shape
-  # dependent (see the ICC block below).
+  # caller-supplied reference curve because its closed form depends on
+  # the full subject-prevalence distribution F (see the ICC block below).
 
   notes <- character(0L)
   # reference_used tracks which path actually produced the reference
@@ -312,7 +312,7 @@ position_on_surface <- function(obs_value = NULL,
   q_grid <- seq(0.5, 1.0, length.out = 501L)
 
   if (metric == "icc") {
-    # ICC depends on the full F-shape (not pi_hat alone). Resolution order:
+    # ICC depends on the full subject-prevalence distribution F (not pi_hat alone). Resolution order:
     #   1. Caller-supplied surface_data$reference_curve (wins if present)
     #   2. If reference_type = "fitted" (default) and N is in the fitted-
     #      reference sim range: use fitted_icc_reference_curves. glmer-fitted
@@ -761,8 +761,8 @@ lookup_empirical_q_hat <- function(metric, pi_hat, k, N, q_hat) {
 
 # ---- Internal: ICC reference curve lookup from bundled sysdata ------------
 # Resolves the nearest sim F_key and returns the 501-point E[ICC](q) curve
-# at that F_key. The ICC closed form depends on the full F-shape (mu, tau2
-# for logit-normal), not pi_hat alone.
+# at that F_key. The ICC closed form depends on the full subject-prevalence
+# distribution F (mu, tau2 for logit-normal), not pi_hat alone.
 #
 # Selection path:
 #   - If `ratings` is supplied AND lme4 is available: fit

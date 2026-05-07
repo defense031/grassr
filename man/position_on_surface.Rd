@@ -173,7 +173,7 @@ alpha depend on \code{q} and the marginal positive rate \verb{pi_+} only. This
 function uses \code{pi_hat} as a plug-in for \verb{pi_+} and inverts the observed
 value on a 501-point q-grid on \verb{[0.5, 1]} (matching
 \verb{paper2/code/12_q_inversion.R} resolution). ICC requires the full
-F-shape; in the absence of \code{surface_data} containing an ICC lookup, ICC
+subject-prevalence distribution F; in the absence of \code{surface_data} containing an ICC lookup, ICC
 requests fall through to a warning-noted delta-method approximation using
 the caller-supplied \code{q_hat_override} / \code{se_q_hat_override} if present, or
 stop with a clear message.

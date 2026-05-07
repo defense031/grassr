@@ -8,7 +8,7 @@ check_asymmetry(
   ratings,
   axis = c("inter", "intra"),
   occasion = NULL,
-  delta_thresholds = c(9.25, 11.75),
+  delta_thresholds = NULL,
   ...
 )
 }

@@ -32,8 +32,7 @@ grass_report(ratings = Y)
 GRASS Report Card
 
   sample      = 5 raters, N = 200, pi_hat = 0.35, tau2_hat = 0.083
-  PABAK  = 0.41  ->  95th percentile
-  band        = Strong (decisive)
+  PABAK  = 0.41  ->  95th pct (decisive)
   delta       = 1.2 pp (aligned)
 
   Notes:
@@ -56,10 +55,10 @@ single number is safe to cite. The clamp note in this example is for
 ICC, whose observed value (`0.4642`) sits above the achievable maximum
 of its reference surface at this `(k, N)`; ICC is therefore excluded
 from `delta_hat` per the clamping policy (see vignette section 7).
-ICC also carries an `[F-shape sensitive]` marker because its reference
-surface depends on the full F-shape variance structure rather than on
-`(q, pi_+)` alone, and is excluded from `delta_hat` by construction
-regardless of clamp status. At the *divergent* tier the headline is
+ICC also carries a `[distribution-sensitive]` marker because its
+reference surface depends on the full subject-prevalence distribution
+F rather than on `(q, pi_+)` alone, and is excluded from `delta_hat`
+by construction regardless of clamp status. At the *divergent* tier the headline is
 replaced with the per-rater sensitivity / specificity table from a
 latent-class fit (point estimates at `k >= 3`, bounded estimates at
 `k = 2`).
@@ -78,11 +77,14 @@ remotes::install_github("defense031/grass")
 # from the package directory:
 devtools::load_all()
 
+# or pin a specific release:
+# remotes::install_github("defense031/grass", ref = "v0.5.1")
+
 # or install the built tarball:
-# R CMD INSTALL grass_0.5.0.tar.gz
+# R CMD INSTALL grass_0.5.1.tar.gz
 ```
 
-## What you get in v0.5.0
+## What you get in v0.5.x
 
 - **Headline API.** `grass_report(ratings = Y)` — single-call
   workflow returning a four-field Report Card object (`grass_card`)
@@ -91,10 +93,13 @@ devtools::load_all()
   `intervals`, `per_rater`, `diagnostic`.
 - **Surface-position primitive.** `position_on_surface(ratings = Y,
   metric = ...)` places one observed coefficient on its
-  context-conditioned reference surface and returns the percentile,
-  four-band adjective (Poor / Moderate / Strong / Excellent), and a
-  decisive / moderate / weak confidence qualifier from the modal-band
-  sampling probability. Closed-form references for PABAK, AC1,
+  context-conditioned reference surface and returns the percentile
+  and a decisive / moderate / weak confidence qualifier capturing
+  the local envelope width (modal-quartile sampling probability
+  under bootstrap perturbation of `(q_hat, pi_hat)`). The percentile
+  is the categorical score; no four-way labeled band is interposed
+  between the percentile and the reader. Closed-form references for
+  PABAK, AC1,
   Fleiss kappa, Krippendorff alpha; bundled fitted-ICC reference for
   ICC across `k in {3, 5, 8, 15, 25} x N in {30, 50, 75, 100, 200,
   300, 500, 1000}` on a 14-point q-grid.
@@ -103,10 +108,10 @@ devtools::load_all()
   computed over the four-coefficient agreement family (PABAK, AC1,
   Fleiss kappa, alpha) plus an aligned / caution / divergent flag at
   per-(k, N) size-alpha calibrated thresholds. ICC is reported on
-  the panel with an `[F-shape sensitive]` marker but does not enter
-  `delta_hat` by construction, because its reference surface
-  depends on the full F-shape variance structure rather than on
-  `(q, pi_+)` alone.
+  the panel with a `[distribution-sensitive]` marker but does not
+  enter `delta_hat` by construction, because its reference surface
+  depends on the full subject-prevalence distribution F rather than
+  on `(q, pi_+)` alone.
 - **Divergent-flag recovery path.** `pairwise_agreement()` returns a
   pairwise PABAK matrix on the `k = 2` reference surface plus
   per-rater pooled-reference `(Se_tilde, Sp_tilde)` against the
@@ -121,12 +126,13 @@ devtools::load_all()
   "what does my reference surface look like at this design, before
   I collect data?"
 
-See `NEWS.md` for the full v0.5.0 entry and `?grass_roadmap` for
-planned future families (ordinal, multi-rater nominal, continuous).
+See `NEWS.md` for the v0.5.1 + v0.5.0 entries and `?grass_roadmap`
+for planned future families (ordinal, multi-rater nominal, continuous).
 
 ## Status
 
-v0.5.0 (release). Binary inter-rater and intra-rater families fully
+v0.5.1 (release; cosmetic + vignette over v0.5.0). Binary inter-rater
+and intra-rater families fully
 implemented. The intra-rater axis uses the inter-rater diagonal
 calibration as an approximation pending a dedicated intra-axis
 calibration cube. See `?grass_roadmap` for planned families.

@@ -145,7 +145,7 @@ format.grass_card <- function(x, digits = 2, ...) {
                          name_w, label, val_str, pct_str, marker))
     }
     lines <- c(lines,
-               sprintf("  band        = suppressed"))
+               sprintf("  panel-agg.  = suppressed (divergent)"))
     lines <- c(lines,
                sprintf("  delta       = %s pp (divergent)",
                        formatC(delta_pp, format = "g", digits = max(digits, 2L))))
@@ -227,7 +227,9 @@ format.grass_card <- function(x, digits = 2, ...) {
       }
     }
   } else {
-    # Aligned or caution: show only the primary coefficient + band + delta.
+    # Aligned or caution: show only the primary coefficient + delta.
+    # Qualifier is appended to the percentile inline; no band line --
+    # the percentile is the categorical score per the v0.5 manifesto.
     coef <- x$coefficient
     label <- .coef_label(coef$primary)
     val_str <- formatC(coef$observed_value, format = "f", digits = digits)
@@ -242,20 +244,11 @@ format.grass_card <- function(x, digits = 2, ...) {
     } else if (isTRUE(primary_ref == "oracle-icc-explicit")) {
       "  [oracle-icc]"
     } else ""
-    lines <- c(lines,
-               sprintf("  %-*s = %s  ->  %s%s",
-                       name_w, label, val_str, pct_str, primary_marker))
-    band_str <- if (is.null(coef$band) || is.na(coef$band)) "NA" else coef$band
     qual_str <- if (is.null(coef$qualifier) || is.na(coef$qualifier)) "" else coef$qualifier
-    if (nzchar(qual_str)) {
-      lines <- c(lines,
-                 sprintf("  band        = %s (%s)",
-                         band_str, qual_str))
-    } else {
-      lines <- c(lines,
-                 sprintf("  band        = %s",
-                         band_str))
-    }
+    qual_suffix <- if (nzchar(qual_str)) sprintf(" (%s)", qual_str) else ""
+    lines <- c(lines,
+               sprintf("  %-*s = %s  ->  %s%s%s",
+                       name_w, label, val_str, pct_str, qual_suffix, primary_marker))
     lines <- c(lines,
                sprintf("  delta       = %s pp (%s)",
                        formatC(delta_pp, format = "g", digits = max(digits, 2L)),

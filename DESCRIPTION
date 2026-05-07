@@ -1,7 +1,7 @@
 Package: grass
 Type: Package
 Title: Context-Conditioned Reporting for Binary Rater Reliability
-Version: 0.5.0
+Version: 0.5.1
 Authors@R: c(
     person("Austin", "Semmel", email = "runfast031@gmail.com",
            role = c("aut", "cre")),

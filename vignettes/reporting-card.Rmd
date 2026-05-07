@@ -72,17 +72,18 @@ Each block in the printed Report Card means something specific:
 
 - **`sample`** describes the study: rater count `k`, subject count `N`,
   and the observed positive rate `pi_hat = mean(Y)`.
-- **The primary coefficient line** (e.g. `PABAK = 0.41 -> 95th percentile`)
-  shows the observed value and where it lands on the reference surface
-  *for this study's `(k, N, pi_hat)`*. The percentile is calibrated, not
-  comparative against fixed cutoffs.
-- **`band`** translates the percentile into a plain-language label
-  (Poor / Moderate / Strong / Excellent) with a confidence qualifier
-  (decisive / moderate / weak).
-- **`delta`** is the cross-coefficient percentile spread in pp. Below
-  9.25 the panel is *aligned* and one coefficient is safe to cite. Above
-  11.75 the panel is *divergent* and the headline coefficient is
-  suppressed in favor of per-rater detail.
+- **The primary coefficient line** (e.g. `PABAK = 0.41 -> 95th pct (decisive)`)
+  shows the observed value, where it lands on the reference surface
+  *for this study's `(k, N, pi_hat)`*, and the confidence qualifier
+  (decisive / moderate / weak) reflecting the local envelope width.
+  The percentile is the categorical score; no four-way labeled band
+  sits between the percentile and the reader.
+- **`delta`** is the cross-coefficient percentile spread in pp across
+  the agreement family (PABAK, AC1, Fleiss kappa, Krippendorff alpha;
+  ICC excluded by construction). Below 9.25 the panel is *aligned* and
+  one coefficient is safe to cite. Above 11.75 the panel is
+  *divergent* and the panel-aggregate is suppressed in favor of the
+  pairwise PABAK matrix and per-rater pooled-reference Se/Sp.
 
 ## 2. A symmetric panel (the easy case)
 
@@ -368,9 +369,10 @@ new `plot_surface()` entry point.
 
 The bare call shows the closed-form expected value of a coefficient
 across the entire surface (mean prevalence `M_1` × rater operating
-quality `q`). Dotted contours overlay the four-band partition, so
-the reader can see which combinations of prevalence and rater
-quality land in which band:
+quality `q`). Dotted contours overlay equal-spaced reference levels
+on the `q`-axis (computational scaffolding for the qualifier; not
+displayed on the headline Report Card), so the reader can see which
+combinations of prevalence and rater quality land where:
 
 ```{r plot-surface-bare, fig.width = 7, fig.height = 4.5}
 plot_surface("fleiss_kappa")
@@ -402,9 +404,9 @@ plot_surface("fleiss_kappa",
 
 `plot_surface()` supports the four closed-form non-ICC metrics
 (PABAK, Fleiss kappa, mean-pairwise AC1, Krippendorff alpha). ICC
-surfaces depend on the full F-shape and the GLMM-gap-corrected
-fitted reference; for ICC, build a card with `grass_report()` and
-use `plot.grass_card(type = "surface")`.
+surfaces depend on the full subject-prevalence distribution F
+and the GLMM-gap-corrected fitted reference; for ICC, build a card
+with `grass_report()` and use `plot.grass_card(type = "surface")`.
 
 ## References
 

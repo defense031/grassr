@@ -134,7 +134,8 @@ normalize_ratings <- function(ratings) {
 #' separate prevalence variance from sampling noise).
 #'
 #' Note: F_key parameterization in the bundled reference surfaces uses
-#' logit-scale tau2 (logit-normal F shape). The ICC reference-curve
+#' logit-scale tau2 (logit-normal subject-prevalence distribution F).
+#' The ICC reference-curve
 #' selection path in `position_on_surface()` calls glmer separately to
 #' fit (mu, tau2) on the logit scale; this prevalence-scale estimate is
 #' the practitioner-visible summary surfaced in the Report Card sample

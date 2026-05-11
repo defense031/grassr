@@ -23,7 +23,11 @@
 # true F does not match the bundled logit-normal reference incurs surface-
 # percentile drift on the order of 20 pp at small designs (sanity probe,
 # 2026-05-05). The agreement family is mutually distribution-robust, so
-# cross-family spread is a clean asymmetry detector.
+# cross-family spread is a clean SPLIT-BIAS detector: it fires when raters
+# tilt in different directions across (Se, Sp) so the four coefficients
+# disagree on surface position. Shared/uniform bias (every rater tilts
+# the same direction) produces small delta_hat with low minimum surface
+# percentile and is detected by the percentile, not by delta_hat.
 
 # Coefficients that enter delta_hat. Anything else (currently just `icc`) is
 # reported on the panel with `in_delta_hat = FALSE`.
@@ -244,13 +248,27 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #' Cross-coefficient panel asymmetry diagnostic
 #'
 #' `check_asymmetry()` takes an N x k binary ratings matrix and returns a
-#' scalar `delta_hat` (in percentile points, "pp") summarising the spread
-#' across the panel of agreement coefficients (PABAK, AC1, Fleiss kappa,
-#' Krippendorff alpha, ICC) when each is positioned on its calibrated
-#' reference surface. A wide spread signals that the panel is reporting
-#' inconsistent stories about the same data — a structural symptom of
-#' shared rater bias or other Se != Sp asymmetry — and routes the user to
-#' the per-rater latent-class diagnostic.
+#' scalar `delta_hat` (in percentile points, "pp"): the max-min spread of
+#' surface percentiles across the four agreement coefficients (PABAK,
+#' AC1, Fleiss kappa, Krippendorff alpha) when each is positioned on its
+#' calibrated reference surface. ICC is reported on the panel rows but
+#' excluded from `delta_hat` (its reference is distribution-sensitive in
+#' ways the agreement family is not).
+#'
+#' `delta_hat` is a *split-bias* detector. It fires when raters tilt in
+#' different directions across (Se, Sp) — e.g., one rater high-Se / low-Sp,
+#' another high-Sp / low-Se — because the four coefficients respond to
+#' heterogeneous per-rater behavior differently and end up disagreeing on
+#' where the panel sits on the surface. The framework's other failure
+#' mode, *shared/uniform bias* (every rater tilts the same direction,
+#' e.g., a panel trained on one protocol all favoring specificity over
+#' sensitivity), produces uniform percentile degradation across
+#' coefficients: small `delta_hat`, low minimum surface percentile.
+#' Shared bias is detected by the panel's minimum surface percentile,
+#' not by `delta_hat`. A divergent flag therefore identifies a specific
+#' kind of disagreement — cross-coefficient inversion from heterogeneous
+#' rater behavior — and routes the user to the per-rater pairwise PABAK
+#' matrix and pooled-reference (Se_tilde, Sp_tilde) diagnostic.
 #'
 #' Each coefficient is positioned on its reference surface via
 #' [position_on_surface()], yielding a percentile in `[0, 100]` pp. The

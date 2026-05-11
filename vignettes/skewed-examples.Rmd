@@ -9,15 +9,16 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
-                      fig.width = 7, fig.height = 4.5, dpi = 110)
+                      fig.width = 7, fig.height = 4.5, dpi = 110,
+                      eval = FALSE)
 library(grass)
 ```
 
-> **Note (v0.2.0 update):** This vignette describes a workflow from the
-> earlier framework version. The current canonical workflow is the
-> Report Card via `grass_report(ratings = Y)`. See
-> `vignette("reporting-card", package = "grass")`. The content here
-> may be retired in a future version.
+> **Retired in v0.5.x.** This vignette uses the v0.1.x 2x2-count-table
+> entry point and the regime-labeling vocabulary, both of which were
+> retired in v0.2.0. **Code chunks in this vignette do not evaluate
+> against the v0.5.x API.** See `vignette("reporting-card", package =
+> "grass")` for skew-prevalence worked examples on the current API.
 
 ## Example 1: Extreme prevalence, high PABAK, near-zero kappa
 
@@ -64,7 +65,7 @@ The off-diagonal asymmetry (25 vs 10) drives a non-trivial bias index. In
 this regime the appropriate response is a calibration session between
 raters, not more training on hard cases.
 
-```{r, eval = requireNamespace("ggplot2", quietly = TRUE)}
+```{r, eval = FALSE}
 plot(result, type = "regime")
 ```
 
@@ -98,7 +99,7 @@ spot relative to the reference lines — kappa below, PABAK/AC1 above —
 and the spot does not chase zero as N grows. N tightens the scatter
 but does not explain the drift.
 
-```{r fig.show = "hold", out.width = "50%", fig.height = 4.2, eval = requireNamespace("ggplot2", quietly = TRUE)}
+```{r fig.show = "hold", out.width = "50%", fig.height = 4.2, eval = FALSE}
 r_small <- grass_report(draw(n =  50, p = 0.10, q = 0.85), reference = "high")
 r_large <- grass_report(draw(n = 500, p = 0.10, q = 0.85), reference = "high")
 plot(r_small, labels = "legend") + ggplot2::labs(title = "N = 50")
@@ -117,7 +118,7 @@ each other and toward their reference curves. The earlier "kappa low,
 PABAK/AC1 high" pattern vanishes — it was a prevalence effect, not a
 noise effect.
 
-```{r fig.show = "hold", out.width = "50%", fig.height = 4.2, eval = requireNamespace("ggplot2", quietly = TRUE)}
+```{r fig.show = "hold", out.width = "50%", fig.height = 4.2, eval = FALSE}
 r_skew <- grass_report(draw(n = 50, p = 0.10, q = 0.85), reference = "high")
 r_bal  <- grass_report(draw(n = 50, p = 0.50, q = 0.85), reference = "high")
 plot(r_skew, labels = "legend") + ggplot2::labs(title = "Prevalence = 0.10 (skewed)")

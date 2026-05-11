@@ -1,3 +1,191 @@
+# grass 0.5.2
+
+Bug-fix and sysdata-correction release. The v0.5.0 / v0.5.1 bundled
+`empirical_q_hat_surface` had a build-time mislabeling bug at k = 2
+that paired empirical q-hat distributions with the wrong scenarios for
+roughly half of all k = 2 sysdata cells; a corrected k = 2 sub-grid
+plus a high-q augmentation are bundled here. Internal logic is
+unchanged; the `0 FAIL` test posture is preserved and 12 new
+regression-anchor tests pin known design points.
+
+## Behavioral change (BUG FIX) — k = 2 surface percentile lookup corrected
+
+- **Cause.** The script that originally built the k = 2 portion of
+  `empirical_q_hat_surface` (`grass/data-raw/extend_empirical_bands_k2.R`,
+  pre-2026-05-10) concatenated per-rep batches via
+  `per_rep <- c(per_rep, batch)` over `list.files(...)` (alphabetical
+  filename order), then assigned `names(per_rep) <- s$scenario_id`
+  assuming the resulting list was in the same order as
+  `summaries.rds`. The two source machines (laptop / sebastian)
+  wrote scenarios in randomized scenario-id order within each batch,
+  so the alphabetical concat misaligned 864 of 1728 k = 2 entries.
+  The empirical q-hat distribution under `scenario_id = X` was, in
+  half of all k = 2 cells, actually the q-hat distribution from a
+  different scenario.
+
+- **Effect.** `position_on_surface(metric, pi_hat, k = 2L, N, ...)`
+  returned percentiles that were correct for ~50% of the (F-key,
+  q_true, N) cells and silently wrong for the rest. The most visible
+  manifestation was the published Soares (2021) HEART-score panel:
+  the v0.5.0 surface placed it at the 96th percentile; the corrected
+  surface places it at the ~9th percentile (a structural inversion,
+  not a small drift).
+
+- **Fix.** The replacement sim
+  (`paper1_2_merged/output/multirater_sim_k2_extension/`) writes one
+  RDS per scenario keyed by scenario_id in the filename, so the
+  alphabetical-concat bug class is structurally impossible. The new
+  `extend_empirical_bands_k2.R` reads per-scenario files directly.
+  k = 2 q-true grid is densified from the previous 6-point set
+  {0.60, 0.70, 0.80, 0.85, 0.90, 0.95} to the canonical 11-point set
+  {0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95, 0.97, 0.99}.
+  F-key set densified from 16 to the canonical 52 (matches k >= 3).
+  Total k = 2 scenario count: 1728 -> 1716 (slightly lower because the
+  new sim does not include the 5 asymmetric profiles per cell that
+  were inappropriately mixed into the symmetric-anchor surface in
+  v0.5.0; those are preserved separately at
+  `paper2/simulation_output/k2_asym_sim/` for non-surface uses such as
+  the §4.2 op_strong worked example and pairwise-PABAK validation).
+
+- **Migration impact.** Anyone who computed grass surface percentiles
+  on a k = 2 panel with v0.5.0 or v0.5.1 should re-run under v0.5.2.
+  Aggregate downstream: the merged GRASS paper §5 Soares anchor was
+  written against the buggy v0.5.0 surface and reports 96th pct;
+  corrected reading is ~9th pct, with the Klein 2018 panels stable
+  (50th, 51st pct unchanged) and the Hinde 2025 k = 10 panels
+  unaffected (canonical k >= 3 surface; built correctly in v0.5.0).
+
+## Robustness checks — high-q surface coverage
+
+Three targeted sub-sims added at v0.5.2 verify the surface lookup
+behaves as designed at high-quality boundary cells where per-cohort
+empirical distributions are tightest and grid coverage matters
+most. These are robustness checks of the framework's reach into
+the high-q corners of the design space, not bug fixes.
+
+- **k = 2 q = 0.97 (`multirater_sim_k2_q097_aug/`, 156 scenarios).**
+  At k = 2 with the canonical 10-point q-grid, panels with
+  closed-form-inverted q_hat in (0.96, 0.98) snap to q_true_near = 0.99,
+  where the empirical distribution is centered above q_hat. Adding
+  q = 0.97 to the grid lets such panels snap to a cohort whose
+  empirical distribution brackets q_hat, returning a centered
+  percentile.
+
+- **k = 25 q in {0.92, 0.97} (`multirater_sim_k25_q092_097_aug/`,
+  312 scenarios).** At k = 25 with N = 1000, per-cohort q-hat sd is
+  ~0.003 (panels are tightly informative), so grid spacing of 0.05
+  leaves cells in the gap between adjacent cohorts. Adding q = 0.92
+  and q = 0.97 closes the 0.90–0.95 and 0.95–0.99 gaps.
+
+- **k = 2 + k = 25 q = 0.94 (`multirater_sim_q094_aug/`, 312
+  scenarios).** A residual 0.92–0.95 midpoint gap surfaced when
+  `tab:card_summary` row 6 (k = 25, PABAK = 0.78, q_hat = 0.9416)
+  still snapped to q = 0.95 after the q = {0.92, 0.97} augmentation.
+  Adding q = 0.94 to k = 2 and k = 25 lets such panels snap to
+  q = 0.94 cohort and return a centered percentile.
+
+**Net q-grids after all v0.5.2 augmentations:**
+- **k = 2: 12 points** {0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85,
+  0.90, 0.94, 0.95, 0.97, 0.99} — canonical 10-point grid plus
+  0.94 and 0.97.
+- **k = 25: 13 points** {0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85,
+  0.90, 0.92, 0.94, 0.95, 0.97, 0.99} — canonical 10-point grid plus
+  0.92, 0.94, and 0.97.
+- **k in {3, 5, 8, 15}: 10 points** (canonical) — unchanged.
+
+The augmentation sims use a per-scenario rds layout (kill-safe,
+resume-safe) and skip glmer (the bundled surface uses only
+`logit_mixed_icc_oracle`, not the glmer-fitted ICC; glmer was the
+slow path that initially stalled the k = 25 run before being
+disabled).
+
+**Why three sub-sims rather than one denser grid up front?** Each
+boundary gap surfaced through diagnostic work on a specific paper
+anchor (post-hoc figure A at k = 2; tab:card_summary row 6 at k =
+25). We added grid points where the diagnostics surfaced gaps,
+keeping the augmentation tight to the actual coverage need rather
+than running an order-of-magnitude denser global grid. The
+structural fix — bilinear interpolation across two adjacent q_true
+cohorts in `lookup_empirical_q_hat()` — is designed in
+`grass/design/v0.5.3_lookup_interpolation.md` and queued for the
+next minor release; it would resolve the boundary-snap pathology
+*without* requiring ever-denser grids, but the augmentations bring
+the v0.5.2 surface to a defensible coverage level for the paper's
+specific anchor cells.
+
+## Defensive guards in sysdata builders
+
+- **Stronger preconditions.** `extend_empirical_bands_k2.R` and the new
+  `augment_empirical_bands_k2_q097.R` both assert
+  `setequal(names(per_rep), as.character(s$scenario_id))` and
+  `!any(duplicated(names(per_rep)))` after labeling. These would
+  have caught the original mislabeling at write time.
+- **Recommended for v0.5.3.** Mirror the same preconditions in
+  `build_empirical_bands.R` (canonical k >= 3 builder) — currently
+  safe because `multirater_sim_v3_combined_full.rds` saves per_rep
+  named by scenario_id, but the silent positional-fallback at L171-173
+  could mask a future regression.
+
+## New regression tests
+
+- **`tests/testthat/test-sysdata-regression-anchors.R`** (12 tests, all
+  PASS): pins surface-percentile lookups for the merged GRASS paper's
+  §4 / §5 anchors. Soares now bracketed below 20 pct (was inflated
+  to 96 in v0.5.0), Klein AE/PR ~50 pct, Hinde DSM-5-TR ~10 pct,
+  Hinde ICD-11 PTSD ~95 pct, §4.1 PABAK 40-55, §4.2 PABAK 30-50 +
+  AC1 50-65 (the divergent split), §4.3 unclamped 30-80 (the q = 0.97
+  augmentation guard). Plus three structural invariants on the k = 2
+  index. Regenerating sysdata in the future without producing these
+  values will fail-fast.
+
+## Sysdata size and shape
+
+- `empirical_q_hat_surface`: 9,360 -> 10,140 scenarios after the
+  fix and the three v0.5.2 augmentations (k = 2 went 1728 -> 1872;
+  k = 25 went 1560 -> 2028; k in {3, 5, 8, 15} unchanged at 1560
+  each).
+- File size: 9.0 MB -> 9.1 MB on disk (xz-compressed).
+
+## Report Card render fixes (`R/format.R`)
+
+Two render-layer changes surfaced by the 2026-05-11 paper-vs-code
+audit. Neither changes computation; both affect what
+`print(grass_report(Y))` shows on screen.
+
+- **Aligned and caution flags now render all panel coefficients,
+  not just the primary.** Previously, under the aligned/caution
+  branch, `format.grass_card()` emitted only the primary coefficient
+  line; the other agreement-family coefficients (and ICC) were
+  computed and stored in `card$panel` but suppressed in the print
+  output. The new render lists every coefficient with its observed
+  value and surface percentile; the primary carries the qualifier
+  (`decisive` / `moderate` / `weak`) inline and a `<- primary`
+  marker. This matches the §3.2 dictionary table in the paper
+  (`coefficient` field "lists every coefficient with its own
+  percentile") and the §3.1 Quick Start example output.
+
+- **`[distribution-sensitive]` marker now rendered by
+  `format.grass_card()` on the ICC line.** Previously the marker
+  was emitted only inside `print.grass_asymmetry_panel`, so the
+  Report Card a user saw via `print(grass_report(Y))` carried no
+  marker on ICC. The marker now renders in both the aligned/caution
+  branch and the divergent branch, alongside any
+  `[oracle-fallback]` / `[oracle-icc]` reference-source markers.
+
+- **`tau2_hat` removed from the inline sample header.** The sample
+  line now reads `sample = k raters, N = ..., pi_hat = ...` only;
+  the per-panel τ̂² lives in `card$sample$tau2_hat` and prints in
+  the Notes section when a fitted-ICC F_key is picked via glmer.
+
+## What did NOT change
+
+- ICC reference surface (`fitted_icc_reference_curves`) is unchanged.
+- δ̂ threshold lookup (`delta_thresholds_lookup`) is unchanged.
+- Closed-form `reference_binary` lookup is unchanged.
+- All exported function signatures and return objects are unchanged.
+- Paper §4 worked examples (k = 5 aligned + divergent) reproduce
+  exactly under the corrected sysdata; the fix touches k = 2 only.
+
 # grass 0.5.1
 
 Cosmetic and documentation release. No internal-logic, sysdata, or

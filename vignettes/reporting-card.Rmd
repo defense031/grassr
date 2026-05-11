@@ -33,22 +33,38 @@ sample summary, the primary coefficient with its surface percentile, the
 cross-coefficient asymmetry diagnostic, and (when the panel disagrees
 with itself) a per-rater latent-class fit.
 
-### What's new in 0.2.2
+### What's new in 0.5.2
 
-- Two new transparency rules in the `delta_hat` calculation: clamped
-  coefficients (whose observed value falls outside the surface envelope)
-  are excluded from `delta_hat` rather than inflating it, and the
-  exclusion is surfaced both in the printed Report Card (under the
-  `divergent` flag, clamped rows show `[clamped — excluded from delta]`)
-  and in the `panel` data.frame's new `clamped` column. See Section 7.
-- A new top-level `plot_surface()` function for prospective study design:
-  given `metric`, optional `pi_hat`, and optional `observed`, returns
-  a heatmap of the closed-form `E[metric](M_1, q)` reference surface
-  with optional pin marker. See Section 8.
-- When called with `axis = "intra"`, `grass_report()` now surfaces a
-  note that the intra-axis surface percentile uses the bundled
-  inter-rater diagonal calibration as an approximation; the dedicated
-  intra-axis calibration cube is queued for a follow-on data release.
+- **Bug fix (0.5.2):** the k = 2 portion of the bundled
+  `empirical_q_hat_surface` had a build-time scenario mislabeling
+  that affected roughly half of all k = 2 sysdata cells in v0.5.0
+  and v0.5.1. A corrected k = 2 sub-grid plus high-q augmentations
+  at k = 2 and k = 25 are bundled here; full details and migration
+  impact in `NEWS.md`. Anyone who computed k = 2 surface percentiles
+  on v0.5.0 / v0.5.1 should re-run on v0.5.2.
+- **Report Card render (0.5.2):** under the `aligned` and `caution`
+  flags, `print(grass_report(Y))` now lists every panel coefficient
+  with its surface percentile (previously only the primary
+  printed). The primary still carries the `<- primary` marker and
+  the qualifier (`decisive` / `moderate` / `weak`) inline. ICC
+  carries a `[distribution-sensitive]` marker in the Report Card
+  rather than only in the asymmetry-panel print.
+- **Scope locked (0.5.0):** δ̂ is computed over the four-coefficient
+  agreement family (PABAK, AC1, Fleiss κ, Krippendorff α). ICC is
+  reported alongside on the Report Card with a
+  `[distribution-sensitive]` marker but does not enter δ̂ by
+  construction; its reference surface depends on the full subject-
+  prevalence distribution rather than on `(q, pi_hat)` alone.
+- **Per-(k, N) δ̂ thresholds (0.5.0):** `delta_thresholds_lookup`
+  bundles the size-α-calibrated (caution, divergent) pair per
+  design cell; at off-grid `(k, N)` the lookup snaps to the
+  nearest fully-calibrated cell and surfaces the snap on the
+  Report Card.
+- **Fitted-ICC reference (0.5.0):** rebuilt from a unified
+  Julia/MixedModels.jl sim across k ∈ {3, 5, 8, 15, 25} × N ∈
+  {30, 50, 75, 100, 200, 300, 500, 1000} on a 14-point q-grid.
+  Empirical clamp rate at common applied designs dropped from
+  98.2% (v0.3 baseline) to 7.7%.
 
 ## 1. The headline call
 
@@ -80,10 +96,13 @@ Each block in the printed Report Card means something specific:
   sits between the percentile and the reader.
 - **`delta`** is the cross-coefficient percentile spread in pp across
   the agreement family (PABAK, AC1, Fleiss kappa, Krippendorff alpha;
-  ICC excluded by construction). Below 9.25 the panel is *aligned* and
-  one coefficient is safe to cite. Above 11.75 the panel is
-  *divergent* and the panel-aggregate is suppressed in favor of the
-  pairwise PABAK matrix and per-rater pooled-reference Se/Sp.
+  ICC excluded by construction). The caution and divergent cuts are
+  size-α calibrated per `(k, N)` (`delta_thresholds_lookup`); at the
+  modal applied design `(k = 5, N = 200)` the pair is `(9.25, 10.75)`
+  pp. Below the caution cut the panel is *aligned* and the primary
+  coefficient is safe to cite; above the divergent cut the panel-
+  aggregate is suppressed in favor of the pairwise PABAK matrix and
+  per-rater pooled-reference Se/Sp.
 
 ## 2. A symmetric panel (the easy case)
 

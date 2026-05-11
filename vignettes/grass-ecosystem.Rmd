@@ -8,14 +8,15 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
-knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
 ```
 
-> **Note (v0.2.0 update):** This vignette describes a workflow from the
-> earlier framework version. The current canonical workflow is the
-> Report Card via `grass_report(ratings = Y)`. See
-> `vignette("reporting-card", package = "grass")`. The content here
-> may be retired in a future version.
+> **Retired in v0.5.x.** This vignette describes the v0.1.x
+> ecosystem framing. The current canonical workflow is the
+> four-field Report Card via `grass_report(ratings = Y)`. **Code
+> chunks in this vignette do not evaluate against the v0.5.x API.**
+> See `vignette("reporting-card", package = "grass")` for the
+> active introduction.
 
 ## One package, one entry point
 

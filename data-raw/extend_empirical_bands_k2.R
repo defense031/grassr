@@ -1,31 +1,38 @@
-# extend_empirical_bands_k2.R --- ADD k = 2 entries to the existing
-# empirical_q_hat_surface in grass/R/sysdata.rda from the paper-2
-# k2_asym_sim (1,728 scenarios x 2,000 reps).
+# extend_empirical_bands_k2.R --- REPLACE k = 2 entries in the existing
+# empirical_q_hat_surface in grass/R/sysdata.rda with the denser
+# multirater_sim_k2_extension grid (1,560 scenarios x 2,000 reps).
 #
 # Background: build_empirical_bands.R covers k in {3, 5, 8, 15, 25}
-# from multirater_sim_v3_combined_full.rds. The k = 2 path was missing,
-# so position_on_surface(..., k = 2L) clamped to k = 3 with a note.
-# This script appends k = 2 quantile summaries (built with the same
-# 13-probability pipeline and the same closed-form-inverse machinery)
-# so the lookup serves k = 2 directly.
+# from multirater_sim_v3_combined_full.rds (10 q x 52 F-keys x 3 N).
+# k = 2 was previously bolted on from the paper-1-era k2_asym_sim
+# (6 q x 16 F-keys x 3 N --- about one-third the grid density), which
+# manifested as 0/100 clamps and discrete jumps in surface-percentile
+# lookups for moderate-quality k = 2 panels. multirater_sim_k2_extension
+# mirrors multirater_sim_v3 exactly at k = 2 (same 52 F-keys, same q
+# grid {0.55-0.99}, same N in {50, 200, 1000}, 2000 reps each), closing
+# the gap. This script drops the existing k = 2 rows and writes the
+# new dense k = 2 quantile summaries in their place using the same
+# closed-form-inverse pipeline as the k >= 3 build.
 #
 # Run from PABAK_Investigation project root:
 #   Rscript grass/data-raw/extend_empirical_bands_k2.R
 #
 # Inputs:
-#   paper2/simulation_output/k2_asym_sim/summaries.rds   (1,728 x 23)
-#   paper2/simulation_output/k2_asym_sim/per_rep/*.rds   (36 batches)
-#   paper2/code/04_reference_closed_form.R               (cf_panel)
-#   paper2/code/06_grid.R                                (F_params_for, e_p_logit_normal)
+#   paper1_2_merged/output/multirater_sim_k2_extension/summaries.rds
+#       (1,560 x 22)
+#   paper1_2_merged/output/multirater_sim_k2_extension/per_scenario/scenario_NNNN.rds
+#       (one list per scenario with $summary + $per_rep matrix)
+#   paper2/code/04_reference_closed_form.R   (cf_panel)
+#   paper2/code/06_grid.R                    (F_params_for, e_p_logit_normal)
 # Outputs:
-#   grass/R/sysdata.rda  (updated --- existing objects preserved)
+#   grass/R/sysdata.rda  (updated --- existing non-k=2 rows preserved)
 
 suppressMessages({
   source("paper2/code/04_reference_closed_form.R")
   source("paper2/code/06_grid.R")
 })
 
-K2_DIR  <- "paper2/simulation_output/k2_asym_sim"
+K2_DIR  <- "paper1_2_merged/output/multirater_sim_k2_extension"
 SYSDATA <- "grass/R/sysdata.rda"
 
 # Use the SAME quantile probabilities, Q_GRID, and metric mappings as the
@@ -62,24 +69,37 @@ if (2L %in% existing_eqs$index$k) {
       "existing k=2 rows will be replaced.\n", sep = "")
 }
 
-# ---- Load k2 summaries + per-rep batches into one merged list -------------
-cat("Loading k2_asym_sim summaries...\n")
+# ---- Load k2 summaries + per-scenario per_rep matrices --------------------
+cat("Loading multirater_sim_k2_extension summaries...\n")
 s <- readRDS(file.path(K2_DIR, "summaries.rds"))
-cat(sprintf("  %d scenarios, k=%d, N in {%s}\n",
+cat(sprintf("  %d scenarios, k=%d, N in {%s}, q in {%s}, F-keys=%d\n",
             nrow(s), unique(s$k),
-            paste(sort(unique(s$N)), collapse = ",")))
+            paste(sort(unique(s$N)), collapse = ","),
+            paste(sort(unique(s$q)), collapse = ","),
+            length(unique(s$F_key))))
 stopifnot(unique(s$k) == 2L)
 
-cat("Loading per_rep batches (36 files)...\n")
-per_rep_files <- list.files(file.path(K2_DIR, "per_rep"), full.names = TRUE,
-                            pattern = "\\.rds$")
-per_rep <- list()
-for (f in per_rep_files) {
-  batch <- readRDS(f)
-  per_rep <- c(per_rep, batch)
+cat(sprintf("Loading %d per-scenario rds files (each $per_rep is 2000 x 6)...\n",
+            nrow(s)))
+per_rep <- vector("list", nrow(s))
+t0 <- Sys.time()
+for (i in seq_len(nrow(s))) {
+  sid <- s$scenario_id[i]
+  f <- file.path(K2_DIR, "per_scenario",
+                 sprintf("scenario_%04d.rds", sid))
+  obj <- readRDS(f)
+  per_rep[[i]] <- obj$per_rep
+  if (i %% 200L == 0L) {
+    cat(sprintf("  %d / %d  (%.1f s elapsed)\n",
+                i, nrow(s), as.numeric(Sys.time() - t0, units = "secs")))
+  }
 }
-cat(sprintf("  loaded %d per_rep matrices\n", length(per_rep)))
+cat(sprintf("  done in %.1f s; loaded %d per_rep matrices\n",
+            as.numeric(Sys.time() - t0, units = "secs"), length(per_rep)))
 stopifnot(length(per_rep) == nrow(s))
+expected_cols <- c("fleiss_kappa", "mean_pabak", "mean_ac1",
+                   "krippendorff_a", "logit_mixed_icc_oracle")
+stopifnot(all(expected_cols %in% colnames(per_rep[[1]])))
 
 # Apply scenario_id offset for the new entries (preserves the order of `s`).
 s$scenario_id <- s$scenario_id + K2_SCENARIO_ID_OFFSET
@@ -270,7 +290,7 @@ empirical_q_hat_surface <- list(
   index     = merged_index,
   metrics   = names(PER_REP_COL_FOR),
   source    = sprintf(
-    "multirater_sim_v3_combined_full.rds + k2_asym_sim (%s scenarios; k in {%s})",
+    "multirater_sim_v3_combined_full.rds + multirater_sim_k2_extension (%s scenarios; k in {%s})",
     format(nrow(merged_index), big.mark = ","),
     paste(sort(unique(merged_index$k)), collapse = ",")
   ),

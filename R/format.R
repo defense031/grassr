@@ -97,11 +97,6 @@ format.grass_card <- function(x, digits = 2, ...) {
   k  <- x$sample$k
   N  <- x$sample$N
   pi_hat_str <- formatC(x$sample$pi_hat, format = "f", digits = digits)
-  tau2_str <- if (!is.null(x$sample$tau2_hat) &&
-                  is.finite(x$sample$tau2_hat)) {
-    formatC(x$sample$tau2_hat, format = "f", digits = max(digits + 1L, 3L))
-  } else NULL
-
   flag <- x$delta$flag
   delta_pp <- round(x$delta$delta_hat, digits = max(digits - 1L, 0L))
 
@@ -109,9 +104,6 @@ format.grass_card <- function(x, digits = 2, ...) {
   lines <- c(lines, "GRASS Report Card", "")
   sample_line <- sprintf("  sample      = %d raters, N = %d, pi_hat = %s",
                          k, N, pi_hat_str)
-  if (!is.null(tau2_str)) {
-    sample_line <- paste0(sample_line, ", tau2_hat = ", tau2_str)
-  }
   lines <- c(lines, sample_line)
 
   if (identical(flag, "divergent")) {
@@ -125,11 +117,14 @@ format.grass_card <- function(x, digits = 2, ...) {
       val_str <- formatC(pn$observed_value[i], format = "f", digits = digits)
       pct_str <- .fmt_pp(pn$surface_percentile[i])
       is_clamped <- isTRUE(pn$clamped[i])
+      is_icc <- identical(pn$coefficient[i], "icc")
       ref_used <- if ("reference_used" %in% names(pn)) pn$reference_used[i] else NA_character_
       ref_marker <- if (isTRUE(ref_used == "oracle-icc-fallback")) {
         "  [oracle-fallback]"
       } else if (isTRUE(ref_used == "oracle-icc-explicit")) {
         "  [oracle-icc]"
+      } else if (is_icc) {
+        "  [distribution-sensitive]"
       } else {
         ""
       }
@@ -227,28 +222,39 @@ format.grass_card <- function(x, digits = 2, ...) {
       }
     }
   } else {
-    # Aligned or caution: show only the primary coefficient + delta.
-    # Qualifier is appended to the percentile inline; no band line --
-    # the percentile is the categorical score per the v0.5 manifesto.
-    coef <- x$coefficient
-    label <- .coef_label(coef$primary)
-    val_str <- formatC(coef$observed_value, format = "f", digits = digits)
-    pct_str <- .fmt_pp(coef$surface_percentile)
-    name_w <- max(nchar(label), 6L)
-    primary_ref <- if (!is.null(x$panel) && "reference_used" %in% names(x$panel)) {
-      i <- which(x$panel$coefficient == coef$primary)
-      if (length(i) == 1L) x$panel$reference_used[i] else NA_character_
-    } else NA_character_
-    primary_marker <- if (isTRUE(primary_ref == "oracle-icc-fallback")) {
-      "  [oracle-fallback]"
-    } else if (isTRUE(primary_ref == "oracle-icc-explicit")) {
-      "  [oracle-icc]"
-    } else ""
-    qual_str <- if (is.null(coef$qualifier) || is.na(coef$qualifier)) "" else coef$qualifier
-    qual_suffix <- if (nzchar(qual_str)) sprintf(" (%s)", qual_str) else ""
-    lines <- c(lines,
-               sprintf("  %-*s = %s  ->  %s%s%s",
-                       name_w, label, val_str, pct_str, qual_suffix, primary_marker))
+    # Aligned or caution: show all panel coefficients with their
+    # surface percentiles, with the qualifier on the primary row.
+    # The percentile is the categorical score per the v0.5 manifesto;
+    # no band line.
+    primary <- x$coefficient$primary
+    qual_str <- if (is.null(x$coefficient$qualifier) ||
+                    is.na(x$coefficient$qualifier)) "" else x$coefficient$qualifier
+    pn <- x$panel
+    name_w <- max(nchar(vapply(pn$coefficient, .coef_label, character(1))))
+    name_w <- max(name_w, 6L)
+    for (i in seq_len(nrow(pn))) {
+      label <- .coef_label(pn$coefficient[i])
+      val_str <- formatC(pn$observed_value[i], format = "f", digits = digits)
+      pct_str <- .fmt_pp(pn$surface_percentile[i])
+      is_primary <- identical(pn$coefficient[i], primary)
+      is_icc <- identical(pn$coefficient[i], "icc")
+      qual_suffix <- if (is_primary && nzchar(qual_str)) {
+        sprintf("  (%s)", qual_str)
+      } else ""
+      ref_used <- if ("reference_used" %in% names(pn)) pn$reference_used[i] else NA_character_
+      ref_marker <- if (isTRUE(ref_used == "oracle-icc-fallback")) {
+        "  [oracle-fallback]"
+      } else if (isTRUE(ref_used == "oracle-icc-explicit")) {
+        "  [oracle-icc]"
+      } else if (is_icc) {
+        "  [distribution-sensitive]"
+      } else ""
+      primary_tag <- if (is_primary) "  <- primary" else ""
+      lines <- c(lines,
+                 sprintf("  %-*s = %s  ->  %s%s%s%s",
+                         name_w, label, val_str, pct_str,
+                         qual_suffix, ref_marker, primary_tag))
+    }
     lines <- c(lines,
                sprintf("  delta       = %s pp (%s)",
                        formatC(delta_pp, format = "g", digits = max(digits, 2L)),

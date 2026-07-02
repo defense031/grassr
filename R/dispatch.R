@@ -9,8 +9,8 @@
 #
 # These are package-internal. Rather than use S3 method names (which
 # roxygen flags as needing @export), each operation dispatches manually
-# on spec$family via switch(). The intent is the same — extensible per
-# family — without exporting an internal generic.
+# on spec$family via switch(). The intent is the same -- extensible per
+# family -- without exporting an internal generic.
 
 # ---- compute_agreement -------------------------------------------------
 

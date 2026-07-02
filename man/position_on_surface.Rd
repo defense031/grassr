@@ -53,7 +53,7 @@ Default \code{c("Poor", "Moderate", "Strong", "Excellent")}.}
 components, used when \code{method = "empirical"}:
 \itemize{
 \item \code{per_rep}: a matrix of per-rep metric values at the closest simulated
-\verb{(q, pi_hat, k, N)} cell — this is the empirical sampling distribution
+\verb{(q, pi_hat, k, N)} cell -- this is the empirical sampling distribution
 at that design. Used for the percentile of \code{obs_value}.
 \item \code{q_grid_per_rep}: a matrix of dimension \code{n_q} x \code{n_rep} giving the
 empirical sampling distribution of the metric at each q-grid point,
@@ -91,18 +91,18 @@ function auto-falls-back to oracle with an explanatory note.}
 \value{
 A list of class \code{grass_surface_position} with fields:
 \itemize{
-\item \code{observed_value} — echo of \code{obs_value}
-\item \code{metric} — echo of \code{metric}
-\item \code{design} — \code{list(pi_hat, k, N)}
-\item \code{q_hat} — inverted rater quality (internal scaffold)
-\item \code{se_q_hat} — delta-method SE of \code{q_hat}
-\item \code{percentile} — surface percentile of \code{obs_value} in \verb{[0, 1]}
-\item \code{band_probabilities} — named numeric vector of \verb{P(q in band_j)}
-\item \code{modal_band} — integer index \verb{1..4} of the highest-probability band
-\item \code{modal_band_label} — character adjective at the modal band
-\item \code{confidence} — \code{"decisive"} / \code{"moderate"} / \code{"weak"}
-\item \code{sampling_method} — which method was used
-\item \code{notes} — character vector of caveats (e.g. nearest-neighbor gaps)
+\item \code{observed_value} -- echo of \code{obs_value}
+\item \code{metric} -- echo of \code{metric}
+\item \code{design} -- \code{list(pi_hat, k, N)}
+\item \code{q_hat} -- inverted rater quality (internal scaffold)
+\item \code{se_q_hat} -- delta-method SE of \code{q_hat}
+\item \code{percentile} -- surface percentile of \code{obs_value} in \verb{[0, 1]}
+\item \code{band_probabilities} -- named numeric vector of \verb{P(q in band_j)}
+\item \code{modal_band} -- integer index \verb{1..4} of the highest-probability band
+\item \code{modal_band_label} -- character adjective at the modal band
+\item \code{confidence} -- \code{"decisive"} / \code{"moderate"} / \code{"weak"}
+\item \code{sampling_method} -- which method was used
+\item \code{notes} -- character vector of caveats (e.g. nearest-neighbor gaps)
 }
 }
 \description{
@@ -122,7 +122,7 @@ surface percentile, the band adjective, and the confidence qualifier.
 \code{q_hat} survives as internal scaffolding (surface parameterization and
 delta-method SE carrier) rather than as the labeled output.
 }
-\section{Label construction (§0.6.5)}{
+\section{Label construction (Sec.0.6.5)}{
 
 Four adjacent-exclusive bands partition the above-chance quality range
 \verb{q in [0.5, 1.0]} on equal width: \strong{Poor} \verb{[0.5, 0.625)}, \strong{Moderate}
@@ -133,9 +133,9 @@ may supply custom cut points through \code{bands} and matching \code{band_labels
 The confidence qualifier is derived from the modal band's sampling
 probability \code{p_star}:
 \itemize{
-\item \code{decisive} — \code{p_star >= 0.90}
-\item \code{moderate} — \verb{p_star in [0.60, 0.90)}
-\item \code{weak} — \code{p_star < 0.60}
+\item \code{decisive} -- \code{p_star >= 0.90}
+\item \code{moderate} -- \verb{p_star in [0.60, 0.90)}
+\item \code{weak} -- \code{p_star < 0.60}
 }
 }
 
@@ -206,7 +206,7 @@ position_on_surface(
   metric = "pabak", pi_hat = mean(Y), k = ncol(Y), N = nrow(Y)
 )
 
-# Delta-method positioning — no sim data needed, summary-stats only.
+# Delta-method positioning -- no sim data needed, summary-stats only.
 r <- position_on_surface(
   obs_value = 0.62,
   metric    = "pabak",

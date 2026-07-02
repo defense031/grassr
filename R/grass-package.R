@@ -5,16 +5,13 @@
 #' prevalence-conditioned thresholds from the GRASS framework.
 #'
 #' @section Entry points:
-#' * [grass_report()] — contextual profile: metrics + PI + BI + regime + reference
-#' * [grass_spec_binary()] — spec for the binary family (the one implemented today)
-#' * [grass_methods()] — GRRAS-compliant manuscript methods paragraph
-#' * [grass_report_by()] — cohort-split reporting with optional `.parallel`
-#' * [grass_compute()] — raw metric panel from 2x2 or rater data
-#' * [grass_reference()] — look up reference curves at a given prevalence
-#' * [grass_reference_table()] — full internal reference-curve table
-#' * [grass_prevalence()] — estimate prevalence from rater marginals
-#' * [grass_format_report()] — one-line paper-ready summary of a result
-#' * [grass_plot()] — plot a grass object
+#' * [grass_report()] -- contextual profile: metrics + PI + BI + regime + reference
+#' * [grass_spec_binary()] -- spec for the binary family (the one implemented today)
+#' * [grass_compute()] -- raw metric panel from 2x2 or rater data
+#' * [grass_reference()] -- look up reference curves at a given prevalence
+#' * [grass_reference_table()] -- full internal reference-curve table
+#' * [grass_prevalence()] -- estimate prevalence from rater marginals
+#' * [grass_plot()] -- plot a grass object
 #'
 #' @section Roadmap:
 #' See [grass_roadmap] for the framework taxonomy and the planned

@@ -93,8 +93,9 @@ test_that("grass_report reproduces the paper §4 divergent worked example", {
               info = sprintf("non-ICC range = %.2f pp; expected >= 11.75",
                              diff(range(nonicc, na.rm = TRUE))))
 
-  # Five-coefficient panel.
-  expect_equal(nrow(card$panel), 5L)
+  # Four-coefficient panel (PABAK, AC1, Fleiss kappa, ICC; alpha removed
+  # from the panel at v0.6.0).
+  expect_equal(nrow(card$panel), 4L)
   expect_true("clamped" %in% names(card$panel))
 
   # Per-rater data.frame with five rows of finite Se/Sp + CIs.
@@ -184,7 +185,7 @@ test_that("print.grass_card renders the four-field card header", {
   txt_align <- paste(out_align, collapse = "\n")
   expect_match(txt_align, "aligned", fixed = TRUE)
   # Aligned card should not list every panel coefficient by name.
-  # (At k = 2 the panel has PABAK/AC1/kappa/alpha; aligned mode should print
+  # (At k = 2 the panel has PABAK/AC1/kappa; aligned mode should print
   # only the primary one.)
   expect_false(grepl("Fleiss kappa", txt_align, fixed = TRUE))
 })

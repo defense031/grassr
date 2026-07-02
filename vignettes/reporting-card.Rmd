@@ -33,7 +33,23 @@ sample summary, the primary coefficient with its surface percentile, the
 cross-coefficient asymmetry diagnostic, and (when the panel disagrees
 with itself) a per-rater latent-class fit.
 
-### What's new in 0.5.2
+### What's new in 0.6.0
+
+- **Krippendorff's α removed from the Report Card and δ̂ (0.6.0):**
+  in the binary fully-crossed designs this package targets, α
+  coincides with Fleiss' κ asymptotically (median absolute
+  difference 0.00024 across the 10,140-cell calibration grid), so
+  its row added no information and its small-sample deviation could
+  tip borderline δ̂ readings across a threshold on noise alone. δ̂ is
+  now the percentile spread over PABAK, mean AC1, and Fleiss' κ; the
+  bundled thresholds hold for the 3-coefficient spread (sub-pp
+  shift, within MC-SE). `obs_krippendorff_alpha()` is exported for
+  anyone needing the value, and
+  `position_on_surface(metric = "krippendorff_a")` still positions
+  it on its closed-form reference.
+- **Legacy pre-0.2.0 API removed (0.6.0):** `grass_format_report()`,
+  `grass_methods()`, `grass_report_by()`, and the `grass_result`
+  methods. See `NEWS.md`.
 
 - **Bug fix (0.5.2):** the k = 2 portion of the bundled
   `empirical_q_hat_surface` had a build-time scenario mislabeling
@@ -49,8 +65,8 @@ with itself) a per-rater latent-class fit.
   the qualifier (`decisive` / `moderate` / `weak`) inline. ICC
   carries a `[distribution-sensitive]` marker in the Report Card
   rather than only in the asymmetry-panel print.
-- **Scope locked (0.5.0):** δ̂ is computed over the four-coefficient
-  agreement family (PABAK, AC1, Fleiss κ, Krippendorff α). ICC is
+- **Scope locked (0.5.0):** δ̂ is computed over the agreement
+  family (PABAK, AC1, Fleiss κ; Krippendorff α until 0.6.0). ICC is
   reported alongside on the Report Card with a
   `[distribution-sensitive]` marker but does not enter δ̂ by
   construction; its reference surface depends on the full subject-
@@ -95,7 +111,7 @@ Each block in the printed Report Card means something specific:
   The percentile is the categorical score; no four-way labeled band
   sits between the percentile and the reader.
 - **`delta`** is the cross-coefficient percentile spread in pp across
-  the agreement family (PABAK, AC1, Fleiss kappa, Krippendorff alpha;
+  the agreement family (PABAK, AC1, Fleiss kappa;
   ICC excluded by construction). The caution and divergent cuts are
   size-α calibrated per `(k, N)` (`delta_thresholds_lookup`); at the
   modal applied design `(k = 5, N = 200)` the pair is `(9.25, 10.75)`
@@ -166,8 +182,8 @@ card_div
 ```
 
 The flag is `divergent`: the cross-coefficient percentile spread
-exceeds the 11.75-pp threshold even though the four agreement
-coefficients (PABAK, AC1, Fleiss kappa, Krippendorff alpha) all sit
+exceeds the 11.75-pp threshold even though the three agreement
+coefficients (PABAK, AC1, Fleiss kappa) all sit
 near the same observed value. Three things change in the printed
 output:
 
@@ -342,7 +358,7 @@ GLMM-gap correction), which over-predicts the practitioner's
 glmer-fit ICC and clamps the percentile to 0:
 
 ```{r}
-# A panel where ICC clamps but the four agreement coefficients align.
+# A panel where ICC clamps but the three agreement coefficients align.
 set.seed(5)
 N <- 1000L; k <- 5L
 mu_logit <- qlogis(0.08)
@@ -372,7 +388,7 @@ The trade-off: a coefficient with no calibrated reference at the
 user's design contributes nothing to the diagnostic. The benefit:
 when `delta_hat` does fire `divergent`, it reflects genuine
 cross-coefficient surface-percentile disagreement rather than an
-envelope artifact. If the clamp is cosmetic (the four agreement
+envelope artifact. If the clamp is cosmetic (the three agreement
 coefficients align cleanly without ICC), the Report Card's
 verdict is the right one. If clamping coincides with a real
 divergent panel (rare but possible), the `Notes` line and the
@@ -422,7 +438,8 @@ plot_surface("fleiss_kappa",
 ```
 
 `plot_surface()` supports the four closed-form non-ICC metrics
-(PABAK, Fleiss kappa, mean-pairwise AC1, Krippendorff alpha). ICC
+(PABAK, Fleiss kappa, mean-pairwise AC1, and — although it no longer
+appears on the Report Card — Krippendorff alpha). ICC
 surfaces depend on the full subject-prevalence distribution F
 and the GLMM-gap-corrected fitted reference; for ICC, build a card
 with `grass_report()` and use `plot.grass_card(type = "surface")`.

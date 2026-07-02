@@ -1,7 +1,7 @@
 # Column B of the GRASS Reporting Card: use-case tier on EMR_panel.
 # Assigns one of Fails / Indeterminate / Meets / Met with distinction /
 # Exceeds against a declared tolerance T on the 95% CI of EMR_panel. Ships
-# with grass 0.2.x. See paper2/review/framework_notes.md §0.6.5 for the
+# with grass 0.2.x. See paper2/review/framework_notes.md Sec.0.6.5 for the
 # label system and why it does not re-create Landis-Koch.
 
 # ---- Use-case ladder --------------------------------------------------

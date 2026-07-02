@@ -13,16 +13,13 @@ prevalence-conditioned thresholds from the GRASS framework.
 \section{Entry points}{
 
 \itemize{
-\item \code{\link[=grass_report]{grass_report()}} — contextual profile: metrics + PI + BI + regime + reference
-\item \code{\link[=grass_spec_binary]{grass_spec_binary()}} — spec for the binary family (the one implemented today)
-\item \code{\link[=grass_methods]{grass_methods()}} — GRRAS-compliant manuscript methods paragraph
-\item \code{\link[=grass_report_by]{grass_report_by()}} — cohort-split reporting with optional \code{.parallel}
-\item \code{\link[=grass_compute]{grass_compute()}} — raw metric panel from 2x2 or rater data
-\item \code{\link[=grass_reference]{grass_reference()}} — look up reference curves at a given prevalence
-\item \code{\link[=grass_reference_table]{grass_reference_table()}} — full internal reference-curve table
-\item \code{\link[=grass_prevalence]{grass_prevalence()}} — estimate prevalence from rater marginals
-\item \code{\link[=grass_format_report]{grass_format_report()}} — one-line paper-ready summary of a result
-\item \code{\link[=grass_plot]{grass_plot()}} — plot a grass object
+\item \code{\link[=grass_report]{grass_report()}} -- contextual profile: metrics + PI + BI + regime + reference
+\item \code{\link[=grass_spec_binary]{grass_spec_binary()}} -- spec for the binary family (the one implemented today)
+\item \code{\link[=grass_compute]{grass_compute()}} -- raw metric panel from 2x2 or rater data
+\item \code{\link[=grass_reference]{grass_reference()}} -- look up reference curves at a given prevalence
+\item \code{\link[=grass_reference_table]{grass_reference_table()}} -- full internal reference-curve table
+\item \code{\link[=grass_prevalence]{grass_prevalence()}} -- estimate prevalence from rater marginals
+\item \code{\link[=grass_plot]{grass_plot()}} -- plot a grass object
 }
 }
 

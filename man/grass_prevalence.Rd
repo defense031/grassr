@@ -14,13 +14,13 @@ grass_prevalence(
 \arguments{
 \item{data}{Input data. Form depends on \code{format}:
 \itemize{
-\item \code{"matrix"} — a 2x2 integer count matrix with \code{R1} rows, \code{R2} columns.
-\item \code{"wide"} — a data.frame with exactly two rater columns (or pass
+\item \code{"matrix"} -- a 2x2 integer count matrix with \code{R1} rows, \code{R2} columns.
+\item \code{"wide"} -- a data.frame with exactly two rater columns (or pass
 \code{rater_cols = c("r1", "r2")} if the data contains extra columns).
-\item \code{"long"} — a data.frame with \code{subject}, \code{rater}, and \code{rating} columns
+\item \code{"long"} -- a data.frame with \code{subject}, \code{rater}, and \code{rating} columns
 (names configurable via \verb{subject =}, \verb{rater =}, \verb{rating =}). Must
 contain exactly two distinct raters.
-\item \code{"paired"} — a list of two equal-length rating vectors, a 2-column
+\item \code{"paired"} -- a list of two equal-length rating vectors, a 2-column
 matrix, or a 2-column data.frame.
 }}
 

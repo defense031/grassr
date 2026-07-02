@@ -16,3 +16,5 @@
 ^Rplots\.pdf$
 ^simulation$
 ^grass\.bak$
+^design$
+^texput\.log$

@@ -1,0 +1,45 @@
+url: https://defense031.github.io/grass/
+
+template:
+  bootstrap: 5
+
+home:
+  title: "grass: Context-Conditioned Reporting for Binary Rater Reliability"
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [search, github]
+
+articles:
+- title: Vignettes
+  navbar: ~
+  contents:
+  - grass-intro
+  - reporting-card
+  - methods-companion
+  - skewed-examples
+  - grass-ecosystem
+
+reference:
+- title: Report Card workflow
+  contents:
+  - grass_report
+  - position_on_surface
+  - check_asymmetry
+  - check_rater_asymmetry
+  - pairwise_agreement
+  - latent_class_fit
+- title: Plotting
+  contents:
+  - starts_with("plot")
+- title: Coefficients and helpers
+  contents:
+  - obs_krippendorff_alpha
+  - grass_compute
+  - grass_prevalence
+  - grass_reference
+  - grass_reference_table
+- title: Other
+  contents:
+  - matches(".*")

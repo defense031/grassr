@@ -1,7 +1,7 @@
 #' The grass ecosystem roadmap
 #'
 #' `grass` is the binary categorical-agreement submodule of the MEADOW
-#' framework. Its single headline entry point — [grass_report()] — takes
+#' framework. Its single headline entry point -- [grass_report()] -- takes
 #' an `N x k` binary rating matrix and returns a `grass_card`: a four-field
 #' Report Card carrying the sample summary, primary coefficient with its
 #' surface-position percentile, the four-band qualitative label, and the
@@ -26,8 +26,8 @@
 #' @section MEADOW submodules:
 #'
 #' MEADOW is the umbrella; each submodule covers one scale type. The
-#' user-facing API of each submodule is the same — a single rating
-#' matrix in, a Report Card out — so user code that works on a binary
+#' user-facing API of each submodule is the same -- a single rating
+#' matrix in, a Report Card out -- so user code that works on a binary
 #' panel today will work on a continuous panel once FIELD ships.
 #'
 #' \tabular{lll}{
@@ -35,12 +35,12 @@
 #'   GRASS \tab Binary categorical agreement (Cohen's kappa, PABAK, AC1,
 #'     Fleiss kappa, Krippendorff alpha, observed ICC for binary). Surface
 #'     positioning calibrated over `k in {2,3,5,8,15,25}` and
-#'     `N in {50,200,1000}`. \tab **implemented** in grass v0.2.0 — see
+#'     `N in {50,200,1000}`. \tab **implemented** in grass v0.2.0 -- see
 #'     [grass_report()] \cr
 #'   FIELD \tab Continuous variance-component reliability (Shrout-Fleiss
 #'     ICC family, Lin's CCC, Bland-Altman bounds, generalisability-theory
 #'     variance components). Same Target-2 surface-positioning contract as
-#'     GRASS. \tab planned for v1.0.0 alongside Paper 3 — see
+#'     GRASS. \tab planned for v1.0.0 alongside Paper 3 -- see
 #'     [grass_spec_continuous()] placeholder \cr
 #' }
 #'
@@ -54,41 +54,41 @@
 #'
 #' The Target-2 contract is the same across submodules:
 #'
-#' * [grass_report()] — primary entry point; rating matrix in,
+#' * [grass_report()] -- primary entry point; rating matrix in,
 #'   `grass_card` out. The `grass_card` carries the four-field summary
 #'   (sample, primary coefficient with surface percentile, four-band
 #'   label, `delta_hat` with stability flag), the full panel of
 #'   coefficients with their bootstrap CIs, and the reference-surface
 #'   artifacts.
-#' * [position_on_surface()] — granular access to a single coefficient's
+#' * [position_on_surface()] -- granular access to a single coefficient's
 #'   surface percentile, four-band label, and qualifier.
-#' * [check_asymmetry()] — granular access to the cross-coefficient
+#' * [check_asymmetry()] -- granular access to the cross-coefficient
 #'   `delta_hat` and three-tier stability flag.
-#' * [latent_class_fit()] — per-rater Se/Sp via Dawid-Skene EM (k >= 3)
+#' * [latent_class_fit()] -- per-rater Se/Sp via Dawid-Skene EM (k >= 3)
 #'   or Hui-Walter bounds (k = 2), populated automatically in the
 #'   divergent branch of [grass_report()].
-#' * `summary()`, `as.data.frame()`, `plot()` — layered access to the
+#' * `summary()`, `as.data.frame()`, `plot()` -- layered access to the
 #'   full underlying panel and the surface-position visualization.
 #'
 #' @section Target-2 vocabulary:
 #'
 #' These terms, used throughout the package documentation and printed
 #' Report Card, come from the merged GRASS binary-rater-reliability
-#' paper (§§3-4):
+#' paper (Sec.Sec.3-4):
 #'
-#' * **context-conditioned reporting convention** — the principle that
+#' * **context-conditioned reporting convention** -- the principle that
 #'   the percentile and band reported for a coefficient must condition on
 #'   `(k, N, pi_hat)`, not on a fixed table.
-#' * **surface-position percentile** — the empirical percentile of the
+#' * **surface-position percentile** -- the empirical percentile of the
 #'   observed coefficient against the calibrated reference surface at
 #'   the study's `(k, N, pi_hat)`.
-#' * **four-band label** — the qualitative tier (`Poor` / `Moderate` /
+#' * **four-band label** -- the qualitative tier (`Poor` / `Moderate` /
 #'   `Strong` / `Excellent`) mapped from `q_hat` (the operating-quality
 #'   projection onto the `Se = Sp` diagonal) via the partition
 #'   `c(0.5, 0.625, 0.75, 0.875, 1.0)`.
-#' * **delta-hat (`delta_hat`) stability flag** — the cross-coefficient
+#' * **delta-hat (`delta_hat`) stability flag** -- the cross-coefficient
 #'   percentile spread (in pp) with three tiers `aligned` / `caution` /
-#'   `divergent` at NP-motivated size-alpha thresholds `c(9.25, 11.75)` (paper §3.2,
+#'   `divergent` at NP-motivated size-alpha thresholds `c(9.25, 11.75)` (paper Sec.3.2,
 #'   App G operating characteristics). When `divergent`, the band is
 #'   suppressed and per-rater Se/Sp from a latent-class fit are
 #'   reported instead.

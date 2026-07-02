@@ -18,6 +18,6 @@ A character vector (one element per line).
 }
 \description{
 Returns the four-field Report Card rendered as a character vector, one
-line per element. Used by \code{\link[=print.grass_card]{print.grass_card()}} and by downstream embedders
+line per element. Used by \code{print.grass_card()} and by downstream embedders
 (Markdown, knitr) that want the lines as data.
 }

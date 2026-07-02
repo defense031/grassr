@@ -14,17 +14,17 @@ conventions as \code{\link{grass_report}}.}
 
 \item{axis}{Character; \code{"inter"} (default) or \code{"intra"}.
 The intra-axis path treats the columns of \code{ratings} as
-per-rater viewing pairs; see paper §3.3 intra-rater section.}
+per-rater viewing pairs; see paper Sec.3.3 intra-rater section.}
 }
 \value{
 An object of class \code{c("grass_pairwise", "list")} with
 fields:
 \itemize{
 \item \code{pabak_matrix} --- \eqn{k \times k} symmetric numeric
-matrix; \eqn{[i, j]} is \eqn{\PABAK_{ij}}, the diagonal is 1.
+matrix; \eqn{[i, j]} is \eqn{\mathrm{PABAK}_{ij}}, the diagonal is 1.
 \item \code{percentile_matrix} --- \eqn{k \times k} symmetric
 numeric (0--100); \eqn{[i, j]} is the surface percentile of
-\eqn{\PABAK_{ij}} on the \eqn{k = 2} reference at the pair's
+\eqn{\mathrm{PABAK}_{ij}} on the \eqn{k = 2} reference at the pair's
 observed marginal. Diagonal is \code{NA}.
 \item \code{marginal_matrix} --- \eqn{k \times k} symmetric
 numeric; \eqn{[i, j]} is \eqn{\hat\pi_{+, ij}}. Diagonal is

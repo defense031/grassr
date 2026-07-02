@@ -1,3 +1,49 @@
+# grass 0.6.0
+
+First CRAN release. Two behavioral changes and a legacy-API removal,
+plus CRAN compliance fixes.
+
+## Behavioral change — Krippendorff's alpha removed from the Report Card panel and delta-hat
+
+In the binary fully-crossed designs this package targets, Krippendorff's
+alpha coincides with Fleiss' kappa asymptotically (median absolute
+difference 0.00024 across the 10,140-cell calibration grid; the
+asymptotic argument is in the accompanying paper's Appendix A.2). The
+alpha row added no information to the Report Card and its
+small-sample deviation from Fleiss' kappa could tip borderline
+delta-hat readings across a calibrated threshold on noise alone. As of
+0.6.0:
+
+* `compute_panel()` no longer returns `krippendorff_a`; the Report Card
+  panel is PABAK / AC1 / Cohen's kappa at k = 2 and PABAK / AC1 /
+  Fleiss' kappa / ICC at k >= 3.
+* `delta_hat` is the surface-percentile spread over PABAK, mean AC1,
+  and Fleiss' kappa. The bundled per-(k, N) thresholds hold for the
+  3-coefficient spread (sensitivity check: sub-pp shift, within MC-SE).
+* `obs_krippendorff_alpha()` is newly exported for users who need the
+  value for cross-study comparison, and
+  `position_on_surface(metric = "krippendorff_a")` still positions it
+  on its closed-form reference.
+
+## Legacy API removed
+
+The pre-0.2.0 `grass_result` object and its consumers were deprecated
+at 0.2.0 and have been unreachable from the public API since then (no
+exported constructor produced a `grass_result`). Removed:
+`grass_format_report()`, `grass_methods()`, `grass_report_by()`,
+`print.grass_result()`, `summary.grass_result()`,
+`tidy.grass_result()`, `as.data.frame.grass_result()`. The modern equivalents are
+`print(grass_report(Y))`, `summary()`, `as.data.frame()`, and the
+Methods-paragraph templates in the reporting-card vignette.
+
+## CRAN compliance
+
+* All R sources ASCII-clean; Rd math fixed in `pairwise_agreement`;
+  broken Rd cross-links resolved.
+* `bootstrap_delta_B` argument documented.
+* ggplot2 NSE column names declared via `globalVariables()`.
+* DESCRIPTION rewritten (placeholder self-citation removed).
+
 # grass 0.5.2
 
 Bug-fix and sysdata-correction release. The v0.5.0 / v0.5.1 bundled

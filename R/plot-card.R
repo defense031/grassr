@@ -1,11 +1,11 @@
-# plot.grass_card — multi-view S3 method for the v0.2.0 Report Card.
+# plot.grass_card -- multi-view S3 method for the v0.2.0 Report Card.
 #
 # Six views, all returning ggplot objects (or a patchwork composite for
 # `type = "diagnostic"`). The flagship "surface" view is a 2D heatmap of
 # E[primary metric] over (M_1, q) at the study's (k, N), with the observation
 # pinned and dotted band boundaries at q in {0.5, 0.625, 0.75, 0.875, 1.0}.
 #
-# Closed-form expectations for non-ICC metrics follow paper2 §6.1
+# Closed-form expectations for non-ICC metrics follow paper2 Sec.6.1
 # (paper2/code/04_reference_closed_form.R is the reference implementation;
 # we reimplement the large-N closed forms inline here so the package has no
 # project-path runtime dependency). For ICC we prefer
@@ -30,8 +30,8 @@ check_patchwork <- function() {
 # under F). pi_+ = (1 - q) + (2 q - 1) * M_1.
 #
 # These reduce to F-only-through-pi_+ for the four agreement-family metrics
-# (PABAK, Fleiss kappa, mean-pairwise AC1, Krippendorff alpha) — see paper2
-# §6.1, App A.2-A.3.
+# (PABAK, Fleiss kappa, mean-pairwise AC1, Krippendorff alpha) -- see paper2
+# Sec.6.1, App A.2-A.3.
 
 .cf_pi_plus <- function(q, M1) (1 - q) + (2 * q - 1) * M1
 
@@ -102,7 +102,7 @@ check_patchwork <- function() {
 #' rather than a fitted [grass_report()] result. The intended use case is
 #' prospective study design: a practitioner planning a multi-rater study at
 #' design `(pi_hat, k, N)` can ask "what does my reference surface look
-#' like for this metric, before I collect data?" — and `plot_surface()`
+#' like for this metric, before I collect data?" -- and `plot_surface()`
 #' answers without requiring a rating matrix.
 #'
 #' The plot is a heatmap of the closed-form expectation
@@ -151,10 +151,10 @@ check_patchwork <- function() {
 #' @examples
 #' \donttest{
 #' if (requireNamespace("ggplot2", quietly = TRUE)) {
-#'   # Bare surface — what does PABAK's reference look like?
+#'   # Bare surface -- what does PABAK's reference look like?
 #'   plot_surface("pabak")
 #'
-#'   # Mark a design context (no observed value yet — pre-data).
+#'   # Mark a design context (no observed value yet -- pre-data).
 #'   plot_surface("fleiss_kappa", pi_hat = 0.30, k = 5, N = 200)
 #'
 #'   # Pin a hypothetical observation on the surface.
@@ -308,7 +308,7 @@ plot_surface <- function(metric,
 
   grid <- .surface_grid(primary_for_grid)
   if (is.null(grid)) {
-    # No closed form available for this metric — fall back to PABAK.
+    # No closed form available for this metric -- fall back to PABAK.
     fallback_note <- sprintf(
       "No closed-form surface for '%s'; displaying PABAK surface.", primary)
     primary_for_grid <- "pabak"
@@ -678,8 +678,8 @@ plot_surface <- function(metric,
     pabak      = as.numeric(pab),
     stringsAsFactors = FALSE
   )
-  # Cell label: surface percentile (off-diagonal); "—" on the diagonal.
-  df$label <- ifelse(rows == cols, "—",
+  # Cell label: surface percentile (off-diagonal); "--" on the diagonal.
+  df$label <- ifelse(rows == cols, "--",
                      sprintf("%.0f%%", df$percentile))
   # Secondary label: PABAK_ij in parentheses (off-diagonal).
   df$pabak_label <- ifelse(rows == cols, "",
@@ -758,22 +758,22 @@ plot_surface <- function(metric,
 #'
 #' @param x A `grass_card` object.
 #' @param type One of:
-#'   - `"surface"` (default) — 2D heatmap of E[primary metric] over (M_1, q)
+#'   - `"surface"` (default) -- 2D heatmap of the expected primary metric over (M_1, q)
 #'     at the study's (k, N), with the observation pinned and dotted band
 #'     contours at q in {0.5, 0.625, 0.75, 0.875, 1.0}.
-#'   - `"panel"` — forest plot of all panel coefficients on the percentile
+#'   - `"panel"` -- forest plot of all panel coefficients on the percentile
 #'     axis (0-100 pp), so the cross-coefficient spread is visible.
-#'   - `"thermometer"` — colored gauge for `delta_hat` with the
+#'   - `"thermometer"` -- colored gauge for `delta_hat` with the
 #'     aligned/caution/divergent thresholds shown.
-#'   - `"intervals"` — forest plot of observed coefficients with 95%
+#'   - `"intervals"` -- forest plot of observed coefficients with 95%
 #'     Wilson-logit CIs.
-#'   - `"per_rater"` — forest plot of per-rater Ŝe and Ŝp (latent-class
+#'   - `"per_rater"` -- forest plot of per-rater Se-hat and Sp-hat (latent-class
 #'     bootstrap CIs). Errors when `card$per_rater` is `NULL`.
-#'   - `"pairwise"` — k x k tile heatmap of pairwise surface percentiles
+#'   - `"pairwise"` -- k x k tile heatmap of pairwise surface percentiles
 #'     (cell label = percentile in pp; parenthetical label = PABAK_ij). Only
 #'     available when `card$delta$flag == "divergent"` (auto-populated by
 #'     [grass_report()] via [pairwise_agreement()]).
-#'   - `"diagnostic"` — `patchwork` composite of "panel" + "thermometer" +
+#'   - `"diagnostic"` -- `patchwork` composite of "panel" + "thermometer" +
 #'     "pairwise" (under divergent) / "per_rater" / "intervals".
 #' @param ... Currently unused.
 #'

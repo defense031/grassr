@@ -29,17 +29,6 @@ print.summary.grass_metrics <- function(x, digits = 4, ...) {
   invisible(x)
 }
 
-#' @export
-summary.grass_result <- function(object, ...) {
-  structure(object, class = c("summary.grass_result", class(object)))
-}
-
-#' @export
-print.summary.grass_result <- function(x, digits = 4, ...) {
-  print.grass_result(x, digits = digits)
-  invisible(x)
-}
-
 # --------------------------------------------------------------------------
 # summary.grass_card -- v0.2.0 Target-2 Report Card detailed summary
 # --------------------------------------------------------------------------

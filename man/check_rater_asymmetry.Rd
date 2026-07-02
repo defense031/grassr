@@ -30,7 +30,7 @@ in \verb{[0, 1]}. Same length as \code{se}.}
 (\code{unsafe}). Default \code{0.10}.}
 
 \item{summary}{How to reduce per-rater gaps to the scalar \code{delta_hat}.
-\code{"max"} (default, conservative tripwire — any single rater above the
+\code{"max"} (default, conservative tripwire -- any single rater above the
 threshold triggers escalation) or \code{"mean"} (panel-average asymmetry).
 The framework uses \code{"max"}; \code{"mean"} is provided for sensitivity
 checks.}
@@ -57,25 +57,25 @@ as the primary summary.
 }
 \details{
 This function is appropriate when the user already has per-rater
-Se/Sp estimates — typically from a Hui-Walter / Dawid-Skene latent-class
+Se/Sp estimates -- typically from a Hui-Walter / Dawid-Skene latent-class
 fit (see \code{\link[=latent_class_fit]{latent_class_fit()}}), a simulation with known truth, or a
 reference-standard comparison. It is the function called inside the
 divergent branch of the new \code{\link[=check_asymmetry]{check_asymmetry()}} / \code{grass_report()}
 workflow when per-rater (Se, Sp) become available.
 
 For ratings-matrix input (when only the N x k binary ratings are
-available, no per-rater Se/Sp), use \code{\link[=check_asymmetry]{check_asymmetry()}} instead — it
+available, no per-rater Se/Sp), use \code{\link[=check_asymmetry]{check_asymmetry()}} instead -- it
 computes the cross-coefficient percentile spread without requiring
 identifiability of per-rater (Se, Sp).
 
 Tier thresholds follow the three-tier architecture:
 \itemize{
-\item \strong{Tier 1 — \code{ok}} (\code{delta_hat < 0.05}): diagonal default. Report
+\item \strong{Tier 1 -- \code{ok}} (\code{delta_hat < 0.05}): diagonal default. Report
 \verb{q_hat +/- SE} plus EDR and EMR_panel without per-rater disclosure.
-\item \strong{Tier 2 — \code{caution}} (\verb{0.05 <= delta_hat < 0.10}): diagonal +
+\item \strong{Tier 2 -- \code{caution}} (\verb{0.05 <= delta_hat < 0.10}): diagonal +
 diagnostic. Report \verb{q_hat +/- SE} with a caution flag and the
 \code{delta_hat} value.
-\item \strong{Tier 3 — \code{unsafe}} (\code{delta_hat >= 0.10}): full latent-class.
+\item \strong{Tier 3 -- \code{unsafe}} (\code{delta_hat >= 0.10}): full latent-class.
 \code{q_hat} is withheld as primary; report per-rater \verb{(Se_j, Sp_j)} via a
 Hui-Walter / Dawid-Skene fit. PABAK's prevalence-flatness was
 conditional on \code{Se = Sp}; at Tier 3 that condition is visibly broken.
@@ -89,13 +89,13 @@ comparison. Passing raw \code{table()} off-diagonals as \code{se} / \code{sp} is
 \strong{wrong} and the function cannot detect the error.
 }
 \examples{
-# Tier 1: symmetric raters — safe to use q_hat as primary
+# Tier 1: symmetric raters -- safe to use q_hat as primary
 check_rater_asymmetry(se = c(0.86, 0.88, 0.84), sp = c(0.85, 0.87, 0.86))
 
 # Tier 2: one rater pressing the Se = Sp assumption
 check_rater_asymmetry(se = c(0.90, 0.88, 0.92), sp = c(0.82, 0.86, 0.85))
 
-# Tier 3: within-rater Se-favoring regime — requires latent-class fit
+# Tier 3: within-rater Se-favoring regime -- requires latent-class fit
 check_rater_asymmetry(se = c(0.95, 0.93, 0.94), sp = c(0.78, 0.80, 0.79))
 }
 \seealso{

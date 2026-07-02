@@ -13,8 +13,8 @@ clamped with a warning.}
 \item{reference_level}{One of \code{0.70}, \code{0.80}, \code{0.85}, \code{0.90}. Default
 \code{0.85}.}
 
-\item{quality}{Deprecated alias. \code{"high"} → \code{reference_level = 0.85},
-\code{"medium"} → \code{0.70}. Emits a one-time soft deprecation warning.}
+\item{quality}{Deprecated alias. \code{"high"} -> \code{reference_level = 0.85},
+\code{"medium"} -> \code{0.70}. Emits a one-time soft deprecation warning.}
 }
 \value{
 A \code{grass_reference} S3 object containing a 3-row data.frame

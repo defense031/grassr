@@ -3,7 +3,7 @@
 # and positions it against the DGP-calibrated reference surface at that
 # design. Returns the surface percentile, four-band sampling probabilities,
 # the modal band adjective, and a confidence qualifier. See
-# paper2/review/framework_notes.md §§0.1-0.3 (thesis) and §0.6.5 (label
+# paper2/review/framework_notes.md Sec.Sec.0.1-0.3 (thesis) and Sec.0.6.5 (label
 # construction) for the spec this function operationalises.
 
 #' Position an observed agreement coefficient on its DGP-calibrated surface
@@ -23,7 +23,7 @@
 #' `q_hat` survives as internal scaffolding (surface parameterization and
 #' delta-method SE carrier) rather than as the labeled output.
 #'
-#' @section Label construction (§0.6.5):
+#' @section Label construction (Sec.0.6.5):
 #' Four adjacent-exclusive bands partition the above-chance quality range
 #' `q in [0.5, 1.0]` on equal width: **Poor** `[0.5, 0.625)`, **Moderate**
 #' `[0.625, 0.75)`, **Strong** `[0.75, 0.875)`, **Excellent**
@@ -32,9 +32,9 @@
 #'
 #' The confidence qualifier is derived from the modal band's sampling
 #' probability `p_star`:
-#' - `decisive` — `p_star >= 0.90`
-#' - `moderate` — `p_star in [0.60, 0.90)`
-#' - `weak` — `p_star < 0.60`
+#' - `decisive` -- `p_star >= 0.90`
+#' - `moderate` -- `p_star in [0.60, 0.90)`
+#' - `weak` -- `p_star < 0.60`
 #'
 #' @section Sampling-probability construction:
 #' Two methods are implemented.
@@ -130,7 +130,7 @@
 #' @param surface_data Optional. A list with one or more of the following
 #'   components, used when `method = "empirical"`:
 #'   - `per_rep`: a matrix of per-rep metric values at the closest simulated
-#'     `(q, pi_hat, k, N)` cell — this is the empirical sampling distribution
+#'     `(q, pi_hat, k, N)` cell -- this is the empirical sampling distribution
 #'     at that design. Used for the percentile of `obs_value`.
 #'   - `q_grid_per_rep`: a matrix of dimension `n_q` x `n_rep` giving the
 #'     empirical sampling distribution of the metric at each q-grid point,
@@ -142,18 +142,18 @@
 #' @param ... Reserved for future extension.
 #'
 #' @return A list of class `grass_surface_position` with fields:
-#' - `observed_value` — echo of `obs_value`
-#' - `metric` — echo of `metric`
-#' - `design` — `list(pi_hat, k, N)`
-#' - `q_hat` — inverted rater quality (internal scaffold)
-#' - `se_q_hat` — delta-method SE of `q_hat`
-#' - `percentile` — surface percentile of `obs_value` in `[0, 1]`
-#' - `band_probabilities` — named numeric vector of `P(q in band_j)`
-#' - `modal_band` — integer index `1..4` of the highest-probability band
-#' - `modal_band_label` — character adjective at the modal band
-#' - `confidence` — `"decisive"` / `"moderate"` / `"weak"`
-#' - `sampling_method` — which method was used
-#' - `notes` — character vector of caveats (e.g. nearest-neighbor gaps)
+#' - `observed_value` -- echo of `obs_value`
+#' - `metric` -- echo of `metric`
+#' - `design` -- `list(pi_hat, k, N)`
+#' - `q_hat` -- inverted rater quality (internal scaffold)
+#' - `se_q_hat` -- delta-method SE of `q_hat`
+#' - `percentile` -- surface percentile of `obs_value` in `[0, 1]`
+#' - `band_probabilities` -- named numeric vector of `P(q in band_j)`
+#' - `modal_band` -- integer index `1..4` of the highest-probability band
+#' - `modal_band_label` -- character adjective at the modal band
+#' - `confidence` -- `"decisive"` / `"moderate"` / `"weak"`
+#' - `sampling_method` -- which method was used
+#' - `notes` -- character vector of caveats (e.g. nearest-neighbor gaps)
 #'
 #' @seealso [check_asymmetry()] for the companion Column A tier (rater
 #'   asymmetry model-safety).
@@ -171,7 +171,7 @@
 #'   metric = "pabak", pi_hat = mean(Y), k = ncol(Y), N = nrow(Y)
 #' )
 #'
-#' # Delta-method positioning — no sim data needed, summary-stats only.
+#' # Delta-method positioning -- no sim data needed, summary-stats only.
 #' r <- position_on_surface(
 #'   obs_value = 0.62,
 #'   metric    = "pabak",
@@ -216,7 +216,7 @@ position_on_surface <- function(obs_value = NULL,
     is.null(k) || is.null(N)
   if (!is.null(ratings) && needs_autoderive) {
     # Detect whether `ratings` is a long data.frame (subject/rating columns)
-    # bound for the ICC `glmer` fit only — that form can't be normalized to
+    # bound for the ICC `glmer` fit only -- that form can't be normalized to
     # an N x k matrix here. In that case we don't auto-derive; the caller
     # must still provide the missing scalars.
     is_long_df <- is.data.frame(ratings) &&
@@ -875,7 +875,7 @@ lookup_icc_reference_curve <- function(pi_hat, q_grid, ratings = NULL) {
 # This is the correct reference for practitioners whose obs_ICC was computed
 # via glmer (the standard workflow). The oracle reference routinely over-
 # shoots the practitioner's scale due to the GLMM gap (framework_notes.md
-# §0.4.iii); the fitted reference pulls the curve up to match glmer output.
+# Sec.0.4.iii); the fitted reference pulls the curve up to match glmer output.
 #
 # Returns NULL when N is outside the fitted sim range ({50, 200}) or the
 # bundled sysdata is missing; caller falls back to oracle with a note.

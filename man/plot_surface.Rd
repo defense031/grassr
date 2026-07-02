@@ -53,7 +53,7 @@ Renders the same context-conditioned reference surface that
 rather than a fitted \code{\link[=grass_report]{grass_report()}} result. The intended use case is
 prospective study design: a practitioner planning a multi-rater study at
 design \verb{(pi_hat, k, N)} can ask "what does my reference surface look
-like for this metric, before I collect data?" — and \code{plot_surface()}
+like for this metric, before I collect data?" -- and \code{plot_surface()}
 answers without requiring a rating matrix.
 }
 \details{
@@ -77,10 +77,10 @@ and (if available) a fitted card via \code{plot.grass_card(type = "surface")}.
 \examples{
 \donttest{
 if (requireNamespace("ggplot2", quietly = TRUE)) {
-  # Bare surface — what does PABAK's reference look like?
+  # Bare surface -- what does PABAK's reference look like?
   plot_surface("pabak")
 
-  # Mark a design context (no observed value yet — pre-data).
+  # Mark a design context (no observed value yet -- pre-data).
   plot_surface("fleiss_kappa", pi_hat = 0.30, k = 5, N = 200)
 
   # Pin a hypothetical observation on the surface.

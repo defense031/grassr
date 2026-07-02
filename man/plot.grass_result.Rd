@@ -19,7 +19,7 @@
 
 \item{type}{Either \code{"landing"} (default) or \code{"regime"}.}
 
-\item{labels}{Where to identify the three curves: \code{"auto"} (default —
+\item{labels}{Where to identify the three curves: \code{"auto"} (default --
 inline at the right edge unless curves are too close together),
 \code{"inline"}, or \code{"legend"}.}
 

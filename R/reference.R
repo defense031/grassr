@@ -21,8 +21,8 @@
 #'   clamped with a warning.
 #' @param reference_level One of `0.70`, `0.80`, `0.85`, `0.90`. Default
 #'   `0.85`.
-#' @param quality Deprecated alias. `"high"` → `reference_level = 0.85`,
-#'   `"medium"` → `0.70`. Emits a one-time soft deprecation warning.
+#' @param quality Deprecated alias. `"high"` -> `reference_level = 0.85`,
+#'   `"medium"` -> `0.70`. Emits a one-time soft deprecation warning.
 #'
 #' @return A `grass_reference` S3 object containing a 3-row data.frame
 #'   (one row per metric) with columns `metric`, `reference`, `J`,

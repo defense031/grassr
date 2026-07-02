@@ -25,7 +25,7 @@ normalize_ratings <- function(ratings) {
          call. = FALSE)
   }
 
-  # Reject 2x2 count tables — ambiguous reconstruction.
+  # Reject 2x2 count tables -- ambiguous reconstruction.
   if (is.matrix(ratings) && all(dim(ratings) == c(2, 2)) &&
       !is.null(rownames(ratings)) &&
       identical(rownames(ratings), c("0", "1")) &&
@@ -158,14 +158,15 @@ compute_tau2_hat <- function(Y) {
 
 #' Compute the observed coefficient panel
 #'
-#' At `k = 2`: returns `pabak`, `ac1`, `kappa` (Cohen's), `krippendorff_a`.
+#' At `k = 2`: returns `pabak`, `ac1`, `kappa` (Cohen's).
 #' Cohen's kappa, PABAK, and AC1 at `k = 2` are derived from the existing
 #' `compute_agreement_metrics()` 2x2 path so the package never has two
 #' diverging implementations of the same coefficient.
 #'
-#' At `k >= 3`: returns `pabak`, `ac1`, `fleiss_kappa`, `krippendorff_a`,
+#' At `k >= 3`: returns `pabak`, `ac1`, `fleiss_kappa`,
 #' `icc`. (`icc` may be `NA_real_` if `lme4` is not installed or `glmer`
-#' fails; an `attr(., "note")` flags why.)
+#' fails; an `attr(., "note")` flags why.) Krippendorff's alpha left the
+#' panel at v0.6.0; see [obs_krippendorff_alpha()] for manual computation.
 #'
 #' @param ratings N x k binary matrix / data.frame / k=2 list.
 #' @param axis "inter" (default) or "intra". Phase 1A treats both the same;
@@ -185,15 +186,13 @@ compute_panel <- function(ratings, axis = "inter", occasion = NULL) {
     out <- list(
       pabak          = unname(base[["PABAK"]]),
       ac1            = unname(base[["AC1"]]),
-      kappa          = unname(base[["kappa"]]),
-      krippendorff_a = obs_krippendorff_alpha(Y)
+      kappa          = unname(base[["kappa"]])
     )
   } else {
     out <- list(
       pabak          = obs_mean_pairwise_pabak(Y),
       ac1            = obs_mean_pairwise_ac1(Y),
       fleiss_kappa   = obs_fleiss_kappa(Y),
-      krippendorff_a = obs_krippendorff_alpha(Y),
       icc            = obs_icc_glmer(Y)
     )
   }
@@ -218,7 +217,7 @@ compute_panel <- function(ratings, axis = "inter", occasion = NULL) {
 #' @param pi_hat Observed positive rate in [0, 1].
 #' @param axis "inter" (default) or "intra".
 #' @return Single string in
-#'   `c("pabak", "ac1", "fleiss_kappa", "krippendorff_a", "icc")`.
+#'   `c("pabak", "ac1", "fleiss_kappa", "icc")`.
 #' @keywords internal
 #' @noRd
 pick_primary_coefficient <- function(k, pi_hat, axis = "inter") {

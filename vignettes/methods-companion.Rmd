@@ -80,12 +80,12 @@ coefficient value.
 
 ## 3. ICC and the subject-prevalence distribution
 
-The Report Card prints ICC alongside PABAK, AC1, Fleiss $\kappa$, and
-Krippendorff $\alpha$, but with a `[distribution-sensitive]` marker,
+The Report Card prints ICC alongside PABAK, AC1, and Fleiss
+$\kappa$, but with a `[distribution-sensitive]` marker,
 and ICC is excluded from the cross-coefficient stability signal
 $\hat\delta$ by construction. This section explains why.
 
-The four agreement-family coefficients each have a closed-form
+The agreement-family coefficients each have a closed-form
 expectation that depends only on the panel marginal $\hat\pi_+$ and
 the rater quality $q$. ICC depends additionally on the full
 distribution $F$ of subject-level positive probabilities $p_i$ across

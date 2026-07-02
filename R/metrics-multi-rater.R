@@ -107,10 +107,15 @@ obs_mean_pairwise_ac1 <- function(Y) {
 #' Returns `NA_real_` (with a `note` attribute) if the design is degenerate
 #' (no positives or no negatives in `Y`).
 #'
+#' As of v0.6.0, alpha is not part of the Report Card panel or the
+#' `delta_hat` coefficient set: in the binary fully-crossed case it
+#' coincides with Fleiss' kappa asymptotically (median absolute difference
+#' 0.00024 across the 10,140-cell calibration grid). This function is
+#' exported for users who need the value for cross-study comparison.
+#'
 #' @param Y N x k integer matrix in \{0L, 1L\}.
 #' @return Single numeric.
-#' @keywords internal
-#' @noRd
+#' @export
 obs_krippendorff_alpha <- function(Y) {
   .check_Y_multi(Y)
   k <- ncol(Y)

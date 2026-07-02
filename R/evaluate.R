@@ -16,9 +16,8 @@
 #'    derive `pi_hat = mean(Y)`, `k = ncol(Y)`, `N = nrow(Y)`. Validate
 #'    `k >= 2`; warn at `N < 10`; note at `N < 30`.
 #' 2. Compute the panel of observed coefficients
-#'    ([compute_panel()] internal): at `k = 2`, PABAK / AC1 / Cohen's
-#'    kappa / Krippendorff alpha; at `k >= 3`, PABAK / AC1 / Fleiss kappa /
-#'    Krippendorff alpha / ICC.
+#'    (`compute_panel()`, internal): at `k = 2`, PABAK / AC1 / Cohen's
+#'    kappa; at `k >= 3`, PABAK / AC1 / Fleiss kappa / ICC.
 #' 3. For each panel coefficient, position the observed value on its
 #'    DGP-calibrated reference surface via [position_on_surface()].
 #' 4. Pick the primary coefficient via Table 2 (`metric = "auto"`) or accept
@@ -37,19 +36,25 @@
 #'   `?normalize_ratings` for accepted shapes.
 #' @param axis One of `"inter"` (default) or `"intra"`. Selects the surface
 #'   family. The intra-axis path uses `occasion` to identify viewings.
-#' @param metric One of `"auto"` (default; calls [pick_primary_coefficient()]
-#'   per Table 2), `"pabak"`, `"ac1"`, `"fleiss_kappa"`, `"krippendorff_a"`,
+#' @param metric One of `"auto"` (default; calls `pick_primary_coefficient()`
+#'   per Table 2), `"pabak"`, `"ac1"`, `"fleiss_kappa"`,
 #'   `"icc"`. Selects which coefficient is the headline in the printed Report
-#'   Card; the full panel is always populated.
+#'   Card; the full panel is always populated. (Krippendorff's alpha left
+#'   the Report Card panel at v0.6.0; it coincides with Fleiss' kappa in
+#'   the binary fully-crossed case. Use [obs_krippendorff_alpha()] or
+#'   [position_on_surface()] to compute it manually.)
 #' @param occasion Reserved for `axis = "intra"`; ignored when `axis = "inter"`.
 #' @param bands Numeric length-5 partition on `q in [0.5, 1]`. Default
 #'   `c(0.5, 0.625, 0.75, 0.875, 1.0)`.
 #' @param band_labels Character length-4 labels for the bands. Default
 #'   `c("Poor", "Moderate", "Strong", "Excellent")`.
 #' @param delta_thresholds Length-2 numeric vector `c(caution, divergent)`
-#'   in percentile points. Default `c(9.25, 11.75)` (paper §3.2, NP-motivated size-alpha).
+#'   in percentile points. Default `c(9.25, 11.75)` (paper Sec.3.2, NP-motivated size-alpha).
 #' @param bootstrap_B Integer; bootstrap replicates for the divergent-branch
 #'   latent-class CIs. Default `1000L`. Set lower for fast tests.
+#' @param bootstrap_delta_B Integer; subject-resampling replicates for the
+#'   optional bootstrap distribution of `delta_hat`. Default `0L` (off);
+#'   values below `50L` are treated as off.
 #' @param verbose Logical; emit progress messages on long calls. Default
 #'   `FALSE`.
 #' @param ... Reserved for future extension.
@@ -57,7 +62,7 @@
 #' @return An object of class `c("grass_card", "list")` with fields
 #'   `sample`, `coefficient`, `delta`, `panel`, `per_rater`, `surface`,
 #'   `call`, `grass_version`, `timestamp`, `inputs`, `notes`. See the
-#'   v0.2.0 paper-alignment design doc §3.1 for the full structure.
+#'   v0.2.0 paper-alignment design doc Sec.3.1 for the full structure.
 #'
 #'   **Percentile units.** `card$coefficient$surface_percentile` and
 #'   `card$panel$surface_percentile` are reported on the 0-100 scale
@@ -150,7 +155,6 @@ grass_report <- function(ratings,
     pabak          = "pabak",
     ac1            = "mean_ac1",
     fleiss_kappa   = "fleiss_kappa",
-    krippendorff_a = "krippendorff_a",
     icc            = "icc"
   )
   panel_keep <- intersect(names(panel_obs), names(surface_metric_for))
@@ -266,7 +270,7 @@ grass_report <- function(ratings,
     )
     per_rater <- lc$per_rater
 
-    # Recommended primary deliverable under divergent (paper §3.3): the
+    # Recommended primary deliverable under divergent (paper Sec.3.3): the
     # pairwise PABAK matrix on the k = 2 surface plus per-rater pooled-
     # reference Se/Sp from the panel-majority of the other k - 1 raters.
     # The latent-class fit above is kept alongside as the alternative
@@ -283,7 +287,7 @@ grass_report <- function(ratings,
       })
   } else if (identical(flag, "caution")) {
     notes <- c(notes,
-      "Caution: cross-coefficient spread is approaching the divergent threshold. Consider running pairwise_agreement(ratings = Y) for a pairwise PABAK matrix and per-rater pooled-reference Se/Sp; see paper §3.3.")
+      "Caution: cross-coefficient spread is approaching the divergent threshold. Consider running pairwise_agreement(ratings = Y) for a pairwise PABAK matrix and per-rater pooled-reference Se/Sp; see paper Sec.3.3.")
   }
 
   # ---- Assemble the panel data.frame ------------------------------------
@@ -340,14 +344,14 @@ grass_report <- function(ratings,
     character(1)
   )
 
-  # in_delta_hat = TRUE for agreement-family coefficients (PABAK, AC1, Fleiss,
-  # alpha) which contribute to delta_hat under the v0.5.0 scope decision; ICC
+  # in_delta_hat = TRUE for agreement-family coefficients (PABAK, AC1,
+  # Fleiss) which contribute to delta_hat under the v0.5.0 scope decision
+  # (alpha removed at v0.6.0; see asymmetry.R header); ICC
   # is always FALSE because its reference surface depends on the full
   # subject-prevalence distribution F rather than (q, pi_+) and would
   # inflate delta_hat under distribution misspecification. See asymmetry.R
   # `.DELTA_AGREEMENT_COEFS` for the source of truth on the coefficient set.
-  in_delta_set <- names(panel_obs) %in% c("pabak", "mean_ac1",
-                                          "fleiss_kappa", "krippendorff_a")
+  in_delta_set <- names(panel_obs) %in% .DELTA_AGREEMENT_COEFS
   panel_df <- data.frame(
     coefficient            = names(panel_obs),
     observed_value         = unlist(panel_obs, use.names = FALSE),
@@ -366,7 +370,7 @@ grass_report <- function(ratings,
   # ---- Reference-surface artifacts (for plot() / audit) -----------------
   # position_on_surface() does not currently surface its 501-point q_grid or
   # the reference curve in its return value, so capture what's analogous
-  # (NULL placeholders) per the design doc §3.1 NOTE.
+  # (NULL placeholders) per the design doc Sec.3.1 NOTE.
   surface_payload <- list(
     q_grid           = positions[[primary]]$q_grid %||% NULL,
     reference_curves = lapply(positions, function(p) p$ref_curve %||% NULL),
@@ -458,7 +462,7 @@ estimate_prevalence <- function(tab) {
 }
 
 # Internal: classify the (PI, BI) regime and attach the structural
-# implication — what the mathematics forces on the metrics, stated as fact.
+# implication -- what the mathematics forces on the metrics, stated as fact.
 #   - balanced              : both indices small
 #   - prevalence-dominated  : PI meaningfully exceeds BI
 #   - bias-dominated        : BI meaningfully exceeds PI

@@ -25,7 +25,7 @@ family.}
 identifying viewing occasion); ignored when \code{axis = "inter"}.}
 
 \item{delta_thresholds}{Length-2 numeric vector \code{c(caution, divergent)}
-in percentile points. Default \code{c(9.25, 11.75)} from paper §3.2 (NP
+in percentile points. Default \code{c(9.25, 11.75)} from paper Sec.3.2 (NP
 optimum at alpha = 0.05 / 0.01).}
 
 \item{...}{Forwarded to \code{\link[=position_on_surface]{position_on_surface()}} (e.g. \code{bands},
@@ -46,15 +46,29 @@ unavailability)
 }
 \description{
 \code{check_asymmetry()} takes an N x k binary ratings matrix and returns a
-scalar \code{delta_hat} (in percentile points, "pp") summarising the spread
-across the panel of agreement coefficients (PABAK, AC1, Fleiss kappa,
-Krippendorff alpha, ICC) when each is positioned on its calibrated
-reference surface. A wide spread signals that the panel is reporting
-inconsistent stories about the same data — a structural symptom of
-shared rater bias or other Se != Sp asymmetry — and routes the user to
-the per-rater latent-class diagnostic.
+scalar \code{delta_hat} (in percentile points, "pp"): the max-min spread of
+surface percentiles across the four agreement coefficients (PABAK,
+AC1, Fleiss kappa, Krippendorff alpha) when each is positioned on its
+calibrated reference surface. ICC is reported on the panel rows but
+excluded from \code{delta_hat} (its reference is distribution-sensitive in
+ways the agreement family is not).
 }
 \details{
+\code{delta_hat} is a \emph{split-bias} detector. It fires when raters tilt in
+different directions across (Se, Sp) -- e.g., one rater high-Se / low-Sp,
+another high-Sp / low-Se -- because the four coefficients respond to
+heterogeneous per-rater behavior differently and end up disagreeing on
+where the panel sits on the surface. The framework's other failure
+mode, \emph{shared/uniform bias} (every rater tilts the same direction,
+e.g., a panel trained on one protocol all favoring specificity over
+sensitivity), produces uniform percentile degradation across
+coefficients: small \code{delta_hat}, low minimum surface percentile.
+Shared bias is detected by the panel's minimum surface percentile,
+not by \code{delta_hat}. A divergent flag therefore identifies a specific
+kind of disagreement -- cross-coefficient inversion from heterogeneous
+rater behavior -- and routes the user to the per-rater pairwise PABAK
+matrix and pooled-reference (Se_tilde, Sp_tilde) diagnostic.
+
 Each coefficient is positioned on its reference surface via
 \code{\link[=position_on_surface]{position_on_surface()}}, yielding a percentile in \verb{[0, 100]} pp. The
 panel diagnostic is \code{delta_hat = max(percentile) - min(percentile)},
@@ -88,7 +102,7 @@ the diagnostic. If fewer than two unclamped coefficients remain,
 and the note records the fallback.
 
 Tier thresholds default to \code{c(9.25, 11.75)} pp, the Neyman-Pearson-motivated
-size-alpha cutoffs at \code{alpha = 0.05} and \code{alpha = 0.01} from §3.2 of the
+size-alpha cutoffs at \code{alpha = 0.05} and \code{alpha = 0.01} from Sec.3.2 of the
 GRASS paper (see also App G operating characteristics). The construction is
 NP-optimal within the test class of threshold rules on \code{delta_hat}; it is
 not a likelihood-ratio test on the joint distribution of the panel
@@ -117,7 +131,7 @@ routes the call to \code{\link[=check_rater_asymmetry]{check_rater_asymmetry()}}
 \examples{
 \donttest{
 set.seed(1)
-# Build a 5x200 symmetric panel — should print as 'aligned'.
+# Build a 5x200 symmetric panel -- should print as 'aligned'.
 Y <- matrix(rbinom(5 * 200, 1, 0.30), nrow = 200, ncol = 5)
 check_asymmetry(Y)
 }

@@ -6,7 +6,7 @@
 \title{The grass ecosystem roadmap}
 \description{
 \code{grass} is the binary categorical-agreement submodule of the MEADOW
-framework. Its single headline entry point — \code{\link[=grass_report]{grass_report()}} — takes
+framework. Its single headline entry point -- \code{\link[=grass_report]{grass_report()}} -- takes
 an \verb{N x k} binary rating matrix and returns a \code{grass_card}: a four-field
 Report Card carrying the sample summary, primary coefficient with its
 surface-position percentile, the four-band qualitative label, and the
@@ -34,8 +34,8 @@ reliability on continuous outcomes.
 
 
 MEADOW is the umbrella; each submodule covers one scale type. The
-user-facing API of each submodule is the same — a single rating
-matrix in, a Report Card out — so user code that works on a binary
+user-facing API of each submodule is the same -- a single rating
+matrix in, a Report Card out -- so user code that works on a binary
 panel today will work on a continuous panel once FIELD ships.
 
 \tabular{lll}{
@@ -43,12 +43,12 @@ panel today will work on a continuous panel once FIELD ships.
 GRASS \tab Binary categorical agreement (Cohen's kappa, PABAK, AC1,
 Fleiss kappa, Krippendorff alpha, observed ICC for binary). Surface
 positioning calibrated over \verb{k in \{2,3,5,8,15,25\}} and
-\verb{N in \{50,200,1000\}}. \tab \strong{implemented} in grass v0.2.0 — see
+\verb{N in \{50,200,1000\}}. \tab \strong{implemented} in grass v0.2.0 -- see
 \code{\link[=grass_report]{grass_report()}} \cr
 FIELD \tab Continuous variance-component reliability (Shrout-Fleiss
 ICC family, Lin's CCC, Bland-Altman bounds, generalisability-theory
 variance components). Same Target-2 surface-positioning contract as
-GRASS. \tab planned for v1.0.0 alongside Paper 3 — see
+GRASS. \tab planned for v1.0.0 alongside Paper 3 -- see
 \code{\link[=grass_spec_continuous]{grass_spec_continuous()}} placeholder \cr
 }
 
@@ -64,20 +64,20 @@ to MEADOW = GRASS + FIELD.
 
 The Target-2 contract is the same across submodules:
 \itemize{
-\item \code{\link[=grass_report]{grass_report()}} — primary entry point; rating matrix in,
+\item \code{\link[=grass_report]{grass_report()}} -- primary entry point; rating matrix in,
 \code{grass_card} out. The \code{grass_card} carries the four-field summary
 (sample, primary coefficient with surface percentile, four-band
 label, \code{delta_hat} with stability flag), the full panel of
 coefficients with their bootstrap CIs, and the reference-surface
 artifacts.
-\item \code{\link[=position_on_surface]{position_on_surface()}} — granular access to a single coefficient's
+\item \code{\link[=position_on_surface]{position_on_surface()}} -- granular access to a single coefficient's
 surface percentile, four-band label, and qualifier.
-\item \code{\link[=check_asymmetry]{check_asymmetry()}} — granular access to the cross-coefficient
+\item \code{\link[=check_asymmetry]{check_asymmetry()}} -- granular access to the cross-coefficient
 \code{delta_hat} and three-tier stability flag.
-\item \code{\link[=latent_class_fit]{latent_class_fit()}} — per-rater Se/Sp via Dawid-Skene EM (k >= 3)
+\item \code{\link[=latent_class_fit]{latent_class_fit()}} -- per-rater Se/Sp via Dawid-Skene EM (k >= 3)
 or Hui-Walter bounds (k = 2), populated automatically in the
 divergent branch of \code{\link[=grass_report]{grass_report()}}.
-\item \code{summary()}, \code{as.data.frame()}, \code{plot()} — layered access to the
+\item \code{summary()}, \code{as.data.frame()}, \code{plot()} -- layered access to the
 full underlying panel and the surface-position visualization.
 }
 }
@@ -87,21 +87,21 @@ full underlying panel and the surface-position visualization.
 
 These terms, used throughout the package documentation and printed
 Report Card, come from the merged GRASS binary-rater-reliability
-paper (§§3-4):
+paper (Sec.Sec.3-4):
 \itemize{
-\item \strong{context-conditioned reporting convention} — the principle that
+\item \strong{context-conditioned reporting convention} -- the principle that
 the percentile and band reported for a coefficient must condition on
 \verb{(k, N, pi_hat)}, not on a fixed table.
-\item \strong{surface-position percentile} — the empirical percentile of the
+\item \strong{surface-position percentile} -- the empirical percentile of the
 observed coefficient against the calibrated reference surface at
 the study's \verb{(k, N, pi_hat)}.
-\item \strong{four-band label} — the qualitative tier (\code{Poor} / \code{Moderate} /
+\item \strong{four-band label} -- the qualitative tier (\code{Poor} / \code{Moderate} /
 \code{Strong} / \code{Excellent}) mapped from \code{q_hat} (the operating-quality
 projection onto the \code{Se = Sp} diagonal) via the partition
 \code{c(0.5, 0.625, 0.75, 0.875, 1.0)}.
-\item \strong{delta-hat (\code{delta_hat}) stability flag} — the cross-coefficient
+\item \strong{delta-hat (\code{delta_hat}) stability flag} -- the cross-coefficient
 percentile spread (in pp) with three tiers \code{aligned} / \code{caution} /
-\code{divergent} at NP-motivated size-alpha thresholds \code{c(9.25, 11.75)} (paper §3.2,
+\code{divergent} at NP-motivated size-alpha thresholds \code{c(9.25, 11.75)} (paper Sec.3.2,
 App G operating characteristics). When \code{divergent}, the band is
 suppressed and per-rater Se/Sp from a latent-class fit are
 reported instead.

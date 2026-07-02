@@ -77,7 +77,7 @@ scale_fill_grass_metric <- function(...) {
 # Short interpretive caption for plot subtitles. The `regime` slot on a
 # grass_result carries a bare label ("prevalence-dominated" etc.) that on
 # its own reads as jargon. We append a one-clause interpretation so a
-# reader who has never opened the package help can tell — at a glance —
+# reader who has never opened the package help can tell -- at a glance --
 # why the three metrics disagree the way they do.
 regime_caption <- function(regime) {
   if (is.null(regime) || is.na(regime)) return("regime = unknown")
@@ -167,7 +167,7 @@ inline_curve_labels <- function(ref = "high") {
 #'
 #' @param x A `grass_result` object.
 #' @param type Either `"landing"` (default) or `"regime"`.
-#' @param labels Where to identify the three curves: `"auto"` (default —
+#' @param labels Where to identify the three curves: `"auto"` (default --
 #'   inline at the right edge unless curves are too close together),
 #'   `"inline"`, or `"legend"`.
 #' @param show_medium If `TRUE`, also plot the medium-quality reference
@@ -322,7 +322,7 @@ plot_regime <- function(x, title = NULL, subtitle = NULL) {
   pi2 <- pi^2
   bi2 <- bi^2
   # Nudge the point off the axes when PI^2 or BI^2 is (near) zero so the
-  # marker is not bisected by the plot edge. Cosmetic only — the printed
+  # marker is not bisected by the plot edge. Cosmetic only -- the printed
   # PI / BI in the subtitle still report the true values.
   nudge <- 0.015
   df_point <- data.frame(PI2 = pmax(pi2, nudge),
@@ -450,7 +450,7 @@ plot.grass_reference <- function(x, labels = c("auto", "inline", "legend"),
 
 # ---- Bare metrics plot ------------------------------------------------
 
-# Dropped — bare metrics have no prevalence or bias context. Guide the user
+# Dropped -- bare metrics have no prevalence or bias context. Guide the user
 # toward the report workflow.
 #' @export
 plot.grass_metrics <- function(x, ...) {

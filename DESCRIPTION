@@ -1,22 +1,24 @@
 Package: grass
 Type: Package
 Title: Context-Conditioned Reporting for Binary Rater Reliability
-Version: 0.5.2
+Version: 0.6.0
 Authors@R: c(
     person("Austin", "Semmel", email = "runfast031@gmail.com",
            role = c("aut", "cre")),
     person("Rachel", "Gidaro", role = "aut"))
-Description: Generates a four-field Report Card for binary inter-rater
-    agreement from an N x k rating matrix. Each candidate coefficient
-    (Cohen's kappa, PABAK, Gwet's AC1, Fleiss kappa, Krippendorff alpha,
-    observed ICC) is positioned on a calibrated reference surface
-    conditioned on the study's rater count, sample size, and prevalence,
-    yielding a surface-position percentile, a four-band qualitative label,
-    and a Neyman-Pearson-motivated delta-hat stability flag from
-    cross-coefficient spread. When the panel is divergent, per-rater sensitivity and
-    specificity are recovered from a Dawid-Skene latent-class fit
-    (Hui-Walter bounds at k = 2). The package implements the GRASS
-    submodule of the MEADOW framework (Semmel 202X).
+Description: Generates a Report Card for rater reliability on binary
+    outcomes from an N x k subject-by-rater rating matrix, on both the
+    inter-rater and intra-rater axes. Each panel coefficient (PABAK,
+    Gwet's AC1, Fleiss' kappa, and observed intraclass correlation) is
+    positioned on a simulation-calibrated reference surface conditioned
+    on the study's rater count, sample size, and prevalence, yielding a
+    surface-position percentile with a bootstrap confidence qualifier.
+    A cross-coefficient discordance diagnostic (delta-hat), with
+    per-design thresholds calibrated to fixed false-positive rates,
+    flags panels for which no single coefficient is a stable summary;
+    for such divergent panels the report routes to a pairwise PABAK
+    matrix and per-rater sensitivity and specificity recovered from a
+    Dawid-Skene latent-class fit (Hui-Walter bounds at k = 2).
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: false
@@ -42,5 +44,5 @@ VignetteBuilder: knitr
 Config/testthat/edition: 3
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
-URL: https://github.com/defense031/grass
+URL: https://defense031.github.io/grass/, https://github.com/defense031/grass
 BugReports: https://github.com/defense031/grass/issues

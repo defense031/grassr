@@ -16,22 +16,22 @@
 
 \item{type}{One of:
 \itemize{
-\item \code{"surface"} (default) — 2D heatmap of E\link{primary metric} over (M_1, q)
+\item \code{"surface"} (default) -- 2D heatmap of the expected primary metric over (M_1, q)
 at the study's (k, N), with the observation pinned and dotted band
 contours at q in {0.5, 0.625, 0.75, 0.875, 1.0}.
-\item \code{"panel"} — forest plot of all panel coefficients on the percentile
+\item \code{"panel"} -- forest plot of all panel coefficients on the percentile
 axis (0-100 pp), so the cross-coefficient spread is visible.
-\item \code{"thermometer"} — colored gauge for \code{delta_hat} with the
+\item \code{"thermometer"} -- colored gauge for \code{delta_hat} with the
 aligned/caution/divergent thresholds shown.
-\item \code{"intervals"} — forest plot of observed coefficients with 95\%
+\item \code{"intervals"} -- forest plot of observed coefficients with 95\%
 Wilson-logit CIs.
-\item \code{"per_rater"} — forest plot of per-rater Ŝe and Ŝp (latent-class
+\item \code{"per_rater"} -- forest plot of per-rater Se-hat and Sp-hat (latent-class
 bootstrap CIs). Errors when \code{card$per_rater} is \code{NULL}.
-\item \code{"pairwise"} — k x k tile heatmap of pairwise surface percentiles
+\item \code{"pairwise"} -- k x k tile heatmap of pairwise surface percentiles
 (cell label = percentile in pp; parenthetical label = PABAK_ij). Only
 available when \code{card$delta$flag == "divergent"} (auto-populated by
 \code{\link[=grass_report]{grass_report()}} via \code{\link[=pairwise_agreement]{pairwise_agreement()}}).
-\item \code{"diagnostic"} — \code{patchwork} composite of "panel" + "thermometer" +
+\item \code{"diagnostic"} -- \code{patchwork} composite of "panel" + "thermometer" +
 "pairwise" (under divergent) / "per_rater" / "intervals".
 }}
 

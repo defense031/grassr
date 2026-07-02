@@ -13,8 +13,6 @@
                      envir = asNamespace("broom"))
     registerS3method("tidy", "grass_reference", tidy.grass_reference,
                      envir = asNamespace("broom"))
-    registerS3method("tidy", "grass_result", tidy.grass_result,
-                     envir = asNamespace("broom"))
   }
   invisible()
 }

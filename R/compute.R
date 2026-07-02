@@ -11,13 +11,13 @@
 #' `vignette("reporting-card")` and [grass_report()].
 #'
 #' @param data Input data. Form depends on `format`:
-#'   * `"matrix"` — a 2x2 integer count matrix with `R1` rows, `R2` columns.
-#'   * `"wide"` — a data.frame with exactly two rater columns (or pass
+#'   * `"matrix"` -- a 2x2 integer count matrix with `R1` rows, `R2` columns.
+#'   * `"wide"` -- a data.frame with exactly two rater columns (or pass
 #'     `rater_cols = c("r1", "r2")` if the data contains extra columns).
-#'   * `"long"` — a data.frame with `subject`, `rater`, and `rating` columns
+#'   * `"long"` -- a data.frame with `subject`, `rater`, and `rating` columns
 #'     (names configurable via `subject =`, `rater =`, `rating =`). Must
 #'     contain exactly two distinct raters.
-#'   * `"paired"` — a list of two equal-length rating vectors, a 2-column
+#'   * `"paired"` -- a list of two equal-length rating vectors, a 2-column
 #'     matrix, or a 2-column data.frame.
 #' @param format One of `"matrix"`, `"wide"`, `"long"`, `"paired"`.
 #' @param positive Optional character string naming the level to treat as the

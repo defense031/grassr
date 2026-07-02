@@ -102,7 +102,7 @@ pick_positive <- function(levels, positive = NULL, name = "rating") {
 
 # Find a column in `data` that is clearly non-binary (and so is unlikely to
 # be a rater column). Returns NULL if more than one such column exists or
-# none do — the hint is only useful when unambiguous.
+# none do -- the hint is only useful when unambiguous.
 guess_id_col <- function(data) {
   is_binary <- function(x) {
     if (is.logical(x)) return(TRUE)
@@ -216,7 +216,7 @@ normalize_wide <- function(data, positive = NULL, rater_cols = NULL,
       col_list <- paste(names(data), collapse = ", ")
       # Deliberately avoid guessing which columns are raters vs. identifiers
       # for `rater_cols`. But we can softly point at an ID candidate when one
-      # column is clearly non-binary — a cheap hint for a cheap-to-ignore knob.
+      # column is clearly non-binary -- a cheap hint for a cheap-to-ignore knob.
       id_hint <- guess_id_col(data)
       id_suggestion <- if (!is.null(id_hint))
         sprintf(" Column %s looks like an identifier; you could try `id_col = %s`.",

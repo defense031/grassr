@@ -2,21 +2,21 @@
 #
 # Two functions live here:
 #
-#   * `check_rater_asymmetry()` — the old per-rater Se/Sp diagnostic.
+#   * `check_rater_asymmetry()` -- the old per-rater Se/Sp diagnostic.
 #     Renamed (formerly `check_asymmetry()`). Computes mean / max
 #     `|Se_j - Sp_j|` and tiers by 0.05 / 0.10. Class: `grass_asymmetry`
 #     (unchanged so the existing print method, as.data.frame method,
 #     and reporting-card test fixtures keep working).
 #
-#   * `check_asymmetry(ratings, ...)` — the new ratings-input diagnostic
-#     defined by §4.3 of the v0.2.0 paper-alignment design doc. Computes
+#   * `check_asymmetry(ratings, ...)` -- the new ratings-input diagnostic
+#     defined by Sec.4.3 of the v0.2.0 paper-alignment design doc. Computes
 #     the cross-coefficient percentile spread `delta_hat` (in pp) and
-#     tiers by NP-motivated size-alpha thresholds (9.25, 11.75) per paper §3.2 / App G.
+#     tiers by NP-motivated size-alpha thresholds (9.25, 11.75) per paper Sec.3.2 / App G.
 #     Class: `grass_asymmetry_panel`.
 #
 # v0.5.0 ICC scope decision (2026-05-05). delta_hat is computed over the
-# AGREEMENT FAMILY ONLY -- PABAK, mean AC1, Fleiss kappa, Krippendorff alpha
-# -- because each has a closed-form reference depending on (q, pi_+) only and
+# AGREEMENT FAMILY ONLY -- PABAK, mean AC1, Fleiss kappa -- because each has
+# a closed-form reference depending on (q, pi_+) only and
 # is therefore DGP-robust at the panel level. ICC is reported alongside on
 # the panel rows but does NOT enter delta_hat: ICC's reference surface
 # depends on the full subject-prevalence distribution F, and a panel whose
@@ -24,15 +24,25 @@
 # percentile drift on the order of 20 pp at small designs (sanity probe,
 # 2026-05-05). The agreement family is mutually distribution-robust, so
 # cross-family spread is a clean SPLIT-BIAS detector: it fires when raters
-# tilt in different directions across (Se, Sp) so the four coefficients
+# tilt in different directions across (Se, Sp) so the coefficients
 # disagree on surface position. Shared/uniform bias (every rater tilts
 # the same direction) produces small delta_hat with low minimum surface
 # percentile and is detected by the percentile, not by delta_hat.
+#
+# v0.6.0 alpha scope decision (2026-07-02, paper Pass 6). Krippendorff's
+# alpha is removed from the Report Card panel and from delta_hat: in the
+# binary fully-crossed case alpha coincides with Fleiss kappa
+# asymptotically (paper App A.2; empirically median |Fleiss - alpha| =
+# 0.00024 across 10,140 calibration cells), so it added a redundant row
+# and could tip borderline delta_hat readings across a threshold on
+# small-sample noise alone. obs_krippendorff_alpha() and
+# position_on_surface(metric = "krippendorff_a") remain available for
+# manual use. Bundled delta_hat thresholds hold for the 3-coefficient
+# spread (sensitivity check: sub-pp shift, within MC-SE).
 
 # Coefficients that enter delta_hat. Anything else (currently just `icc`) is
 # reported on the panel with `in_delta_hat = FALSE`.
-.DELTA_AGREEMENT_COEFS <- c("pabak", "mean_ac1", "fleiss_kappa",
-                            "krippendorff_a")
+.DELTA_AGREEMENT_COEFS <- c("pabak", "mean_ac1", "fleiss_kappa")
 #
 # Soft-deprecation: if `check_asymmetry()` is called with the OLD signature
 # (`se = ...`, `sp = ...`), we route the call to `check_rater_asymmetry()`
@@ -54,25 +64,25 @@
 #' as the primary summary.
 #'
 #' This function is appropriate when the user already has per-rater
-#' Se/Sp estimates — typically from a Hui-Walter / Dawid-Skene latent-class
+#' Se/Sp estimates -- typically from a Hui-Walter / Dawid-Skene latent-class
 #' fit (see [latent_class_fit()]), a simulation with known truth, or a
 #' reference-standard comparison. It is the function called inside the
 #' divergent branch of the new [check_asymmetry()] / `grass_report()`
 #' workflow when per-rater (Se, Sp) become available.
 #'
 #' For ratings-matrix input (when only the N x k binary ratings are
-#' available, no per-rater Se/Sp), use [check_asymmetry()] instead — it
+#' available, no per-rater Se/Sp), use [check_asymmetry()] instead -- it
 #' computes the cross-coefficient percentile spread without requiring
 #' identifiability of per-rater (Se, Sp).
 #'
 #' Tier thresholds follow the three-tier architecture:
 #'
-#' - **Tier 1 — `ok`** (`delta_hat < 0.05`): diagonal default. Report
+#' - **Tier 1 -- `ok`** (`delta_hat < 0.05`): diagonal default. Report
 #'   `q_hat +/- SE` plus EDR and EMR_panel without per-rater disclosure.
-#' - **Tier 2 — `caution`** (`0.05 <= delta_hat < 0.10`): diagonal +
+#' - **Tier 2 -- `caution`** (`0.05 <= delta_hat < 0.10`): diagonal +
 #'   diagnostic. Report `q_hat +/- SE` with a caution flag and the
 #'   `delta_hat` value.
-#' - **Tier 3 — `unsafe`** (`delta_hat >= 0.10`): full latent-class.
+#' - **Tier 3 -- `unsafe`** (`delta_hat >= 0.10`): full latent-class.
 #'   `q_hat` is withheld as primary; report per-rater `(Se_j, Sp_j)` via a
 #'   Hui-Walter / Dawid-Skene fit. PABAK's prevalence-flatness was
 #'   conditional on `Se = Sp`; at Tier 3 that condition is visibly broken.
@@ -95,7 +105,7 @@
 #' @param threshold_unsafe Boundary between Tier 2 (`caution`) and Tier 3
 #'   (`unsafe`). Default `0.10`.
 #' @param summary How to reduce per-rater gaps to the scalar `delta_hat`.
-#'   `"max"` (default, conservative tripwire — any single rater above the
+#'   `"max"` (default, conservative tripwire -- any single rater above the
 #'   threshold triggers escalation) or `"mean"` (panel-average asymmetry).
 #'   The framework uses `"max"`; `"mean"` is provided for sensitivity
 #'   checks.
@@ -114,13 +124,13 @@
 #' @export
 #'
 #' @examples
-#' # Tier 1: symmetric raters — safe to use q_hat as primary
+#' # Tier 1: symmetric raters -- safe to use q_hat as primary
 #' check_rater_asymmetry(se = c(0.86, 0.88, 0.84), sp = c(0.85, 0.87, 0.86))
 #'
 #' # Tier 2: one rater pressing the Se = Sp assumption
 #' check_rater_asymmetry(se = c(0.90, 0.88, 0.92), sp = c(0.82, 0.86, 0.85))
 #'
-#' # Tier 3: within-rater Se-favoring regime — requires latent-class fit
+#' # Tier 3: within-rater Se-favoring regime -- requires latent-class fit
 #' check_rater_asymmetry(se = c(0.95, 0.93, 0.94), sp = c(0.78, 0.80, 0.79))
 check_rater_asymmetry <- function(se, sp,
                                   rater = NULL,
@@ -256,8 +266,8 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #' ways the agreement family is not).
 #'
 #' `delta_hat` is a *split-bias* detector. It fires when raters tilt in
-#' different directions across (Se, Sp) — e.g., one rater high-Se / low-Sp,
-#' another high-Sp / low-Se — because the four coefficients respond to
+#' different directions across (Se, Sp) -- e.g., one rater high-Se / low-Sp,
+#' another high-Sp / low-Se -- because the four coefficients respond to
 #' heterogeneous per-rater behavior differently and end up disagreeing on
 #' where the panel sits on the surface. The framework's other failure
 #' mode, *shared/uniform bias* (every rater tilts the same direction,
@@ -266,8 +276,8 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #' coefficients: small `delta_hat`, low minimum surface percentile.
 #' Shared bias is detected by the panel's minimum surface percentile,
 #' not by `delta_hat`. A divergent flag therefore identifies a specific
-#' kind of disagreement — cross-coefficient inversion from heterogeneous
-#' rater behavior — and routes the user to the per-rater pairwise PABAK
+#' kind of disagreement -- cross-coefficient inversion from heterogeneous
+#' rater behavior -- and routes the user to the per-rater pairwise PABAK
 #' matrix and pooled-reference (Se_tilde, Sp_tilde) diagnostic.
 #'
 #' Each coefficient is positioned on its reference surface via
@@ -302,7 +312,7 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #' and the note records the fallback.
 #'
 #' Tier thresholds default to `c(9.25, 11.75)` pp, the Neyman-Pearson-motivated
-#' size-alpha cutoffs at `alpha = 0.05` and `alpha = 0.01` from §3.2 of the
+#' size-alpha cutoffs at `alpha = 0.05` and `alpha = 0.01` from Sec.3.2 of the
 #' GRASS paper (see also App G operating characteristics). The construction is
 #' NP-optimal within the test class of threshold rules on `delta_hat`; it is
 #' not a likelihood-ratio test on the joint distribution of the panel
@@ -335,7 +345,7 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #' @param occasion Reserved for `axis = "intra"` (a vector / factor
 #'   identifying viewing occasion); ignored when `axis = "inter"`.
 #' @param delta_thresholds Length-2 numeric vector `c(caution, divergent)`
-#'   in percentile points. Default `c(9.25, 11.75)` from paper §3.2 (NP
+#'   in percentile points. Default `c(9.25, 11.75)` from paper Sec.3.2 (NP
 #'   optimum at alpha = 0.05 / 0.01).
 #' @param ... Forwarded to [position_on_surface()] (e.g. `bands`,
 #'   `band_labels`, `reference_type`).
@@ -365,7 +375,7 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #' @examples
 #' \donttest{
 #' set.seed(1)
-#' # Build a 5x200 symmetric panel — should print as 'aligned'.
+#' # Build a 5x200 symmetric panel -- should print as 'aligned'.
 #' Y <- matrix(rbinom(5 * 200, 1, 0.30), nrow = 200, ncol = 5)
 #' check_asymmetry(Y)
 #' }
@@ -381,7 +391,7 @@ check_asymmetry <- function(ratings,
   # So a call routes to the OLD path if any of:
   #   (a) the user supplied `se =` and / or `sp =` as named args, or
   #   (b) the first positional arg (now bound to `ratings`) is a numeric
-  #       vector that is NOT a matrix / data.frame / list — i.e. the OLD
+  #       vector that is NOT a matrix / data.frame / list -- i.e. the OLD
   #       per-rater Se vector got positionally bound to `ratings`.
   cl <- match.call()
   dots <- list(...)
@@ -427,7 +437,7 @@ check_asymmetry <- function(ratings,
     } else {
       # Positional form: ratings = se vector, axis = sp vector.
       # `axis` may still be the default `c("inter","intra")` if user only
-      # supplied one positional arg. In that case error out — a single
+      # supplied one positional arg. In that case error out -- a single
       # numeric vector is ambiguous.
       if (missing(axis) || identical(axis, c("inter", "intra"))) {
         stop("check_asymmetry(): single numeric vector input is ambiguous. ",
@@ -473,7 +483,6 @@ check_asymmetry <- function(ratings,
     pabak          = "pabak",
     ac1            = "mean_ac1",
     fleiss_kappa   = "fleiss_kappa",
-    krippendorff_a = "krippendorff_a",
     icc            = "icc"
   )
   panel_keep <- intersect(names(panel_obs), names(surface_metric_for))

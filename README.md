@@ -100,13 +100,13 @@ devtools::load_all()
   is the categorical score; no four-way labeled band is interposed
   between the percentile and the reader. Closed-form references for
   PABAK, AC1,
-  Fleiss kappa, Krippendorff alpha; bundled fitted-ICC reference for
+  Fleiss kappa; bundled fitted-ICC reference for
   ICC across `k in {3, 5, 8, 15, 25} x N in {30, 50, 75, 100, 200,
   300, 500, 1000}` on a 14-point q-grid.
 - **Cross-coefficient stability signal.** `check_asymmetry(ratings = Y)`
   returns the cross-coefficient surface-percentile spread `delta_hat`
-  computed over the four-coefficient agreement family (PABAK, AC1,
-  Fleiss kappa, alpha) plus an aligned / caution / divergent flag at
+  computed over the three-coefficient agreement family (PABAK, AC1,
+  Fleiss kappa) plus an aligned / caution / divergent flag at
   per-(k, N) size-alpha calibrated thresholds. ICC is reported on
   the panel with a `[distribution-sensitive]` marker but does not
   enter `delta_hat` by construction, because its reference surface
@@ -126,13 +126,14 @@ devtools::load_all()
   "what does my reference surface look like at this design, before
   I collect data?"
 
-See `NEWS.md` for the v0.5.1 + v0.5.0 entries and `?grass_roadmap`
+See `NEWS.md` for the release history and `?grass_roadmap`
 for planned future families (ordinal, multi-rater nominal, continuous).
 
 ## Status
 
-v0.5.1 (release; cosmetic + vignette over v0.5.0). Binary inter-rater
-and intra-rater families fully
+v0.6.0 (first CRAN submission; Krippendorff alpha removed from the
+Report Card and delta_hat, legacy pre-0.2.0 API removed — see
+NEWS.md). Binary inter-rater and intra-rater families fully
 implemented. The intra-rater axis uses the inter-rater diagonal
 calibration as an approximation pending a dedicated intra-axis
 calibration cube. See `?grass_roadmap` for planned families.

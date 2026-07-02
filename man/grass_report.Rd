@@ -27,10 +27,13 @@ equal-length 0/1 vectors (\code{k = 2} paired form). See
 \item{axis}{One of \code{"inter"} (default) or \code{"intra"}. Selects the surface
 family. The intra-axis path uses \code{occasion} to identify viewings.}
 
-\item{metric}{One of \code{"auto"} (default; calls \code{\link[=pick_primary_coefficient]{pick_primary_coefficient()}}
-per Table 2), \code{"pabak"}, \code{"ac1"}, \code{"fleiss_kappa"}, \code{"krippendorff_a"},
+\item{metric}{One of \code{"auto"} (default; calls \code{pick_primary_coefficient()}
+per Table 2), \code{"pabak"}, \code{"ac1"}, \code{"fleiss_kappa"},
 \code{"icc"}. Selects which coefficient is the headline in the printed Report
-Card; the full panel is always populated.}
+Card; the full panel is always populated. (Krippendorff's alpha left
+the Report Card panel at v0.6.0; it coincides with Fleiss' kappa in
+the binary fully-crossed case. Use \code{\link[=obs_krippendorff_alpha]{obs_krippendorff_alpha()}} or
+\code{\link[=position_on_surface]{position_on_surface()}} to compute it manually.)}
 
 \item{occasion}{Reserved for \code{axis = "intra"}; ignored when \code{axis = "inter"}.}
 
@@ -41,10 +44,14 @@ Card; the full panel is always populated.}
 \code{c("Poor", "Moderate", "Strong", "Excellent")}.}
 
 \item{delta_thresholds}{Length-2 numeric vector \code{c(caution, divergent)}
-in percentile points. Default \code{c(9.25, 11.75)} (paper §3.2, NP-motivated size-alpha).}
+in percentile points. Default \code{c(9.25, 11.75)} (paper Sec.3.2, NP-motivated size-alpha).}
 
 \item{bootstrap_B}{Integer; bootstrap replicates for the divergent-branch
 latent-class CIs. Default \code{1000L}. Set lower for fast tests.}
+
+\item{bootstrap_delta_B}{Integer; subject-resampling replicates for the
+optional bootstrap distribution of \code{delta_hat}. Default \code{0L} (off);
+values below \code{50L} are treated as off.}
 
 \item{verbose}{Logical; emit progress messages on long calls. Default
 \code{FALSE}.}
@@ -55,7 +62,7 @@ latent-class CIs. Default \code{1000L}. Set lower for fast tests.}
 An object of class \code{c("grass_card", "list")} with fields
 \code{sample}, \code{coefficient}, \code{delta}, \code{panel}, \code{per_rater}, \code{surface},
 \code{call}, \code{grass_version}, \code{timestamp}, \code{inputs}, \code{notes}. See the
-v0.2.0 paper-alignment design doc §3.1 for the full structure.
+v0.2.0 paper-alignment design doc Sec.3.1 for the full structure.
 
 \strong{Percentile units.} \code{card$coefficient$surface_percentile} and
 \code{card$panel$surface_percentile} are reported on the 0-100 scale
@@ -83,9 +90,8 @@ The body, in order:
 derive \code{pi_hat = mean(Y)}, \code{k = ncol(Y)}, \code{N = nrow(Y)}. Validate
 \code{k >= 2}; warn at \code{N < 10}; note at \code{N < 30}.
 \item Compute the panel of observed coefficients
-(\code{\link[=compute_panel]{compute_panel()}} internal): at \code{k = 2}, PABAK / AC1 / Cohen's
-kappa / Krippendorff alpha; at \code{k >= 3}, PABAK / AC1 / Fleiss kappa /
-Krippendorff alpha / ICC.
+(\code{compute_panel()}, internal): at \code{k = 2}, PABAK / AC1 / Cohen's
+kappa; at \code{k >= 3}, PABAK / AC1 / Fleiss kappa / ICC.
 \item For each panel coefficient, position the observed value on its
 DGP-calibrated reference surface via \code{\link[=position_on_surface]{position_on_surface()}}.
 \item Pick the primary coefficient via Table 2 (\code{metric = "auto"}) or accept

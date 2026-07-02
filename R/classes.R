@@ -23,22 +23,3 @@ new_grass_reference <- function(prevalence, quality, reference,
     class = "grass_reference"
   )
 }
-
-new_grass_result <- function(metrics, prevalence, prevalence_source,
-                             regime, regime_note,
-                             spec = NULL,
-                             reference = NULL, distance = NULL,
-                             call = NULL) {
-  structure(
-    list(metrics = metrics,
-         spec = spec,
-         prevalence = prevalence,
-         prevalence_source = prevalence_source,
-         regime = regime,
-         regime_note = regime_note,
-         reference = reference,
-         distance = distance,
-         call = call),
-    class = "grass_result"
-  )
-}

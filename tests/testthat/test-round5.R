@@ -65,28 +65,6 @@ test_that("Each reference_level matches the analytical diagonal closed-form", {
   }
 })
 
-# ---- .parallel on grass_report_by -------------------------------------
-
-test_that(".parallel matches sequential output", {
-  skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
-})
-
-test_that(".parallel errors cleanly when future.apply is unavailable", {
-  # Simulate missing future.apply via namespace unloading check.
-  has_future <- requireNamespace("future.apply", quietly = TRUE)
-  has_progressr <- requireNamespace("progressr", quietly = TRUE)
-  skip_if(has_future && has_progressr,
-          "test requires at least one of future.apply / progressr to be absent")
-  # When at least one of them is absent, .parallel = TRUE must error.
-  set.seed(12)
-  df <- data.frame(
-    rA = rbinom(20, 1, 0.3),
-    rB = rbinom(20, 1, 0.3),
-    cohort = rep(c("s1","s2"), each = 10)
-  )
-  expect_error(grass_report_by(df, cohort, .parallel = TRUE), "install.packages")
-})
-
 # ---- grass_methods() --------------------------------------------------
 
 test_that("grass_methods returns a non-trivial paragraph", {

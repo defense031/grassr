@@ -71,11 +71,11 @@ test_that("normalize_ratings rejects mismatched-length list of two vectors", {
 
 # ---- compute_panel ---------------------------------------------------------
 
-test_that("compute_panel at k = 2 returns pabak/ac1/kappa/krippendorff_a", {
+test_that("compute_panel at k = 2 returns pabak/ac1/kappa", {
   Y <- make_Y_k2()
   panel <- compute_panel(Y)
   expect_named(panel,
-               c("pabak", "ac1", "kappa", "krippendorff_a"),
+               c("pabak", "ac1", "kappa"),
                ignore.order = TRUE)
   for (nm in names(panel)) {
     expect_true(is.finite(panel[[nm]]),
@@ -83,16 +83,15 @@ test_that("compute_panel at k = 2 returns pabak/ac1/kappa/krippendorff_a", {
   }
 })
 
-test_that("compute_panel at k = 5 returns pabak/ac1/fleiss_kappa/krippendorff_a/icc", {
+test_that("compute_panel at k = 5 returns pabak/ac1/fleiss_kappa/icc", {
   Y <- make_Y_k5()
   panel <- compute_panel(Y)
   expect_named(panel,
-               c("pabak", "ac1", "fleiss_kappa", "krippendorff_a", "icc"),
+               c("pabak", "ac1", "fleiss_kappa", "icc"),
                ignore.order = TRUE)
   expect_true(is.finite(panel$pabak))
   expect_true(is.finite(panel$ac1))
   expect_true(is.finite(panel$fleiss_kappa))
-  expect_true(is.finite(panel$krippendorff_a))
   # icc may be NA + note when lme4 unavailable; both branches are documented.
   if (requireNamespace("lme4", quietly = TRUE)) {
     if (!is.na(panel$icc)) expect_true(is.finite(panel$icc))
@@ -107,7 +106,6 @@ test_that("compute_panel matches individual obs_* calls at k = 5", {
   expect_equal(panel$pabak,          obs_mean_pairwise_pabak(Y))
   expect_equal(panel$ac1,            obs_mean_pairwise_ac1(Y))
   expect_equal(panel$fleiss_kappa,   obs_fleiss_kappa(Y))
-  expect_equal(panel$krippendorff_a, obs_krippendorff_alpha(Y))
 })
 
 test_that("compute_panel at k = 2 matches the 2x2 metrics-core path", {

@@ -39,11 +39,10 @@ test_that("symmetric panel returns aligned kappa-family + 5-row panel at k=5", {
                       "panel", "notes"))
   expect_named(out$thresholds, c("caution", "divergent"))
 
-  # Structural: panel has 5 rows with the documented metric names at k = 5
-  expect_equal(nrow(out$panel), 5L)
+  # Structural: panel has 4 rows with the documented metric names at k = 5
+  expect_equal(nrow(out$panel), 4L)
   expect_setequal(out$panel$coefficient,
-                  c("pabak", "mean_ac1", "fleiss_kappa",
-                    "krippendorff_a", "icc"))
+                  c("pabak", "mean_ac1", "fleiss_kappa", "icc"))
 
   # Quantitative: the non-ICC kappa-family metrics align (< 9.25 pp). ICC
   # is excluded here because the bundled ICC reference surface for symmetric
@@ -79,10 +78,9 @@ test_that("op_strong heterogeneous panel flags divergent on non-ICC spread", {
   out <- check_asymmetry(Y)
   expect_equal(out$flag, "divergent")
   expect_gte(out$delta_hat, 11.75)
-  expect_equal(nrow(out$panel), 5L)
+  expect_equal(nrow(out$panel), 4L)
   expect_setequal(out$panel$coefficient,
-                  c("pabak", "mean_ac1", "fleiss_kappa",
-                    "krippendorff_a", "icc"))
+                  c("pabak", "mean_ac1", "fleiss_kappa", "icc"))
   expect_true("clamped" %in% names(out$panel))
 
   # The divergent flag must come from non-ICC surface-percentile spread,
@@ -92,14 +90,12 @@ test_that("op_strong heterogeneous panel flags divergent on non-ICC spread", {
   expect_gte(diff(range(nonicc)), 11.75)
 
   # Structural: AC1 is the coefficient that separates from the kappa-family
-  # under op_strong heterogeneity. PABAK / Fleiss / Krippendorff cluster
-  # together; AC1 sits roughly 15+ pp away from the cluster centroid.
+  # under op_strong heterogeneity. PABAK / Fleiss cluster together; AC1
+  # sits roughly 15+ pp away from the cluster centroid.
   pabak <- pp$percentile_pp[pp$coefficient == "pabak"]
   fk    <- pp$percentile_pp[pp$coefficient == "fleiss_kappa"]
-  alpha <- pp$percentile_pp[pp$coefficient == "krippendorff_a"]
   ac1   <- pp$percentile_pp[pp$coefficient == "mean_ac1"]
-  cluster_mean <- mean(c(pabak, fk, alpha))
-  expect_lt(abs(fk - alpha), 5)
+  cluster_mean <- mean(c(pabak, fk))
   expect_gte(abs(ac1 - cluster_mean), 10)
 })
 

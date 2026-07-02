@@ -19,6 +19,13 @@ package authors. We respectfully request that the long-archived
 name be released for reuse. If the CRAN team prefers to keep the
 name reserved, we will resubmit under an alternative name.
 
+### "Possibly misspelled words in DESCRIPTION"
+
+Dawid, Skene, Fleiss, and Gwet are surnames (Dawid-Skene latent-class
+model; Fleiss' kappa; Gwet's AC1). PABAK is the standard acronym for
+prevalence-adjusted bias-adjusted kappa (Byrt, Bishop, and Carlin,
+1993). "Intraclass" and "intra" are standard reliability terminology.
+
 ### Installed size NOTE (~12 MB installed, ~10 MB tarball)
 
 The package bundles pre-computed calibration reference surfaces

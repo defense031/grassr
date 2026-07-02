@@ -17,7 +17,7 @@ latent_class_fit(
 }
 \arguments{
 \item{ratings}{An N x k binary rating matrix. Rows are subjects,
-columns are raters, values in {0, 1}. Data.frame and list-of-rater-
+columns are raters, values in \{0, 1\}. Data.frame and list-of-rater-
 columns inputs are coerced. Requires N >= 10, k >= 2, no NA, no
 all-constant columns.}
 
@@ -64,7 +64,7 @@ parameters from an N x k binary rating matrix.
 Two regimes, dispatched by \code{k}:
 \itemize{
 \item \strong{k >= 3: Dawid-Skene 1979 expectation-maximization.} Latent binary
-class C_i in {0, 1}; conditional independence of raters given C;
+class C_i in \{0, 1\}; conditional independence of raters given C;
 parameters (pi, Se_j, Sp_j) for j = 1..k. Initialized from
 majority-vote consensus. Iterated to log-likelihood tolerance \code{tol}
 or \code{max_iter}. Hand-rolled in base R, no new package dependency.

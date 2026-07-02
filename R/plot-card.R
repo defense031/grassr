@@ -760,7 +760,7 @@ plot_surface <- function(metric,
 #' @param type One of:
 #'   - `"surface"` (default) -- 2D heatmap of the expected primary metric over (M_1, q)
 #'     at the study's (k, N), with the observation pinned and dotted band
-#'     contours at q in {0.5, 0.625, 0.75, 0.875, 1.0}.
+#'     contours at q in \{0.5, 0.625, 0.75, 0.875, 1.0\}.
 #'   - `"panel"` -- forest plot of all panel coefficients on the percentile
 #'     axis (0-100 pp), so the cross-coefficient spread is visible.
 #'   - `"thermometer"` -- colored gauge for `delta_hat` with the

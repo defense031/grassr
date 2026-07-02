@@ -225,7 +225,7 @@
 #' Two regimes, dispatched by `k`:
 #'
 #' - **k >= 3: Dawid-Skene 1979 expectation-maximization.** Latent binary
-#'   class C_i in {0, 1}; conditional independence of raters given C;
+#'   class C_i in \{0, 1\}; conditional independence of raters given C;
 #'   parameters (pi, Se_j, Sp_j) for j = 1..k. Initialized from
 #'   majority-vote consensus. Iterated to log-likelihood tolerance `tol`
 #'   or `max_iter`. Hand-rolled in base R, no new package dependency.
@@ -246,7 +246,7 @@
 #' the per-rater Se_j and Sp_j (or their bound midpoints at k = 2).
 #'
 #' @param ratings An N x k binary rating matrix. Rows are subjects,
-#'   columns are raters, values in {0, 1}. Data.frame and list-of-rater-
+#'   columns are raters, values in \{0, 1\}. Data.frame and list-of-rater-
 #'   columns inputs are coerced. Requires N >= 10, k >= 2, no NA, no
 #'   all-constant columns.
 #' @param B Integer >= 0. Number of nonparametric bootstrap replicates.

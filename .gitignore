@@ -13,3 +13,4 @@ Rplots.pdf
 vignettes/*.html
 vignettes/*.R
 !vignettes/*.Rmd
+texput.log

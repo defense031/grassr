@@ -33,11 +33,8 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/grass-intro.html">Introduction to grass: prevalence-aware agreement interpretation</a></li>
-    <li><a class="dropdown-item" href="../articles/reporting-card.html">GRASS Report Card: a one-call workflow for binary rater reliability</a></li>
+<li><a class="dropdown-item" href="../articles/reporting-card.html">GRASS Report Card: a one-call workflow for binary rater reliability</a></li>
     <li><a class="dropdown-item" href="../articles/methods-companion.html">GRASS methods companion: notation, calibration detail, and auxiliary diagnostics</a></li>
-    <li><a class="dropdown-item" href="../articles/skewed-examples.html">Worked examples of skewed agreement</a></li>
-    <li><a class="dropdown-item" href="../articles/grass-ecosystem.html">The grass ecosystem</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -91,10 +88,6 @@ vignette</strong>; this is a free-standing artifact for
 <div class="section level2">
 <h2 id="notation-glossary">1. Notation glossary<a class="anchor" aria-label="anchor" href="#notation-glossary"></a>
 </h2>
-<blockquote>
-<p><strong>Status:</strong> stub. Populate with the full notation table
-that previously opened paper App A.</p>
-</blockquote>
 <p>Symbols used throughout the package and the paper:</p>
 <ul>
 <li>
@@ -130,10 +123,6 @@ spread.</li>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>q</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat q</annotation></semantics></math>
 from an observed coefficient<a class="anchor" aria-label="anchor" href="#recovering-hat-q-from-an-observed-coefficient"></a>
 </h2>
-<blockquote>
-<p><strong>Status:</strong> stub. Populate with the procedural detail
-previously in paper App A.6.</p>
-</blockquote>
 <p>For each agreement coefficient, <code><a href="../reference/position_on_surface.html">position_on_surface()</a></code>
 inverts the closed-form expectation curve to recover
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>q</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat q</annotation></semantics></math>
@@ -166,7 +155,7 @@ value with a <code>clamped = TRUE</code> flag.</li>
 but with a <code>[distribution-sensitive]</code> marker, and ICC is
 excluded from the cross-coefficient stability signal
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>δ</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat\delta</annotation></semantics></math>
-by construction. This section explains why.</p>
+by construction.</p>
 <p>The agreement-family coefficients each have a closed-form expectation
 that depends only on the panel marginal
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mover><mi>π</mi><mo accent="true">̂</mo></mover><mo>+</mo></msub><annotation encoding="application/x-tex">\hat\pi_+</annotation></semantics></math>
@@ -200,26 +189,20 @@ This is why ICC carries a <code>[distribution-sensitive]</code> marker
 on the Report Card and does not enter
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>δ</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat\delta</annotation></semantics></math>.</p>
 <p><strong>Variant selection</strong> (ICC(1,1), ICC(2,1), ICC(3,1))
-follows the decision tree on both the inter-rater and intra-rater axes.
-The package exposes each variant through the <code>metric</code>
-argument of <code><a href="../reference/position_on_surface.html">position_on_surface()</a></code>. The four-question
-decision tree (same-rater-set / rater sampling / type / definition) is
-reproduced with worked examples per branch in the package help
-files.</p>
+follows the Koo and Li (2016) decision tree on both the inter-rater and
+intra-rater axes. The package exposes each variant through the
+<code>metric</code> argument of <code><a href="../reference/position_on_surface.html">position_on_surface()</a></code>. The
+four-question decision tree (same-rater-set / rater sampling / type /
+definition) is reproduced with worked examples per branch in the package
+help files.</p>
 <hr>
 </div>
 <div class="section level2">
 <h2 id="coefficient-recovery-the-full-diagnostic">4. Coefficient recovery: the full diagnostic<a class="anchor" aria-label="anchor" href="#coefficient-recovery-the-full-diagnostic"></a>
 </h2>
-<blockquote>
-<p><strong>Status:</strong> stub. Populate with figures and tables that
-didn’t make the lean App F print version (k=5 vs k=25 best-metric map,
-asymmetry-cost figures across the full grid, oracle-vs-fitted-ICC
-head-to-head detail).</p>
-</blockquote>
-<p>The paper’s App F carries the lead recovery table
-(<code>tab:best_metric_fitted_k</code>) plus the asymmetry-cost figures.
-This companion expands the same dataset across the full grid.</p>
+<p>The paper’s App C carries the lead recovery table plus the
+asymmetry-cost figures. This companion expands the same dataset across
+the full grid.</p>
 <hr>
 </div>
 <div class="section level2">
@@ -252,16 +235,15 @@ for divergent. The thresholds are therefore a function of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>k</mi><mo>,</mo><mi>N</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(k, N)</annotation></semantics></math>,
 not a fixed pair. At the modal applied design
 (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">k = 5</annotation></semantics></math>,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>≈</mo><mn>200</mn></mrow><annotation encoding="application/x-tex">N \approx 200</annotation></semantics></math>)
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><mn>200</mn></mrow><annotation encoding="application/x-tex">N = 200</annotation></semantics></math>)
 the cuts are
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mn>9.25</mn><mo>,</mo><mn>11.75</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(9.25, 11.75)</annotation></semantics></math>
-pp; at smaller
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>k</mi><mo>,</mo><mi>N</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(k, N)</annotation></semantics></math>
-they shift upward (e.g.,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>13.75</mn><annotation encoding="application/x-tex">13.75</annotation></semantics></math>
-pp caution at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mn>9.25</mn><mo>,</mo><mn>10.75</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(9.25, 10.75)</annotation></semantics></math>
+pp; at smaller designs they shift upward (the snapped pair at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">k = 5</annotation></semantics></math>,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><mn>50</mn></mrow><annotation encoding="application/x-tex">N = 50</annotation></semantics></math>).</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><mn>50</mn></mrow><annotation encoding="application/x-tex">N = 50</annotation></semantics></math>
+is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mn>10.25</mn><mo>,</mo><mn>16.00</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(10.25, 16.00)</annotation></semantics></math>
+pp).</p>
 <p><strong>Small-design behavior.</strong> At
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">k = 2</annotation></semantics></math>
 and at
@@ -284,9 +266,9 @@ at the same
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>,
 because the panel-level coefficient battery at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">k = 2</annotation></semantics></math>
-(PABAK, AC1,
-Fleiss-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>κ</mi><annotation encoding="application/x-tex">\kappa</annotation></semantics></math>-equivalent,
-ICC) measures effectively the same agreement structure under both the
+(PABAK, AC1, Cohen’s
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>κ</mi><annotation encoding="application/x-tex">\kappa</annotation></semantics></math>)
+measures effectively the same agreement structure under both the
 symmetric null and the asymmetric alternatives. This is why the
 framework’s
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">k = 2</annotation></semantics></math>
@@ -304,25 +286,16 @@ pattern in which different chance-correction baselines respond
 differently to per-rater heterogeneity. Independently-drawn-sign
 asymmetry produces this inversion; uniform shared bias, conditional
 dependence, and other panel pathologies that move all coefficients
-together do not. The shared-vs-split-bias detection comparison in paper
-Appendix~D shows the gap: at
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">k = 5</annotation></semantics></math>,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><mn>200</mn></mrow><annotation encoding="application/x-tex">N = 200</annotation></semantics></math>,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><mn>0.20</mn></mrow><annotation encoding="application/x-tex">A = 0.20</annotation></semantics></math>,
-divergent TPR is
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.082</mn><annotation encoding="application/x-tex">0.082</annotation></semantics></math>
-under shared-bias and
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.315</mn><annotation encoding="application/x-tex">0.315</annotation></semantics></math>
-under split-bias.</p>
-<p>Future versions of this companion will add: full sensitivity strip
-across candidate thresholds (5, 10, 12, 15, 20 pp) at every
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>k</mi><mo>,</mo><mi>N</mi><mo>,</mo><mi>A</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(k, N, A)</annotation></semantics></math>
-cell;
-per-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
-ROC curves at
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>N</mi><mo>=</mo><mn>50</mn><mo>,</mo><mn>200</mn><mo>,</mo><mn>500</mn></mrow><annotation encoding="application/x-tex">N = 50, 200, 500</annotation></semantics></math>;
-small-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>
-floor diagnostics.</p>
+together do not. Paper Appendix~D documents the gap: at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mo>=</mo><mn>0.20</mn></mrow><annotation encoding="application/x-tex">A = 0.20</annotation></semantics></math>
+the divergent flag’s TPR plateaus near
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.40</mn><annotation encoding="application/x-tex">0.40</annotation></semantics></math>–<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.46</mn><annotation encoding="application/x-tex">0.46</annotation></semantics></math>
+under split-bias asymmetry, while shared-bias panels move all three
+coefficients together and leave
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>δ</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat\delta</annotation></semantics></math>
+nearly unmoved; the percentile, not
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>δ</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat\delta</annotation></semantics></math>,
+carries the shared-bias signal.</p>
 <hr>
 </div>
 <div class="section level2">
@@ -331,13 +304,12 @@ floor diagnostics.</p>
 <p>When the divergent flag fires, the Report Card abandons the
 panel-aggregate summary and routes to a pairwise PABAK matrix plus
 per-rater pooled-reference <span class="math inline">$(\widetilde\Se_j,
-\widetilde\Sp_j)$</span>. This section documents the construction and
-the empirical recovery characteristics that the paper cites in summary
-form.</p>
+\widetilde\Sp_j)$</span>.</p>
 <p><strong>Why PABAK at the pair level.</strong> PABAK is the
 framework’s pairwise coefficient because under symmetric raters its
-closed-form expectation reduces to <span class="math inline">$E[\PABAK]
-= (2q-1)^2$</span>, a function of rater quality
+closed-form expectation reduces to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>E</mi><mo stretchy="false" form="prefix">[</mo><mrow><mi mathvariant="normal">P</mi><mi mathvariant="normal">A</mi><mi mathvariant="normal">B</mi><mi mathvariant="normal">A</mi><mi mathvariant="normal">K</mi></mrow><mo stretchy="false" form="postfix">]</mo><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mn>2</mn><mi>q</mi><mo>−</mo><mn>1</mn><msup><mo stretchy="false" form="postfix">)</mo><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">E[\mathrm{PABAK}] = (2q-1)^2</annotation></semantics></math>,
+a function of rater quality
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>q</mi><annotation encoding="application/x-tex">q</annotation></semantics></math>
 alone — independent of prevalence and of the subject-prevalence
 distribution
@@ -350,8 +322,9 @@ asymmetry. Cohen’s
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>κ</mi><annotation encoding="application/x-tex">\kappa</annotation></semantics></math>
 at the pair level is prevalence-attenuated (the
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>κ</mi><annotation encoding="application/x-tex">\kappa</annotation></semantics></math>
-paradox of , the original motivation for PABAK); AC1’s chance term
-carries a milder but non-zero prevalence dependence; ICC at
+paradox of Byrt, Bishop, and Carlin (1993), the original motivation for
+PABAK); AC1’s chance term carries a milder but non-zero prevalence
+dependence; ICC at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">k = 2</annotation></semantics></math>
 is degenerate because one pair of raters per subject leaves the variance
 decomposition under-identified.</p>
@@ -413,13 +386,6 @@ information backs each one.</p>
 <div class="section level2">
 <h2 id="worked-code-examples-per-report-card-branch">6. Worked code examples per Report Card branch<a class="anchor" aria-label="anchor" href="#worked-code-examples-per-report-card-branch"></a>
 </h2>
-<blockquote>
-<p><strong>Status:</strong> stub. Populate with three runnable examples
-that each produce the corresponding Report Card output: aligned panel,
-divergent panel,
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo>=</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">k = 2</annotation></semantics></math>
-counterexample.</p>
-</blockquote>
 <p>A small helper generates an <code>N x k</code> rating matrix under
 the paper’s diagonal DGP at a stated <code>seed</code>, <code>k</code>,
 <code>N</code>, per-rater <code>Se</code>/<code>Sp</code>, target
@@ -469,7 +435,7 @@ prevalence <code>pi</code>, and logit-normal spread parameter
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   See `summary(...)` for full panel and CI details.</span></span>
 <span><span class="co">#&gt;   See `plot(...)` for a surface-position visualization.</span></span></code></pre></div>
-<p>The four agreement coefficients land within ~1 pp of each other on
+<p>The three agreement coefficients land within ~1 pp of each other on
 their reference surfaces; the panel is <em>aligned</em> and the primary
 coefficient (PABAK) is safe to cite. ICC is reported alongside with
 <code>[distribution-sensitive]</code> since its reference surface
@@ -530,7 +496,7 @@ depends on the full subject-prevalence distribution rather than on
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   See `summary(...)` for full panel and CI details.</span></span>
 <span><span class="co">#&gt;   See `plot(...)` for a surface-position visualization.</span></span></code></pre></div>
-<p>All four agreement coefficients return values around 0.49 (uniformly
+<p>All three agreement coefficients return values around 0.49 (uniformly
 <em>moderate</em> by Landis-Koch) but the surface percentiles spread by
 ~18 pp: AC1 lands materially higher than the κ-family. The
 <em>divergent</em> flag fires; the panel-aggregate summary is
@@ -574,11 +540,6 @@ to 12 q-points in v0.5.2) places the panel near the median of its
 <div class="section level2">
 <h2 id="audit-pass-rate-detail">7. Audit pass-rate detail<a class="anchor" aria-label="anchor" href="#audit-pass-rate-detail"></a>
 </h2>
-<blockquote>
-<p><strong>Status:</strong> stub. Populate with the per-coefficient
-audit pass-rate tables across (q, F-key, k, N) that previously sat in
-paper App C.</p>
-</blockquote>
 <p>The paper’s App B (Reproducibility, grids, and DGPs) summarizes audit
 pass rates at Bonferroni-corrected
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">|</mo><mi>z</mi><mo stretchy="false" form="prefix">|</mo><mo>&lt;</mo><mn>4.80</mn></mrow><annotation encoding="application/x-tex">|z| &lt; 4.80</annotation></semantics></math>.
@@ -589,12 +550,6 @@ verify any specific corner.</p>
 <div class="section level2">
 <h2 id="confidence-interval-methods-detail">8. Confidence-interval methods detail<a class="anchor" aria-label="anchor" href="#confidence-interval-methods-detail"></a>
 </h2>
-<blockquote>
-<p><strong>Status:</strong> stub. Populate with the procedural detail
-moved out of paper App D — Wilson-logit construction, delta-method SE on
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mover><mi>q</mi><mo accent="true">̂</mo></mover><annotation encoding="application/x-tex">\hat q</annotation></semantics></math>
-for reviewer audit, bootstrap CI procedure for per-rater <span class="math inline">$(\hat\Se_j, \hat\Sp_j)$</span>.</p>
-</blockquote>
 <p>The paper App B carries the load-bearing CI numbers (Monte-Carlo
 error on percentile, nearest-neighbour cost, bootstrap coverage at one
 calibration point). This companion adds the implementation detail.</p>

@@ -39,9 +39,6 @@ is a free-standing artifact for `grass` users.
 
 ## 1. Notation glossary
 
-> **Status:** stub. Populate with the full notation table that previously
-> opened paper App A.
-
 Symbols used throughout the package and the paper:
 
 - `Y` --- the $N \times k$ binary rating matrix; rows are subjects,
@@ -62,9 +59,6 @@ Symbols used throughout the package and the paper:
 
 ## 2. Recovering $\hat q$ from an observed coefficient
 
-> **Status:** stub. Populate with the procedural detail previously in
-> paper App A.6.
-
 For each agreement coefficient, `position_on_surface()` inverts the
 closed-form expectation curve to recover $\hat q$ at the observed
 coefficient value.
@@ -83,7 +77,7 @@ coefficient value.
 The Report Card prints ICC alongside PABAK, AC1, and Fleiss
 $\kappa$, but with a `[distribution-sensitive]` marker,
 and ICC is excluded from the cross-coefficient stability signal
-$\hat\delta$ by construction. This section explains why.
+$\hat\delta$ by construction.
 
 The agreement-family coefficients each have a closed-form
 expectation that depends only on the panel marginal $\hat\pi_+$ and
@@ -108,7 +102,7 @@ agreement-family percentiles do not. This is why ICC carries a `[distribution-se
 marker on the Report Card and does not enter $\hat\delta$.
 
 **Variant selection** (ICC(1,1), ICC(2,1), ICC(3,1)) follows the
-\citet{koo2016guideline} decision tree on both the inter-rater and
+Koo and Li (2016) decision tree on both the inter-rater and
 intra-rater axes. The package exposes each variant through the
 `metric` argument of `position_on_surface()`. The four-question
 decision tree (same-rater-set / rater sampling / type / definition)
@@ -119,13 +113,8 @@ files.
 
 ## 4. Coefficient recovery: the full diagnostic
 
-> **Status:** stub. Populate with figures and tables that didn't make
-> the lean App F print version (k=5 vs k=25 best-metric map,
-> asymmetry-cost figures across the full grid, oracle-vs-fitted-ICC
-> head-to-head detail).
-
-The paper's App F carries the lead recovery table
-(`tab:best_metric_fitted_k`) plus the asymmetry-cost figures. This
+The paper's App C carries the lead recovery table
+plus the asymmetry-cost figures. This
 companion expands the same dataset across the full grid.
 
 ---
@@ -147,8 +136,9 @@ $P(\hat\delta > t \mid \text{symmetric panel at } (k, N)) \leq \alpha$
 on the calibration grid, with $\alpha = 0.05$ for caution and
 $\alpha = 0.01$ for divergent. The thresholds are therefore a function
 of $(k, N)$, not a fixed pair. At the modal applied design ($k = 5$,
-$N \approx 200$) the cuts are $(9.25, 11.75)$ pp; at smaller $(k, N)$
-they shift upward (e.g., $13.75$ pp caution at $k = 5$, $N = 50$).
+$N = 200$) the cuts are $(9.25, 10.75)$ pp; at smaller designs they
+shift upward (the snapped pair at $k = 5$, $N = 50$ is
+$(10.25, 16.00)$ pp).
 
 **Small-design behavior.** At $k = 2$ and at $k = 3$ with
 $N \leq 30$, the diagonal-null distribution of $\hat\delta$ has heavy
@@ -157,8 +147,8 @@ panels to the nearest fully-calibrated cell on the
 $(k, \log_{10} N)$ grid and surfaces the snap on the Report Card; this
 is an optimistic lower bound rather than a calibrated cut at the
 user's design. At $k = 2$ the snap collapses to $k = 3$ at the same
-$N$, because the panel-level coefficient battery at $k = 2$ (PABAK,
-AC1, Fleiss-$\kappa$-equivalent, ICC) measures effectively the same
+$N$, because the panel-level coefficient battery at $k = 2$ (PABAK, AC1,
+Cohen's $\kappa$) measures effectively the same
 agreement structure under both the symmetric null and the asymmetric
 alternatives. This is why the framework's $k = 2$ prescription routes
 to direct pairwise reporting and identifiable bounds on per-rater
@@ -169,15 +159,11 @@ surface-percentile inversion --- the asymmetry pattern in which
 different chance-correction baselines respond differently to per-rater
 heterogeneity. Independently-drawn-sign asymmetry produces this
 inversion; uniform shared bias, conditional dependence, and other
-panel pathologies that move all coefficients together do not. The
-shared-vs-split-bias detection comparison in paper Appendix~D shows
-the gap: at $k = 5$, $N = 200$, $A = 0.20$, divergent TPR is $0.082$
-under shared-bias and $0.315$ under split-bias.
-
-Future versions of this companion will add: full sensitivity strip
-across candidate thresholds (5, 10, 12, 15, 20 pp) at every
-$(k, N, A)$ cell; per-$k$ ROC curves at $N = 50, 200, 500$; small-$N$
-floor diagnostics.
+panel pathologies that move all coefficients together do not. Paper Appendix~D documents the gap: at $A = 0.20$ the divergent
+flag's TPR plateaus near $0.40$--$0.46$ under split-bias asymmetry,
+while shared-bias panels move all three coefficients together and
+leave $\hat\delta$ nearly unmoved; the percentile, not $\hat\delta$,
+carries the shared-bias signal.
 
 ---
 
@@ -185,20 +171,18 @@ floor diagnostics.
 
 When the divergent flag fires, the Report Card abandons the
 panel-aggregate summary and routes to a pairwise PABAK matrix plus
-per-rater pooled-reference $(\widetilde\Se_j, \widetilde\Sp_j)$. This
-section documents the construction and the empirical recovery
-characteristics that the paper cites in summary form.
+per-rater pooled-reference $(\widetilde\Se_j, \widetilde\Sp_j)$.
 
 **Why PABAK at the pair level.** PABAK is the framework's pairwise
 coefficient because under symmetric raters its closed-form expectation
-reduces to $E[\PABAK] = (2q-1)^2$, a function of rater quality $q$
+reduces to $E[\mathrm{PABAK}] = (2q-1)^2$, a function of rater quality $q$
 alone --- independent of prevalence and of the subject-prevalence
 distribution $F$. Pairwise
 reading needs that property because every rater pair has its own
 observed marginal $\hat\pi_{+, ij}$, and those per-pair marginals can
 move substantially with rater asymmetry. Cohen's $\kappa$ at the pair
 level is prevalence-attenuated (the $\kappa$ paradox of
-\citet{byrt1993bias}, the original motivation for PABAK); AC1's chance
+Byrt, Bishop, and Carlin (1993), the original motivation for PABAK); AC1's chance
 term carries a milder but non-zero prevalence dependence; ICC at
 $k = 2$ is degenerate because one pair of raters per subject leaves
 the variance decomposition under-identified.
@@ -236,10 +220,6 @@ how much information backs each one.
 
 ## 6. Worked code examples per Report Card branch
 
-> **Status:** stub. Populate with three runnable examples that each
-> produce the corresponding Report Card output: aligned panel,
-> divergent panel, $k = 2$ counterexample.
-
 A small helper generates an `N x k` rating matrix under the
 paper's diagonal DGP at a stated `seed`, `k`, `N`, per-rater
 `Se`/`Sp`, target prevalence `pi`, and logit-normal spread
@@ -275,7 +255,7 @@ card_aligned <- grass_report(Y_aligned)
 card_aligned
 ```
 
-The four agreement coefficients land within ~1 pp of each
+The three agreement coefficients land within ~1 pp of each
 other on their reference surfaces; the panel is *aligned* and
 the primary coefficient (PABAK) is safe to cite. ICC is
 reported alongside with `[distribution-sensitive]` since its
@@ -297,7 +277,7 @@ card_divergent <- grass_report(Y_divergent)
 card_divergent
 ```
 
-All four agreement coefficients return values around 0.49
+All three agreement coefficients return values around 0.49
 (uniformly *moderate* by Landis-Koch) but the surface
 percentiles spread by ~18 pp: AC1 lands materially higher
 than the κ-family. The *divergent* flag fires; the
@@ -327,9 +307,6 @@ the median of its `(k, N, pi_hat)` reference cohort.
 
 ## 7. Audit pass-rate detail
 
-> **Status:** stub. Populate with the per-coefficient audit pass-rate
-> tables across (q, F-key, k, N) that previously sat in paper App C.
-
 The paper's App B (Reproducibility, grids, and DGPs) summarizes audit
 pass rates at Bonferroni-corrected $|z| < 4.80$. This companion lists
 the per-cell audit results for reviewers wanting to verify any
@@ -338,11 +315,6 @@ specific corner.
 ---
 
 ## 8. Confidence-interval methods detail
-
-> **Status:** stub. Populate with the procedural detail moved out of
-> paper App D — Wilson-logit construction, delta-method SE on $\hat q$
-> for reviewer audit, bootstrap CI procedure for per-rater
-> $(\hat\Se_j, \hat\Sp_j)$.
 
 The paper App B carries the load-bearing CI numbers (Monte-Carlo error
 on percentile, nearest-neighbour cost, bootstrap coverage at one

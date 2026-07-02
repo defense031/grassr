@@ -33,11 +33,8 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/grass-intro.html">Introduction to grass: prevalence-aware agreement interpretation</a></li>
-    <li><a class="dropdown-item" href="../articles/reporting-card.html">GRASS Report Card: a one-call workflow for binary rater reliability</a></li>
+<li><a class="dropdown-item" href="../articles/reporting-card.html">GRASS Report Card: a one-call workflow for binary rater reliability</a></li>
     <li><a class="dropdown-item" href="../articles/methods-companion.html">GRASS methods companion: notation, calibration detail, and auxiliary diagnostics</a></li>
-    <li><a class="dropdown-item" href="../articles/skewed-examples.html">Worked examples of skewed agreement</a></li>
-    <li><a class="dropdown-item" href="../articles/grass-ecosystem.html">The grass ecosystem</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -90,7 +87,8 @@ latent-class fit.</p>
 <h3 id="whats-new-in-0-6-0">What’s new in 0.6.0<a class="anchor" aria-label="anchor" href="#whats-new-in-0-6-0"></a>
 </h3>
 <ul>
-<li><p><strong>Krippendorff’s α removed from the Report Card and δ̂
+<li>
+<strong>Krippendorff’s α removed from the Report Card and δ̂
 (0.6.0):</strong> in the binary fully-crossed designs this package
 targets, α coincides with Fleiss’ κ asymptotically (median absolute
 difference 0.00024 across the 10,140-cell calibration grid), so its row
@@ -100,45 +98,15 @@ spread over PABAK, mean AC1, and Fleiss’ κ; the bundled thresholds hold
 for the 3-coefficient spread (sub-pp shift, within MC-SE).
 <code><a href="../reference/obs_krippendorff_alpha.html">obs_krippendorff_alpha()</a></code> is exported for anyone needing the
 value, and <code>position_on_surface(metric = "krippendorff_a")</code>
-still positions it on its closed-form reference.</p></li>
-<li><p><strong>Legacy pre-0.2.0 API removed (0.6.0):</strong>
+still positions it on its closed-form reference.</li>
+<li>
+<strong>Legacy pre-0.2.0 API removed (0.6.0):</strong>
 <code>grass_format_report()</code>, <code>grass_methods()</code>,
 <code>grass_report_by()</code>, and the <code>grass_result</code>
-methods. See <code>NEWS.md</code>.</p></li>
-<li><p><strong>Bug fix (0.5.2):</strong> the k = 2 portion of the
-bundled <code>empirical_q_hat_surface</code> had a build-time scenario
-mislabeling that affected roughly half of all k = 2 sysdata cells in
-v0.5.0 and v0.5.1. A corrected k = 2 sub-grid plus high-q augmentations
-at k = 2 and k = 25 are bundled here; full details and migration impact
-in <code>NEWS.md</code>. Anyone who computed k = 2 surface percentiles
-on v0.5.0 / v0.5.1 should re-run on v0.5.2.</p></li>
-<li><p><strong>Report Card render (0.5.2):</strong> under the
-<code>aligned</code> and <code>caution</code> flags,
-<code>print(grass_report(Y))</code> now lists every panel coefficient
-with its surface percentile (previously only the primary printed). The
-primary still carries the <code>&lt;- primary</code> marker and the
-qualifier (<code>decisive</code> / <code>moderate</code> /
-<code>weak</code>) inline. ICC carries a
-<code>[distribution-sensitive]</code> marker in the Report Card rather
-than only in the asymmetry-panel print.</p></li>
-<li><p><strong>Scope locked (0.5.0):</strong> δ̂ is computed over the
-agreement family (PABAK, AC1, Fleiss κ; Krippendorff α until 0.6.0). ICC
-is reported alongside on the Report Card with a
-<code>[distribution-sensitive]</code> marker but does not enter δ̂ by
-construction; its reference surface depends on the full subject-
-prevalence distribution rather than on <code>(q, pi_hat)</code>
-alone.</p></li>
-<li><p><strong>Per-(k, N) δ̂ thresholds (0.5.0):</strong>
-<code>delta_thresholds_lookup</code> bundles the size-α-calibrated
-(caution, divergent) pair per design cell; at off-grid
-<code>(k, N)</code> the lookup snaps to the nearest fully-calibrated
-cell and surfaces the snap on the Report Card.</p></li>
-<li><p><strong>Fitted-ICC reference (0.5.0):</strong> rebuilt from a
-unified Julia/MixedModels.jl sim across k ∈ {3, 5, 8, 15, 25} × N ∈ {30,
-50, 75, 100, 200, 300, 500, 1000} on a 14-point q-grid. Empirical clamp
-rate at common applied designs dropped from 98.2% (v0.3 baseline) to
-7.7%.</p></li>
+methods. See <code>NEWS.md</code>.</li>
 </ul>
+<p>Full release history, including the 0.5.x sysdata corrections, is in
+<code>NEWS.md</code>.</p>
 </div>
 </div>
 <div class="section level2">
@@ -236,28 +204,30 @@ sits, so a single number is enough.</p>
 <p>Note three things:</p>
 <ol style="list-style-type: decimal">
 <li>The <code>flag</code> is <code>aligned</code>
-(<code>delta = 5.8 pp</code>, comfortably below the 9.25-pp caution
-threshold). One coefficient is safe to cite.</li>
+(<code>delta = 1.2 pp</code>, well below the 9.25-pp caution threshold).
+One coefficient is safe to cite.</li>
 <li>Only the primary coefficient prints (PABAK, picked automatically by
 the <code>(k, pi_hat)</code> rule from Table 2 of the paper). The full
-panel of five coefficients is still computed and stored on the object —
+panel of four coefficients is still computed and stored on the object;
 it is just not the headline.</li>
-<li>The band (<code>Strong, decisive</code>) is a calibrated label, not
-a Landis-Koch inheritance. <code>Strong</code> means the surface
-percentile sits in the third quartile of the reference distribution;
-<code>decisive</code> means the modal-band sampling probability is
-concentrated enough to give that label without hedging.</li>
+<li>The qualifier (<code>decisive</code>) is calibrated, not inherited
+from a fixed-band convention: it is the bootstrap probability that the
+modal surface region survives perturbation of
+<code>(q_hat, pi_hat)</code>, mapped to decisive / moderate / weak at
+0.90 / 0.60. A four-band label is computed and stored on the object for
+programmatic use; the printed headline carries the percentile and the
+qualifier only.</li>
 </ol>
 </div>
 <div class="section level2">
-<h2 id="a-divergent-panel-the-killer-case">3. A divergent panel (the killer case)<a class="anchor" aria-label="anchor" href="#a-divergent-panel-the-killer-case"></a>
+<h2 id="a-divergent-panel">3. A divergent panel<a class="anchor" aria-label="anchor" href="#a-divergent-panel"></a>
 </h2>
-<p>Now the §4.2 paper case (the <code>op_strong</code> profile): five
-raters with <em>alternating</em> per-rater bias direction at balanced
-prevalence. Three raters lean toward over-calling (Se = 0.95, Sp =
-0.75); two lean toward under-calling (Se = 0.75, Sp = 0.95). The
-asymmetry is severe per rater but cancels in the panel-aggregate
-marginals — so each agreement coefficient returns roughly the same
+<p>Now the paper’s divergent worked example (the <code>op_strong</code>
+profile): five raters with <em>alternating</em> per-rater bias direction
+at balanced prevalence. Three raters lean toward over-calling (Se =
+0.95, Sp = 0.75); two lean toward under-calling (Se = 0.75, Sp = 0.95).
+The asymmetry is severe per rater but cancels in the panel-aggregate
+marginals, so each agreement coefficient returns roughly the same
 observed value, yet their inversions onto the (symmetric-DGP) reference
 surfaces split across percentiles. This is the configuration where the
 headline <code>grass_report</code> flag flips from a single coherent
@@ -266,38 +236,64 @@ reading to a per-rater diagnostic.</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">6</span><span class="op">)</span></span>
 <span><span class="va">N</span> <span class="op">&lt;-</span> <span class="fl">1000</span>; <span class="va">k</span> <span class="op">&lt;-</span> <span class="fl">5</span></span>
 <span><span class="co"># Alternating per-rater Se/Sp asymmetry: R1, R3, R5 favor sensitivity;</span></span>
-<span><span class="co"># R2, R4 favor specificity.</span></span>
+<span><span class="co"># R2, R4 favor specificity. Subject-level positive probabilities are</span></span>
+<span><span class="co"># logit-normal around balanced prevalence (the paper's divergent DGP).</span></span>
 <span><span class="va">Se</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.95</span>, <span class="fl">0.75</span>, <span class="fl">0.95</span>, <span class="fl">0.75</span>, <span class="fl">0.95</span><span class="op">)</span></span>
 <span><span class="va">Sp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.75</span>, <span class="fl">0.95</span>, <span class="fl">0.75</span>, <span class="fl">0.95</span>, <span class="fl">0.75</span><span class="op">)</span></span>
-<span><span class="va">truth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">N</span>, <span class="fl">1</span>, <span class="fl">0.50</span><span class="op">)</span></span>
-<span><span class="va">Y_div</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="va">k</span>, <span class="kw">function</span><span class="op">(</span><span class="va">j</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">truth</span> <span class="op">==</span> <span class="fl">1</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">N</span>, <span class="fl">1</span>, <span class="va">Se</span><span class="op">[</span><span class="va">j</span><span class="op">]</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">N</span>, <span class="fl">1</span>, <span class="fl">1</span> <span class="op">-</span> <span class="va">Sp</span><span class="op">[</span><span class="va">j</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span></span>
+<span><span class="va">p_i</span>   <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">plogis</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">N</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Logistic.html" class="external-link">qlogis</a></span><span class="op">(</span><span class="fl">0.50</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fl">0.25</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">truth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">N</span>, <span class="fl">1L</span>, <span class="va">p_i</span><span class="op">)</span></span>
+<span><span class="va">Y_div</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0L</span>, <span class="va">N</span>, <span class="va">k</span><span class="op">)</span></span>
+<span><span class="kw">for</span> <span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">k</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="va">Y_div</span><span class="op">[</span>, <span class="va">j</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Binomial.html" class="external-link">rbinom</a></span><span class="op">(</span><span class="va">N</span>, <span class="fl">1L</span>, <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">truth</span> <span class="op">==</span> <span class="fl">1L</span>, <span class="va">Se</span><span class="op">[</span><span class="va">j</span><span class="op">]</span>, <span class="fl">1</span> <span class="op">-</span> <span class="va">Sp</span><span class="op">[</span><span class="va">j</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">card_div</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/grass_report.html">grass_report</a></span><span class="op">(</span>ratings <span class="op">=</span> <span class="va">Y_div</span><span class="op">)</span></span>
+<span><span class="va">card_div</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/grass_report.html">grass_report</a></span><span class="op">(</span>ratings <span class="op">=</span> <span class="va">Y_div</span>, bootstrap_B <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
 <span><span class="va">card_div</span></span>
 <span><span class="co">#&gt; GRASS Report Card</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   sample      = 5 raters, N = 1000, pi_hat = 0.52</span></span>
-<span><span class="co">#&gt;   PABAK        = 0.50  -&gt;  76th percentile  (decisive)  &lt;- primary</span></span>
-<span><span class="co">#&gt;   AC1          = 0.51  -&gt;  84th percentile</span></span>
-<span><span class="co">#&gt;   Fleiss kappa = 0.50  -&gt;  77th percentile</span></span>
-<span><span class="co">#&gt;   ICC          = 0.63  -&gt;  50th percentile  [distribution-sensitive]</span></span>
-<span><span class="co">#&gt;   delta       = 8.6 pp (caution)</span></span>
+<span><span class="co">#&gt;   sample      = 5 raters, N = 1000, pi_hat = 0.50</span></span>
+<span><span class="co">#&gt;   PABAK         = 0.49  -&gt;  40th percentile  &lt;- primary</span></span>
+<span><span class="co">#&gt;   AC1           = 0.49  -&gt;  58th percentile</span></span>
+<span><span class="co">#&gt;   Fleiss kappa  = 0.49  -&gt;  41st percentile</span></span>
+<span><span class="co">#&gt;   ICC           = 0.62  -&gt;  50th percentile  [distribution-sensitive]</span></span>
+<span><span class="co">#&gt;   panel-agg.  = suppressed (divergent)</span></span>
+<span><span class="co">#&gt;   delta       =  18 pp (divergent)</span></span>
 <span><span class="co">#&gt;   thresholds  = (8.50, 9.75) [calibrated at nearest grid cell (snapped)]</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   pairwise PABAK / surface percentile (lower / upper):</span></span>
+<span><span class="co">#&gt;     R1     R2     R3     R4     R5    </span></span>
+<span><span class="co">#&gt;   R1    --     25%    79%    43%    98% </span></span>
+<span><span class="co">#&gt;   R2    0.47   --     97%    90%    17% </span></span>
+<span><span class="co">#&gt;   R3    0.51   0.41   --     97%    96% </span></span>
+<span><span class="co">#&gt;   R4    0.48   0.52   0.42   --     63% </span></span>
+<span><span class="co">#&gt;   R5    0.55   0.46   0.54   0.50   --  </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   per-rater vs panel-majority of OTHER raters (pooled-reference):</span></span>
+<span><span class="co">#&gt;     R1   Se_tilde = 0.94  Sp_tilde = 0.77  (n_pos = 434, n_neg = 471, excl = 95)</span></span>
+<span><span class="co">#&gt;     R2   Se_tilde = 0.71  Sp_tilde = 0.95  (n_pos = 466, n_neg = 439, excl = 95)</span></span>
+<span><span class="co">#&gt;     R3   Se_tilde = 0.95  Sp_tilde = 0.71  (n_pos = 433, n_neg = 485, excl = 82)</span></span>
+<span><span class="co">#&gt;     R4   Se_tilde = 0.74  Sp_tilde = 0.95  (n_pos = 468, n_neg = 441, excl = 91)</span></span>
+<span><span class="co">#&gt;     R5   Se_tilde = 0.96  Sp_tilde = 0.78  (n_pos = 428, n_neg = 476, excl = 96)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;   per-rater (latent-class fit; alongside pairwise):</span></span>
+<span><span class="co">#&gt;     R1   Se = 0.95  (0.23, 0.97)   Sp = 0.78  (0.06, 0.82)</span></span>
+<span><span class="co">#&gt;     R2   Se = 0.73  (0.05, 0.77)   Sp = 0.95  (0.29, 0.97)</span></span>
+<span><span class="co">#&gt;     R3   Se = 0.96  (0.29, 0.97)   Sp = 0.72  (0.05, 0.76)</span></span>
+<span><span class="co">#&gt;     R4   Se = 0.75  (0.05, 0.79)   Sp = 0.95  (0.26, 0.97)</span></span>
+<span><span class="co">#&gt;     R5   Se = 0.96  (0.22, 0.98)   Sp = 0.78  (0.04, 0.82)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   Notes:</span></span>
 <span><span class="co">#&gt;     - (k = 5, N = 1000) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 5, N = 500).</span></span>
-<span><span class="co">#&gt;     - Fitted-ICC F_key picked via glmer: mu_hat=0.171, tau2_hat=5.631 -&gt; F_key tau2=4.0000, mu=0.000.</span></span>
+<span><span class="co">#&gt;     - Fitted-ICC F_key picked via glmer: mu_hat=0.005, tau2_hat=5.278 -&gt; F_key tau2=4.0000, mu=0.000.</span></span>
 <span><span class="co">#&gt;     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=+0.000_tau2=4.0000, k=5, N=1000 (family=logit_normal, M1=0.500).</span></span>
-<span><span class="co">#&gt;     - Caution: cross-coefficient spread is approaching the divergent threshold. Consider running pairwise_agreement(ratings = Y) for a pairwise PABAK matrix and per-rater pooled-reference Se/Sp; see paper Sec.3.3.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   See `summary(...)` for full panel and CI details.</span></span>
 <span><span class="co">#&gt;   See `plot(...)` for a surface-position visualization.</span></span></code></pre></div>
 <p>The flag is <code>divergent</code>: the cross-coefficient percentile
-spread exceeds the 11.75-pp threshold even though the three agreement
-coefficients (PABAK, AC1, Fleiss kappa) all sit near the same observed
-value. Three things change in the printed output:</p>
+spread clears the divergent threshold printed on the card (9.75 pp,
+snapped from the nearest calibrated cell) even though the three
+agreement coefficients (PABAK, AC1, Fleiss kappa) all sit near the same
+observed value. Three things change in the printed output:</p>
 <ol style="list-style-type: decimal">
 <li>The full panel of percentiles prints, not just the primary, so the
 reader can see that AC1 separates from the kappa-family
@@ -334,43 +330,43 @@ majority, not a latent class).</p>
 <span><span class="va">pw</span></span>
 <span><span class="co">#&gt; GRASS Pairwise Reliability</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   sample      = 5 raters, N = 1000, pi_hat = 0.52, tau2_hat = 0.125, axis = inter</span></span>
+<span><span class="co">#&gt;   sample      = 5 raters, N = 1000, pi_hat = 0.50, tau2_hat = 0.122, axis = inter</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   Pairwise PABAK (lower triangle = PABAK_ij; upper triangle = surface percentile):</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;    R1     R2     R3     R4     R5    </span></span>
-<span><span class="co">#&gt; R1     --   25%    98%    62%    97% </span></span>
-<span><span class="co">#&gt; R2   0.47     --    7%    99%    46% </span></span>
-<span><span class="co">#&gt; R3   0.55   0.45     --   15%    75% </span></span>
-<span><span class="co">#&gt; R4   0.50   0.55   0.46     --   65% </span></span>
-<span><span class="co">#&gt; R5   0.54   0.49   0.51   0.50     --</span></span>
+<span><span class="co">#&gt; R1     --   25%    79%    43%    98% </span></span>
+<span><span class="co">#&gt; R2   0.47     --   97%    90%    17% </span></span>
+<span><span class="co">#&gt; R3   0.51   0.41     --   97%    96% </span></span>
+<span><span class="co">#&gt; R4   0.48   0.52   0.42     --   63% </span></span>
+<span><span class="co">#&gt; R5   0.55   0.46   0.54   0.50     --</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   Per-rater behavior against pooled panel-majority:</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;  rater Se_tilde Sp_tilde n_pos n_neg n_excl</span></span>
-<span><span class="co">#&gt;     R1     0.95     0.76   459   459     82</span></span>
-<span><span class="co">#&gt;     R2     0.74     0.95   491   422     87</span></span>
-<span><span class="co">#&gt;     R3     0.94     0.74   458   458     84</span></span>
-<span><span class="co">#&gt;     R4     0.77     0.95   488   416     96</span></span>
-<span><span class="co">#&gt;     R5     0.93     0.77   466   451     83</span></span>
+<span><span class="co">#&gt;     R1     0.94     0.77   434   471     95</span></span>
+<span><span class="co">#&gt;     R2     0.71     0.95   466   439     95</span></span>
+<span><span class="co">#&gt;     R3     0.95     0.71   433   485     82</span></span>
+<span><span class="co">#&gt;     R4     0.74     0.95   468   441     91</span></span>
+<span><span class="co">#&gt;     R5     0.96     0.78   428   476     96</span></span>
 <span><span class="co">#&gt;   (Se_tilde, Sp_tilde are calls vs panel-majority of OTHER raters,</span></span>
 <span><span class="co">#&gt;    not against external truth. n_excl: subjects with tied majority,</span></span>
 <span><span class="co">#&gt;    excluded from the per-rater pool.)</span></span></code></pre></div>
-<p>Read the per-rater table: under the §4.2 paper case (R1, R3, R5 favor
-sensitivity; R2, R4 favor specificity) the pooled-reference estimates
-pin each rater’s bias direction without ambiguity. R1’s
-<code>Se_tilde</code> is high (calls true positives at panel-majority
-rate) while <code>Sp_tilde</code> is lower (calls panel-majority
-negatives less reliably) — the over-caller signature. R2 shows the
-mirror: low <code>Se_tilde</code>, high <code>Sp_tilde</code>. The
-latent-class fit’s wide bootstrap CIs in §4.2 of the paper had to live
+<p>Read the per-rater table: with R1, R3, R5 favoring sensitivity and
+R2, R4 favoring specificity, the pooled-reference estimates pin each
+rater’s bias direction without ambiguity. R1’s <code>Se_tilde</code> is
+high (calls true positives at panel-majority rate) while
+<code>Sp_tilde</code> is lower (calls panel-majority negatives less
+reliably): the over-caller signature. R2 shows the mirror: low
+<code>Se_tilde</code>, high <code>Sp_tilde</code>. The latent-class
+fit’s wide bootstrap CIs in the paper’s divergent example had to live
 with the label-switched mode; the pooled-reference per-rater table
 sidesteps that ambiguity.</p>
 <p>The pairwise PABAK matrix lower triangle shows the actual pairwise
 agreements; the upper triangle shows surface percentiles at each pair’s
 observed marginal. Note that the same PABAK value can land at different
 surface percentiles across pairs because each pair sees a different
-<code>pi_hat_ij</code> — the divergent flag is exposing exactly this
+<code>pi_hat_ij</code>; the divergent flag is exposing exactly this
 prevalence-by-pair structure that a panel-aggregate summary would have
 averaged away.</p>
 </div>
@@ -378,8 +374,8 @@ averaged away.</p>
 <div class="section level2">
 <h2 id="layered-access">4. Layered access<a class="anchor" aria-label="anchor" href="#layered-access"></a>
 </h2>
-<p>The Report Card is the curated headline. Every field underneath the
-printed output is available on demand.</p>
+<p>Every field beneath the printed Report Card is available on
+demand.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">card_sym</span><span class="op">)</span></span>
 <span><span class="co">#&gt; GRASS Report Card -- summary</span></span>
@@ -410,7 +406,7 @@ printed output is available on demand.</p>
 <span><span class="co">#&gt;     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-0.847_tau2=4.0000, k=5, N=200 (family=logit_normal, M1=0.374).</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   grass version : 0.6.0</span></span>
-<span><span class="co">#&gt;   timestamp     : 2026-07-02 13:44:55</span></span></code></pre></div>
+<span><span class="co">#&gt;   timestamp     : 2026-07-02 14:16:37</span></span></code></pre></div>
 <p><code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> is the <em>audit view</em>: full panel of
 coefficients with percentiles and bands, all caveats from the surface
 lookup, the GRASS version, the timestamp. Use it when you want to see
@@ -453,11 +449,10 @@ meta-analysis or to feed the panel into another analysis pipeline.</p>
 <span><span class="co">#&gt; Warning: Removed 1 row containing missing values or values outside the scale range</span></span>
 <span><span class="co">#&gt; (`geom_rect()`).</span></span></code></pre></div>
 <p><img src="reporting-card_files/figure-html/plot-thermometer-1.png" alt="Thermometer view" width="770"></p>
-<p>The default <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> view is the <em>visceral
-artifact</em>: a heatmap of the expected primary coefficient over
-<code>(M_1, q)</code> at the study’s <code>(k, N)</code>, with a single
-point pinned at the observed coordinates. Use it when you want to show a
-reader where the study lands. The <code>thermometer</code> view isolates
+<p>The default <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> view is a heatmap of the expected
+primary coefficient over <code>(M_1, q)</code> at the study’s
+<code>(k, N)</code>, with a single point pinned at the observed
+coordinates. The <code>thermometer</code> view isolates
 <code>delta_hat</code> against the caution and divergent thresholds;
 useful when the question is <em>“is the panel stable enough to cite a
 single number?”</em>. Additional views (<code>type = "panel"</code> for
@@ -519,14 +514,14 @@ computing per-rater detail. Cheap when you want only the diagnostic.</p>
 <span><span class="co">#&gt;   bootstrap B   : 200</span></span>
 <span><span class="co">#&gt;   converged     : TRUE</span></span>
 <span><span class="co">#&gt;   iterations    : 10</span></span>
-<span><span class="co">#&gt;   prevalence_hat: 0.502</span></span>
-<span><span class="co">#&gt;   log-likelihood: -2512.122</span></span>
+<span><span class="co">#&gt;   prevalence_hat: 0.475</span></span>
+<span><span class="co">#&gt;   log-likelihood: -2504.371</span></span>
 <span><span class="co">#&gt;   per-rater</span></span>
-<span><span class="co">#&gt;     R1    Se = 0.953  (0.203, 0.970)   Sp = 0.767  (0.033, 0.802)</span></span>
-<span><span class="co">#&gt;     R2    Se = 0.757  (0.029, 0.790)   Sp = 0.952  (0.207, 0.967)</span></span>
-<span><span class="co">#&gt;     R3    Se = 0.942  (0.229, 0.957)   Sp = 0.743  (0.037, 0.777)</span></span>
-<span><span class="co">#&gt;     R4    Se = 0.788  (0.037, 0.819)   Sp = 0.949  (0.177, 0.968)</span></span>
-<span><span class="co">#&gt;     R5    Se = 0.937  (0.194, 0.951)   Sp = 0.777  (0.045, 0.814)</span></span></code></pre></div>
+<span><span class="co">#&gt;     R1    Se = 0.950  (0.201, 0.970)   Sp = 0.783  (0.050, 0.817)</span></span>
+<span><span class="co">#&gt;     R2    Se = 0.729  (0.042, 0.770)   Sp = 0.953  (0.259, 0.973)</span></span>
+<span><span class="co">#&gt;     R3    Se = 0.956  (0.262, 0.973)   Sp = 0.718  (0.036, 0.764)</span></span>
+<span><span class="co">#&gt;     R4    Se = 0.750  (0.044, 0.784)   Sp = 0.949  (0.259, 0.965)</span></span>
+<span><span class="co">#&gt;     R5    Se = 0.962  (0.206, 0.980)   Sp = 0.781  (0.038, 0.812)</span></span></code></pre></div>
 <p><code><a href="../reference/latent_class_fit.html">latent_class_fit()</a></code> produces the per-rater Se/Sp table
 directly, with Dawid-Skene EM and a nonparametric bootstrap CI at k
 &gt;= 3.</p>
@@ -634,7 +629,7 @@ to 0:</p>
 <code>Notes</code> section names which coefficient was excluded and why,
 and under the <code>divergent</code> flag the panel display marks each
 clamped coefficient row with
-<code>[clamped — excluded from delta]</code>. The <code>panel</code>
+<code>[clamped - excluded from delta]</code>. The <code>panel</code>
 data.frame on the returned object also carries a <code>clamped</code>
 logical column for programmatic inspection:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
@@ -736,14 +731,7 @@ diagnostic tests. <em>Biometrics</em> 36(1), 167-171. The k = 2 bounds
 returned by <code><a href="../reference/latent_class_fit.html">latent_class_fit()</a></code>.</li>
 <li>Dawid, A. P. &amp; Skene, A. M. (1979). Maximum likelihood
 estimation of observer error-rates using the EM algorithm. <em>Applied
-Statistics</em> 28(1), 20-28. The k &gt;= 3 EM fit. The (9.25, 11.75)
-thresholds on <code>delta_hat</code> are Neyman-Pearson-motivated
-size-alpha cutoffs (Neyman &amp; Pearson 1933): the smallest threshold
-whose false-positive rate on the diagonal-symmetric null does not exceed
-0.05 / 0.01 (paper §3.2 / App G). NP-optimal within the test class of
-threshold rules on <code>delta_hat</code>; not derived from a
-likelihood-ratio statistic on the joint distribution of the panel
-coefficients.</li>
+Statistics</em> 28(1), 20-28. The k &gt;= 3 EM fit.</li>
 </ul>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

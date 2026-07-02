@@ -51,36 +51,8 @@ with itself) a per-rater latent-class fit.
   `grass_methods()`, `grass_report_by()`, and the `grass_result`
   methods. See `NEWS.md`.
 
-- **Bug fix (0.5.2):** the k = 2 portion of the bundled
-  `empirical_q_hat_surface` had a build-time scenario mislabeling
-  that affected roughly half of all k = 2 sysdata cells in v0.5.0
-  and v0.5.1. A corrected k = 2 sub-grid plus high-q augmentations
-  at k = 2 and k = 25 are bundled here; full details and migration
-  impact in `NEWS.md`. Anyone who computed k = 2 surface percentiles
-  on v0.5.0 / v0.5.1 should re-run on v0.5.2.
-- **Report Card render (0.5.2):** under the `aligned` and `caution`
-  flags, `print(grass_report(Y))` now lists every panel coefficient
-  with its surface percentile (previously only the primary
-  printed). The primary still carries the `<- primary` marker and
-  the qualifier (`decisive` / `moderate` / `weak`) inline. ICC
-  carries a `[distribution-sensitive]` marker in the Report Card
-  rather than only in the asymmetry-panel print.
-- **Scope locked (0.5.0):** δ̂ is computed over the agreement
-  family (PABAK, AC1, Fleiss κ; Krippendorff α until 0.6.0). ICC is
-  reported alongside on the Report Card with a
-  `[distribution-sensitive]` marker but does not enter δ̂ by
-  construction; its reference surface depends on the full subject-
-  prevalence distribution rather than on `(q, pi_hat)` alone.
-- **Per-(k, N) δ̂ thresholds (0.5.0):** `delta_thresholds_lookup`
-  bundles the size-α-calibrated (caution, divergent) pair per
-  design cell; at off-grid `(k, N)` the lookup snaps to the
-  nearest fully-calibrated cell and surfaces the snap on the
-  Report Card.
-- **Fitted-ICC reference (0.5.0):** rebuilt from a unified
-  Julia/MixedModels.jl sim across k ∈ {3, 5, 8, 15, 25} × N ∈
-  {30, 50, 75, 100, 200, 300, 500, 1000} on a 14-point q-grid.
-  Empirical clamp rate at common applied designs dropped from
-  98.2% (v0.3 baseline) to 7.7%.
+Full release history, including the 0.5.x sysdata corrections, is
+in `NEWS.md`.
 
 ## 1. The headline call
 
@@ -140,25 +112,26 @@ card_sym
 
 Note three things:
 
-1. The `flag` is `aligned` (`delta = 5.8 pp`, comfortably below the
+1. The `flag` is `aligned` (`delta = 1.2 pp`, well below the
    9.25-pp caution threshold). One coefficient is safe to cite.
 2. Only the primary coefficient prints (PABAK, picked automatically by
    the `(k, pi_hat)` rule from Table 2 of the paper). The full panel of
-   five coefficients is still computed and stored on the object — it is
+   four coefficients is still computed and stored on the object; it is
    just not the headline.
-3. The band (`Strong, decisive`) is a calibrated label, not a Landis-Koch
-   inheritance. `Strong` means the surface percentile sits in the third
-   quartile of the reference distribution; `decisive` means the modal-band
-   sampling probability is concentrated enough to give that label without
-   hedging.
+3. The qualifier (`decisive`) is calibrated, not inherited from a
+   fixed-band convention: it is the bootstrap probability that the
+   modal surface region survives perturbation of `(q_hat, pi_hat)`,
+   mapped to decisive / moderate / weak at 0.90 / 0.60. A four-band
+   label is computed and stored on the object for programmatic use;
+   the printed headline carries the percentile and the qualifier only.
 
-## 3. A divergent panel (the killer case)
+## 3. A divergent panel
 
-Now the §4.2 paper case (the `op_strong` profile): five raters with
+Now the paper's divergent worked example (the `op_strong` profile): five raters with
 *alternating* per-rater bias direction at balanced prevalence. Three
 raters lean toward over-calling (Se = 0.95, Sp = 0.75); two lean toward
 under-calling (Se = 0.75, Sp = 0.95). The asymmetry is severe per
-rater but cancels in the panel-aggregate marginals --- so each
+rater but cancels in the panel-aggregate marginals, so each
 agreement coefficient returns roughly the same observed value, yet
 their inversions onto the (symmetric-DGP) reference surfaces split
 across percentiles. This is the configuration where the headline
@@ -169,20 +142,24 @@ per-rater diagnostic.
 set.seed(6)
 N <- 1000; k <- 5
 # Alternating per-rater Se/Sp asymmetry: R1, R3, R5 favor sensitivity;
-# R2, R4 favor specificity.
+# R2, R4 favor specificity. Subject-level positive probabilities are
+# logit-normal around balanced prevalence (the paper's divergent DGP).
 Se <- c(0.95, 0.75, 0.95, 0.75, 0.95)
 Sp <- c(0.75, 0.95, 0.75, 0.95, 0.75)
-truth <- rbinom(N, 1, 0.50)
-Y_div <- sapply(1:k, function(j) {
-  ifelse(truth == 1, rbinom(N, 1, Se[j]), rbinom(N, 1, 1 - Sp[j]))
-})
+p_i   <- plogis(rnorm(N, qlogis(0.50), sqrt(0.25)))
+truth <- rbinom(N, 1L, p_i)
+Y_div <- matrix(0L, N, k)
+for (j in seq_len(k)) {
+  Y_div[, j] <- rbinom(N, 1L, ifelse(truth == 1L, Se[j], 1 - Sp[j]))
+}
 
-card_div <- grass_report(ratings = Y_div)
+card_div <- grass_report(ratings = Y_div, bootstrap_B = 200)
 card_div
 ```
 
 The flag is `divergent`: the cross-coefficient percentile spread
-exceeds the 11.75-pp threshold even though the three agreement
+clears the divergent threshold printed on the card (9.75 pp, snapped
+from the nearest calibrated cell) even though the three agreement
 coefficients (PABAK, AC1, Fleiss kappa) all sit
 near the same observed value. Three things change in the printed
 output:
@@ -222,28 +199,28 @@ pw <- pairwise_agreement(Y_div)
 pw
 ```
 
-Read the per-rater table: under the §4.2 paper case (R1, R3, R5
-favor sensitivity; R2, R4 favor specificity) the pooled-reference
+Read the per-rater table: with R1, R3, R5 favoring sensitivity and
+R2, R4 favoring specificity, the pooled-reference
 estimates pin each rater's bias direction without ambiguity. R1's
 `Se_tilde` is high (calls true positives at panel-majority rate)
 while `Sp_tilde` is lower (calls panel-majority negatives less
-reliably) --- the over-caller signature. R2 shows the mirror: low
+reliably): the over-caller signature. R2 shows the mirror: low
 `Se_tilde`, high `Sp_tilde`. The latent-class fit's wide bootstrap
-CIs in §4.2 of the paper had to live with the label-switched mode;
+CIs in the paper's divergent example had to live with the
+label-switched mode;
 the pooled-reference per-rater table sidesteps that ambiguity.
 
 The pairwise PABAK matrix lower triangle shows the actual pairwise
 agreements; the upper triangle shows surface percentiles at each
 pair's observed marginal. Note that the same PABAK value can land
 at different surface percentiles across pairs because each pair
-sees a different `pi_hat_ij` --- the divergent flag is exposing
+sees a different `pi_hat_ij`; the divergent flag is exposing
 exactly this prevalence-by-pair structure that a panel-aggregate
 summary would have averaged away.
 
 ## 4. Layered access
 
-The Report Card is the curated headline. Every field underneath the
-printed output is available on demand.
+Every field beneath the printed Report Card is available on demand.
 
 ```{r}
 summary(card_sym)
@@ -272,10 +249,9 @@ plot(card_sym)                       # default: surface with observation pinned
 plot(card_sym, type = "thermometer") # delta_hat thermometer
 ```
 
-The default `plot()` view is the *visceral artifact*: a heatmap of the
-expected primary coefficient over `(M_1, q)` at the study's `(k, N)`,
-with a single point pinned at the observed coordinates. Use it when you
-want to show a reader where the study lands. The `thermometer` view
+The default `plot()` view is a heatmap of the expected primary
+coefficient over `(M_1, q)` at the study's `(k, N)`, with a single
+point pinned at the observed coordinates. The `thermometer` view
 isolates `delta_hat` against the caution and divergent thresholds; useful
 when the question is *"is the panel stable enough to cite a single
 number?"*. Additional views (`type = "panel"` for the cross-coefficient
@@ -375,7 +351,7 @@ card_clamp
 The printed Report Card surfaces the clamp in two places: the
 `Notes` section names which coefficient was excluded and why, and
 under the `divergent` flag the panel display marks each clamped
-coefficient row with `[clamped — excluded from delta]`. The `panel`
+coefficient row with `[clamped - excluded from delta]`. The `panel`
 data.frame on the returned object also carries a `clamped` logical
 column for programmatic inspection:
 
@@ -457,10 +433,3 @@ with `grass_report()` and use `plot.grass_card(type = "surface")`.
 - Dawid, A. P. & Skene, A. M. (1979). Maximum likelihood estimation of
   observer error-rates using the EM algorithm. *Applied Statistics*
   28(1), 20-28. The k >= 3 EM fit.
-The (9.25, 11.75) thresholds on `delta_hat` are
-Neyman-Pearson-motivated size-alpha cutoffs (Neyman & Pearson 1933):
-the smallest threshold whose false-positive rate on the
-diagonal-symmetric null does not exceed 0.05 / 0.01 (paper §3.2 /
-App G). NP-optimal within the test class of threshold rules on
-`delta_hat`; not derived from a likelihood-ratio statistic on the
-joint distribution of the panel coefficients.

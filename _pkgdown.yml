@@ -15,11 +15,8 @@ articles:
 - title: Vignettes
   navbar: ~
   contents:
-  - grass-intro
   - reporting-card
   - methods-companion
-  - skewed-examples
-  - grass-ecosystem
 
 reference:
 - title: Report Card workflow

@@ -39,7 +39,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Austin Semmel \email{runfast031@gmail.com}
+\strong{Maintainer}: Austin Semmel \email{austinsemmel@gmail.com}
 
 Authors:
 \itemize{

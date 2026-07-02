@@ -3,7 +3,7 @@ Type: Package
 Title: Context-Conditioned Reporting for Binary Rater Reliability
 Version: 0.6.0
 Authors@R: c(
-    person("Austin", "Semmel", email = "runfast031@gmail.com",
+    person("Austin", "Semmel", email = "austinsemmel@gmail.com",
            role = c("aut", "cre")),
     person("Rachel", "Gidaro", role = "aut"))
 Description: Generates a Report Card for rater reliability on binary

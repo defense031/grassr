@@ -1,4 +1,4 @@
-# grass
+# grassr
 
 **G**uide for **R**ater **A**greement under **S**tructural **S**kew.
 
@@ -6,7 +6,7 @@ Rater-reliability coefficients for binary outcomes are routinely
 interpreted using fixed labels from published scales, but those labels
 drift with prevalence, rater count, sample size, and latent rater
 asymmetry. The same panel can land in different conventional categories
-just because prevalence changes. `grass` replaces fixed cutoffs with
+just because prevalence changes. `grassr` replaces fixed cutoffs with
 context-conditioned **surface-position reporting**: the rating matrix
 goes in, and a four-field **Report Card** comes out — sample summary,
 primary coefficient with calibrated percentile, cross-coefficient
@@ -16,7 +16,7 @@ per-rater latent-class fit.
 ## A 30-second example
 
 ```r
-library(grass)
+library(grassr)
 set.seed(29)
 
 # Five raters, 200 subjects, Se = Sp = 0.85, prevalence 0.30.
@@ -72,13 +72,13 @@ and the two-rater branch — is in
 ## Install (local dev)
 
 ```r
-remotes::install_github("defense031/grass")
+remotes::install_github("defense031/grassr")
 
 # from the package directory:
 devtools::load_all()
 
 # or pin a specific release:
-# remotes::install_github("defense031/grass", ref = "v0.5.1")
+# remotes::install_github("defense031/grassr", ref = "v0.5.1")
 
 # or install the built tarball:
 # R CMD INSTALL grass_0.5.1.tar.gz

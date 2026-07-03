@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
   dpi = 110,
   eval = FALSE   # populate to TRUE per-chunk as content lands
 )
-library(grass)
+library(grassr)
 ```
 
 ## Scope of this companion
@@ -28,12 +28,12 @@ library(grass)
 This vignette accompanies the GRASS methods paper. It is a parallel
 reference: the paper is self-contained for review, while this companion
 carries the procedural detail and auxiliary diagnostics a practitioner
-running `grass` may want at hand. Section numbering does not parallel
+running `grassr` may want at hand. Section numbering does not parallel
 the paper.
 
 Content moved here from earlier paper appendices during the 2026-05-04
 appendix consolidation. **The paper does not cite this vignette**; this
-is a free-standing artifact for `grass` users.
+is a free-standing artifact for `grassr` users.
 
 ---
 
@@ -92,7 +92,7 @@ variance). The agreement-family coefficients can't tell those two
 studies apart at the panel level. ICC can, and so its reference
 surface must commit to a specific $F$.
 
-The bundled `grass` reference covers a 48-point logit-normal grid in
+The bundled `grassr` reference covers a 48-point logit-normal grid in
 $(\mu, \tau^2)$ plus four discrete-mixture profiles (uniform,
 bimodal-low-high, skew-rare-positive, and similar shapes). A panel
 whose true $F$ sits cleanly inside that grid reads ICC's surface
@@ -226,7 +226,7 @@ paper's diagonal DGP at a stated `seed`, `k`, `N`, per-rater
 parameter `F_sigma2`:
 
 ```{r dgp-helper, eval = TRUE}
-library(grass)
+library(grassr)
 
 simulate_panel <- function(seed, k, N, Se, Sp, pi, F_sigma2 = 0.25) {
   stopifnot(length(Se) == k, length(Sp) == k)

@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>grass: Context-Conditioned Reporting for Binary Rater Reliability • grass</title>
+<title>grassr: Context-Conditioned Reporting for Binary Rater Reliability • grassr</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="grass: Context-Conditioned Reporting for Binary Rater Reliability">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="grassr: Context-Conditioned Reporting for Binary Rater Reliability">
 <meta name="description" content="Generates a Report Card for rater reliability on binary outcomes from an N x k subject-by-rater rating matrix, on both the inter-rater and intra-rater axes. Each panel coefficient (PABAK, Gwets AC1, Fleiss kappa, and observed intraclass correlation) is positioned on a simulation-calibrated reference surface conditioned on the study's rater count, sample size, and prevalence, yielding a surface-position percentile with a bootstrap confidence qualifier. A cross-coefficient discordance diagnostic (delta-hat), with per-design thresholds calibrated to fixed false-positive rates, flags panels for which no single coefficient is a stable summary; for such divergent panels the report routes to a pairwise PABAK matrix and per-rater sensitivity and specificity recovered from a Dawid-Skene latent-class fit (Hui-Walter bounds at k = 2).">
 <meta property="og:description" content="Generates a Report Card for rater reliability on binary outcomes from an N x k subject-by-rater rating matrix, on both the inter-rater and intra-rater axes. Each panel coefficient (PABAK, Gwets AC1, Fleiss kappa, and observed intraclass correlation) is positioned on a simulation-calibrated reference surface conditioned on the study's rater count, sample size, and prevalence, yielding a surface-position percentile with a bootstrap confidence qualifier. A cross-coefficient discordance diagnostic (delta-hat), with per-design thresholds calibrated to fixed false-positive rates, flags panels for which no single coefficient is a stable summary; for such divergent panels the report routes to a pairwise PABAK matrix and per-rater sensitivity and specificity recovered from a Dawid-Skene latent-class fit (Hui-Walter bounds at k = 2).">
 </head>
@@ -20,9 +20,9 @@
 
     <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="index.html">grass</a>
+    <a class="navbar-brand me-2" href="index.html">grassr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -45,7 +45,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/defense031/grass/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/defense031/grassr/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -54,15 +54,15 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="grass">grass<a class="anchor" aria-label="anchor" href="#grass"></a>
+<div class="page-header"><h1 id="grassr">grassr<a class="anchor" aria-label="anchor" href="#grassr"></a>
 </h1></div>
 <p><strong>G</strong>uide for <strong>R</strong>ater <strong>A</strong>greement under <strong>S</strong>tructural <strong>S</strong>kew.</p>
-<p>Rater-reliability coefficients for binary outcomes are routinely interpreted using fixed labels from published scales, but those labels drift with prevalence, rater count, sample size, and latent rater asymmetry. The same panel can land in different conventional categories just because prevalence changes. <code>grass</code> replaces fixed cutoffs with context-conditioned <strong>surface-position reporting</strong>: the rating matrix goes in, and a four-field <strong>Report Card</strong> comes out — sample summary, primary coefficient with calibrated percentile, cross-coefficient asymmetry diagnostic, and (when the panel disagrees with itself) a per-rater latent-class fit.</p>
+<p>Rater-reliability coefficients for binary outcomes are routinely interpreted using fixed labels from published scales, but those labels drift with prevalence, rater count, sample size, and latent rater asymmetry. The same panel can land in different conventional categories just because prevalence changes. <code>grassr</code> replaces fixed cutoffs with context-conditioned <strong>surface-position reporting</strong>: the rating matrix goes in, and a four-field <strong>Report Card</strong> comes out — sample summary, primary coefficient with calibrated percentile, cross-coefficient asymmetry diagnostic, and (when the panel disagrees with itself) a per-rater latent-class fit.</p>
 <div class="section level2">
 <h2 id="a-30-second-example">A 30-second example<a class="anchor" aria-label="anchor" href="#a-30-second-example"></a>
 </h2>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://defense031.github.io/grass/">grass</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://defense031.github.io/grassr/">grassr</a></span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">29</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Five raters, 200 subjects, Se = Sp = 0.85, prevalence 0.30.</span></span>
@@ -95,13 +95,13 @@
 <h2 id="install-local-dev">Install (local dev)<a class="anchor" aria-label="anchor" href="#install-local-dev"></a>
 </h2>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"defense031/grass"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"defense031/grassr"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># from the package directory:</span></span>
 <span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/load_all.html" class="external-link">load_all</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># or pin a specific release:</span></span>
-<span><span class="co"># remotes::install_github("defense031/grass", ref = "v0.5.1")</span></span>
+<span><span class="co"># remotes::install_github("defense031/grassr", ref = "v0.5.1")</span></span>
 <span></span>
 <span><span class="co"># or install the built tarball:</span></span>
 <span><span class="co"># R CMD INSTALL grass_0.5.1.tar.gz</span></span></code></pre></div>
@@ -134,8 +134,8 @@
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/defense031/grass/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/defense031/grass/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/defense031/grassr/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/defense031/grassr/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -151,7 +151,7 @@
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing grass</a></li>
+<li><a href="authors.html#citation">Citing grassr</a></li>
 </ul>
 </div>
 

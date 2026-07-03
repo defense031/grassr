@@ -158,7 +158,7 @@ test_that("print.grass_asymmetry_panel renders the documented header", {
   # only after `devtools::document()` writes `S3method(print,
   # grass_asymmetry_panel)` to NAMESPACE; the user is regenerating NAMESPACE
   # separately in this paper-alignment sprint.
-  print_method <- getFromNamespace("print.grass_asymmetry_panel", "grass")
+  print_method <- getFromNamespace("print.grass_asymmetry_panel", "grassr")
   expect_output(print_method(out), "panel asymmetry diagnostic")
   expect_output(print_method(out), "panel:")
 })

@@ -1,4 +1,4 @@
 library(testthat)
-library(grass)
+library(grassr)
 
-test_check("grass")
+test_check("grassr")

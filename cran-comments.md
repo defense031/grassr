@@ -1,23 +1,18 @@
-# cran-comments.md — grass 0.6.0
+# cran-comments.md — grassr 0.6.1
 
 ## Submission notes
 
-This is a new submission.
+This is a new submission. It is a resubmission of the package
+previously submitted as 'grass' 0.6.0, revised per CRAN review
+feedback (Uwe Ligges, 2026-07-03):
 
-### Package name: request to reuse the archived name 'grass'
-
-The incoming check reports a case-insensitive conflict with the
-archived package 'GRASS' (last released 2005-2006, versions
-0.1-5 through 0.2-15). That package was an interface to the
-GRASS GIS 5 system, was removed from CRAN many years ago, and
-its role has long been superseded by the actively maintained
-'rgrass' (previously 'rgrass7'/'spgrass6') family. The present
-package is unrelated to GIS: 'grass' here is the acronym of the
-statistical framework it implements (Guide for Rater Agreement
-under Structural Skew), described in a methods manuscript by the
-package authors. We respectfully request that the long-archived
-name be released for reuse. If the CRAN team prefers to keep the
-name reserved, we will resubmit under an alternative name.
+* Package renamed 'grass' -> 'grassr' (the archived name 'GRASS'
+  is persistent and was not released for reuse).
+* Tarball size reduced from 10.7 MB to under 5 MB: the bundled
+  calibration reference surfaces in R/sysdata.rda are now stored
+  at 5-decimal precision (their Monte Carlo simulation error is
+  on the order of 1e-2, so the discarded digits carried no
+  information). No functional changes.
 
 ### "Possibly misspelled words in DESCRIPTION"
 
@@ -26,29 +21,15 @@ model; Fleiss' kappa; Gwet's AC1). PABAK is the standard acronym for
 prevalence-adjusted bias-adjusted kappa (Byrt, Bishop, and Carlin,
 1993). "Intraclass" and "intra" are standard reliability terminology.
 
-### Installed size NOTE (~12 MB installed, ~10 MB tarball)
-
-The package bundles pre-computed calibration reference surfaces
-in R/sysdata.rda (9.5 MB, already xz-compressed). These surfaces
-are the package's core functionality: every reported percentile
-is a lookup against a Monte Carlo reference distribution built
-from roughly 24 million simulated rating panels across 18,780
-design scenarios. Recomputing them at load time or on demand is
-not feasible (multi-day compute), and thinning the grid would
-degrade the calibration the package exists to provide.
-
 ## Test environments
 
 * local: macOS (Darwin 24.6), R 4.3.1
-* R CMD check --as-cran: 0 ERRORs (other than the name-conflict
-  feasibility item above), 0 WARNINGs
-* win-builder / R-devel: to be run before submission
+* win-builder: R-devel and R-release
 
 ## R CMD check results
 
-Remaining NOTEs:
+0 ERRORs, 0 WARNINGs. Remaining local NOTEs:
 
-* installed package size — justified above.
 * "unable to verify current time" — local environment artifact.
 * HTML manual tidy warnings (<table> lacks "summary" attribute,
   <script> type attributes) — produced by the R 4.3 Rd-to-HTML

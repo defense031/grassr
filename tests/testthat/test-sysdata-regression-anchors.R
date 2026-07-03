@@ -121,7 +121,7 @@ test_that("§4.3 k=2 easy case: q=0.97 augmentation prevents clamp-to-0", {
 
 test_that("k=2 surface index has the 12-point q-grid (canonical + 0.94, 0.97)", {
   surf <- get("empirical_q_hat_surface",
-              envir = asNamespace("grass"), inherits = FALSE)
+              envir = asNamespace("grassr"), inherits = FALSE)
   k2_qs <- sort(unique(surf$index$q_true[surf$index$k == 2L]))
   expect_setequal(
     k2_qs,
@@ -132,7 +132,7 @@ test_that("k=2 surface index has the 12-point q-grid (canonical + 0.94, 0.97)", 
 
 test_that("k=25 surface index has the 13-point q-grid (canonical + 0.92, 0.94, 0.97)", {
   surf <- get("empirical_q_hat_surface",
-              envir = asNamespace("grass"), inherits = FALSE)
+              envir = asNamespace("grassr"), inherits = FALSE)
   k25_qs <- sort(unique(surf$index$q_true[surf$index$k == 25L]))
   expect_setequal(
     k25_qs,
@@ -158,7 +158,7 @@ test_that("Row 6 (k=25 PABAK=0.78 pi=0.30 N=1000) unclamps post-q094 aug", {
 
 test_that("k=2 surface F-key set matches canonical k>=3 set (52 keys)", {
   surf <- get("empirical_q_hat_surface",
-              envir = asNamespace("grass"), inherits = FALSE)
+              envir = asNamespace("grassr"), inherits = FALSE)
   k2_F <- sort(unique(surf$index$F_key[surf$index$k == 2L]))
   k3_F <- sort(unique(surf$index$F_key[surf$index$k == 3L]))
   expect_equal(length(k2_F), 52L)
@@ -167,19 +167,19 @@ test_that("k=2 surface F-key set matches canonical k>=3 set (52 keys)", {
 
 test_that("k=2 surface scenario count = 1872 (52 F x 12 q x 3 N)", {
   surf <- get("empirical_q_hat_surface",
-              envir = asNamespace("grass"), inherits = FALSE)
+              envir = asNamespace("grassr"), inherits = FALSE)
   expect_equal(sum(surf$index$k == 2L), 1872L)
 })
 
 test_that("k=25 surface scenario count = 2028 (52 F x 13 q x 3 N)", {
   surf <- get("empirical_q_hat_surface",
-              envir = asNamespace("grass"), inherits = FALSE)
+              envir = asNamespace("grassr"), inherits = FALSE)
   expect_equal(sum(surf$index$k == 25L), 2028L)
 })
 
 test_that("total surface = 10,140 scenarios across 6 k values", {
   surf <- get("empirical_q_hat_surface",
-              envir = asNamespace("grass"), inherits = FALSE)
+              envir = asNamespace("grassr"), inherits = FALSE)
   expect_equal(nrow(surf$index), 10140L)
   expect_setequal(unique(surf$index$k), c(2L, 3L, 5L, 8L, 15L, 25L))
 })

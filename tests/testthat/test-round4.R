@@ -107,7 +107,7 @@ test_that("wide-format error hint is silent when ambiguous (no clear id column)"
 # ---- reset_grass_warnings --------------------------------------------
 
 test_that("reset_grass_warnings clears the once-per-session cache", {
-  env <- grass:::.grass_env
+  env <- grassr:::.grass_env
   env$msg_seen[["test_key"]] <- TRUE
   expect_true(isTRUE(env$msg_seen[["test_key"]]))
   reset_grass_warnings()

@@ -1,4 +1,27 @@
-# grass 0.6.0
+# grassr 0.6.1
+
+CRAN resubmission release. No functional changes.
+
+## Package renamed: grass -> grassr
+
+CRAN declined to release the archived name 'GRASS' (package names are
+persistent, case-insensitively). The package is now 'grassr'. All
+function names, arguments, and behavior are unchanged -- the API keeps
+the `grass_*` prefix, matching the GRASS framework the package
+implements.
+
+## Bundled reference surfaces rounded to 5 decimals
+
+The reference surfaces in `R/sysdata.rda` are now stored at 5-decimal
+precision (previously full 64-bit doubles), shrinking the file from
+9.55 MB to 2.83 MB and the tarball to under 5 MB. The discarded digits
+are Monte Carlo noise: the surfaces' simulation error is on the order
+of 1e-2, three orders of magnitude above the rounding. No lookup,
+threshold, test, or reported number changes at reported precision. The
+full-precision surfaces and the rounding script are archived in
+`data-raw/`.
+
+# grassr 0.6.0
 
 First CRAN release. Two behavioral changes and a legacy-API removal,
 plus CRAN compliance fixes.
@@ -44,7 +67,7 @@ Methods-paragraph templates in the reporting-card vignette.
 * ggplot2 NSE column names declared via `globalVariables()`.
 * DESCRIPTION rewritten (placeholder self-citation removed).
 
-# grass 0.5.2
+# grassr 0.5.2
 
 Bug-fix and sysdata-correction release. The v0.5.0 / v0.5.1 bundled
 `empirical_q_hat_surface` had a build-time mislabeling bug at k = 2
@@ -232,7 +255,7 @@ audit. Neither changes computation; both affect what
 - Paper §4 worked examples (k = 5 aligned + divergent) reproduce
   exactly under the corrected sysdata; the fix touches k = 2 only.
 
-# grass 0.5.1
+# grassr 0.5.1
 
 Cosmetic and documentation release. No internal-logic, sysdata, or
 test changes; the `0 FAIL across 194 test files` posture from v0.5.0
@@ -283,7 +306,7 @@ is unchanged.
 - `man/*.Rd` regenerated from roxygen blocks to reflect the marker
   text change throughout function-level documentation.
 
-# grass 0.5.0
+# grassr 0.5.0
 
 Three substantive landings drive this release. (1) **Cross-coefficient
 divergence `delta_hat` is now computed over the agreement family only**
@@ -392,7 +415,7 @@ max-min) for size-alpha calibration.
   load-bearing ICC clamp at this case is closed.
 
 
-# grass 0.1.2
+# grassr 0.1.2
 
 Round 5 — spec-dispatch architecture + reviewer 5/5 items.
 
@@ -419,7 +442,7 @@ Round 5 — spec-dispatch architecture + reviewer 5/5 items.
 
 ---
 
-# grass 0.1.1
+# grassr 0.1.1
 
 Reviewer-driven polish (round 4).
 
@@ -456,7 +479,7 @@ Reviewer-driven polish (round 4).
 `grass_compute()`, `grass_report()`, `grass_reference()`, `grass_reference_table()`, `grass_prevalence()`, `grass_format_report()`, `grass_plot()`.
 
 
-# grass 0.1.0
+# grassr 0.1.0
 
 Initial local draft.
 

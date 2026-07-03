@@ -352,7 +352,7 @@ position_on_surface <- function(obs_value = NULL,
         gap_dim <- character(0L)
         bundle <- tryCatch(
           get("fitted_icc_reference_curves",
-              envir = asNamespace("grass"), inherits = FALSE),
+              envir = asNamespace("grassr"), inherits = FALSE),
           error = function(e) NULL
         )
         if (!is.null(bundle)) {
@@ -686,7 +686,7 @@ lookup_empirical_q_hat <- function(metric, pi_hat, k, N, q_hat) {
   # into the package namespace by R's normal data-loading mechanism.
   surf <- tryCatch(
     get("empirical_q_hat_surface",
-        envir = asNamespace("grass"),
+        envir = asNamespace("grassr"),
         inherits = FALSE),
     error = function(e) NULL
   )
@@ -778,7 +778,7 @@ lookup_empirical_q_hat <- function(metric, pi_hat, k, N, q_hat) {
 lookup_icc_reference_curve <- function(pi_hat, q_grid, ratings = NULL) {
   bundle <- tryCatch(
     get("icc_reference_curves",
-        envir = asNamespace("grass"),
+        envir = asNamespace("grassr"),
         inherits = FALSE),
     error = function(e) NULL
   )
@@ -883,7 +883,7 @@ lookup_fitted_icc_reference_curve <- function(pi_hat, k, N, q_grid,
                                               ratings = NULL) {
   bundle <- tryCatch(
     get("fitted_icc_reference_curves",
-        envir = asNamespace("grass"),
+        envir = asNamespace("grassr"),
         inherits = FALSE),
     error = function(e) NULL
   )

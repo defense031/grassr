@@ -1,10 +1,10 @@
-url: https://defense031.github.io/grass/
+url: https://defense031.github.io/grassr/
 
 template:
   bootstrap: 5
 
 home:
-  title: "grass: Context-Conditioned Reporting for Binary Rater Reliability"
+  title: "grassr: Context-Conditioned Reporting for Binary Rater Reliability"
 
 navbar:
   structure:

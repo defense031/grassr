@@ -55,7 +55,7 @@ lookup_delta_thresholds <- function(k, N) {
   default <- c(caution = 9.25, divergent = 11.75)
 
   tbl <- tryCatch(
-    get0("delta_thresholds_lookup", envir = asNamespace("grass"),
+    get0("delta_thresholds_lookup", envir = asNamespace("grassr"),
          inherits = FALSE),
     error = function(e) NULL
   )

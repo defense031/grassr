@@ -416,7 +416,7 @@ grass_report <- function(ratings,
     pairwise  = pairwise,
     surface   = surface_payload,
     call      = call,
-    grass_version = utils::packageVersion("grass"),
+    grass_version = utils::packageVersion("grassr"),
     timestamp = Sys.time(),
     inputs = list(
       ratings_dim      = c(N = as.integer(N), k = as.integer(k)),

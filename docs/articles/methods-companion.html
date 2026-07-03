@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>GRASS methods companion: notation, calibration detail, and auxiliary diagnostics • grass</title>
+<title>GRASS methods companion: notation, calibration detail, and auxiliary diagnostics • grassr</title>
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
@@ -18,9 +18,9 @@
 
     <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="../index.html">grass</a>
+    <a class="navbar-brand me-2" href="../index.html">grassr</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,7 +43,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/defense031/grass/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/defense031/grassr/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -63,9 +63,9 @@ Semmel</h4>
                         <h4 data-toc-skip class="author">Rachel
 Gidaro</h4>
             
-            <h4 data-toc-skip class="date">2026-07-02</h4>
+            <h4 data-toc-skip class="date">2026-07-03</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/defense031/grass/blob/HEAD/vignettes/methods-companion.Rmd" class="external-link"><code>vignettes/methods-companion.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/defense031/grassr/blob/HEAD/vignettes/methods-companion.Rmd" class="external-link"><code>vignettes/methods-companion.Rmd</code></a></small>
       <div class="d-none name"><code>methods-companion.Rmd</code></div>
     </div>
 
@@ -77,12 +77,12 @@ Gidaro</h4>
 <p>This vignette accompanies the GRASS methods paper. It is a parallel
 reference: the paper is self-contained for review, while this companion
 carries the procedural detail and auxiliary diagnostics a practitioner
-running <code>grass</code> may want at hand. Section numbering does not
+running <code>grassr</code> may want at hand. Section numbering does not
 parallel the paper.</p>
 <p>Content moved here from earlier paper appendices during the
 2026-05-04 appendix consolidation. <strong>The paper does not cite this
 vignette</strong>; this is a free-standing artifact for
-<code>grass</code> users.</p>
+<code>grassr</code> users.</p>
 <hr>
 </div>
 <div class="section level2">
@@ -174,7 +174,7 @@ The agreement-family coefficients can’t tell those two studies apart at
 the panel level. ICC can, and so its reference surface must commit to a
 specific
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>F</mi><annotation encoding="application/x-tex">F</annotation></semantics></math>.</p>
-<p>The bundled <code>grass</code> reference covers a 48-point
+<p>The bundled <code>grassr</code> reference covers a 48-point
 logit-normal grid in
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>μ</mi><mo>,</mo><msup><mi>τ</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(\mu, \tau^2)</annotation></semantics></math>
 plus four discrete-mixture profiles (uniform, bimodal-low-high,
@@ -392,7 +392,7 @@ the paper’s diagonal DGP at a stated <code>seed</code>, <code>k</code>,
 prevalence <code>pi</code>, and logit-normal spread parameter
 <code>F_sigma2</code>:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://defense031.github.io/grass/">grass</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://defense031.github.io/grassr/">grassr</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">simulate_panel</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">seed</span>, <span class="va">k</span>, <span class="va">N</span>, <span class="va">Se</span>, <span class="va">Sp</span>, <span class="va">pi</span>, <span class="va">F_sigma2</span> <span class="op">=</span> <span class="fl">0.25</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/stopifnot.html" class="external-link">stopifnot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">Se</span><span class="op">)</span> <span class="op">==</span> <span class="va">k</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">Sp</span><span class="op">)</span> <span class="op">==</span> <span class="va">k</span><span class="op">)</span></span>
@@ -471,8 +471,8 @@ depends on the full subject-prevalence distribution rather than on
 <span><span class="co">#&gt;     R1     R2     R3     R4     R5    </span></span>
 <span><span class="co">#&gt;   R1    --     25%    79%    43%    98% </span></span>
 <span><span class="co">#&gt;   R2    0.47   --     97%    90%    17% </span></span>
-<span><span class="co">#&gt;   R3    0.51   0.41   --     97%    96% </span></span>
-<span><span class="co">#&gt;   R4    0.48   0.52   0.42   --     63% </span></span>
+<span><span class="co">#&gt;   R3    0.51   0.41   --     98%    96% </span></span>
+<span><span class="co">#&gt;   R4    0.48   0.52   0.42   --     62% </span></span>
 <span><span class="co">#&gt;   R5    0.55   0.46   0.54   0.50   --  </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;   per-rater vs panel-majority of OTHER raters (pooled-reference):</span></span>

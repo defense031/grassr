@@ -1,27 +1,27 @@
 # =====================================================================
-#  grass — first tour
+#  grassr — first tour
 #
-#  A short walkthrough of what the grass package does. Runs top-to-bottom
+#  A short walkthrough of what the grassr package does. Runs top-to-bottom
 #  in about 30 seconds and hits the headline features that support Paper 1.
 # =====================================================================
 
 # ---- 0. Install & load --------------------------------------------------
 # If you don't have remotes yet:  install.packages("remotes")
-# remotes::install_github("defense031/grass")
+# remotes::install_github("defense031/grassr")
 
-library(grass)
+library(grassr)
 library(ggplot2)
 
 # Optional companion vignettes — browse after install:
-#   vignette("grass-intro", package = "grass")
-#   vignette("skewed-examples", package = "grass")
-#   vignette("grass-ecosystem", package = "grass")
+#   vignette("grass-intro", package = "grassr")
+#   vignette("skewed-examples", package = "grassr")
+#   vignette("grass-ecosystem", package = "grassr")
 
 
 # ---- 1. A real example dataset ------------------------------------------
 # 200 chest X-rays independently read by two radiologists as abnormal/normal.
 # Intentional prevalence skew and rater bias so the framework earns its keep.
-cxr <- read.csv(system.file("examples", "cxr_review.csv", package = "grass"),
+cxr <- read.csv(system.file("examples", "cxr_review.csv", package = "grassr"),
                 stringsAsFactors = FALSE)
 head(cxr)
 table(cxr$rater_A, cxr$rater_B, dnn = c("rater_A", "rater_B"))
@@ -62,7 +62,7 @@ grass_format_report(result, ci_width = TRUE)
 
 
 # ---- 6. Downstream analysis --------------------------------------------
-# Every grass result coerces cleanly to a one-row data.frame for dashboards
+# Every grassr result coerces cleanly to a one-row data.frame for dashboards
 # or results-table pipelines.
 as.data.frame(result)
 

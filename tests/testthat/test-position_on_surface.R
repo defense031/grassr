@@ -1,4 +1,4 @@
-# Tests for grass::position_on_surface() — the Target-2 reporting primitive.
+# Tests for grassr::position_on_surface() — the Target-2 reporting primitive.
 # See grass/R/position_on_surface.R for the spec.
 
 test_that("returns a grass_surface_position with the documented fields", {
@@ -264,7 +264,7 @@ test_that("icc glmer path: ratings matrix pins down F_key via (mu, tau2)", {
   # Empirical pi_hat from the rating matrix
   pi_hat <- mean(ratings)
   # Fit glmer via the helper directly to check it converges
-  fit <- grass:::fit_tau2_from_ratings(ratings)
+  fit <- grassr:::fit_tau2_from_ratings(ratings)
   expect_true(is.finite(fit$mu))
   expect_true(is.finite(fit$tau2) && fit$tau2 > 0)
   # mu_hat should be near mu_true (within ~0.3 given finite N)
@@ -289,11 +289,11 @@ test_that("icc glmer fallback on tiny N or non-numeric ratings surfaces a note",
   skip_if_not_installed("lme4")
   # Tiny N: helper should return NA estimates with explanatory note.
   tiny <- matrix(c(0, 1, 1, 0), nrow = 2, ncol = 2)
-  fit_tiny <- grass:::fit_tau2_from_ratings(tiny)
+  fit_tiny <- grassr:::fit_tau2_from_ratings(tiny)
   expect_true(!is.finite(fit_tiny$mu))
   expect_true(grepl("N>=10", fit_tiny$note))
   # Bad input: character rating matrix.
-  fit_bad <- grass:::fit_tau2_from_ratings(list(foo = 1))
+  fit_bad <- grassr:::fit_tau2_from_ratings(list(foo = 1))
   expect_true(grepl("k x N integer matrix", fit_bad$note))
 })
 

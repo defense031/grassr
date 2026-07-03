@@ -1,5 +1,5 @@
 # =====================================================================
-#  grass playground
+#  grassr playground
 #
 #  A hands-on tour of the package. Edit, rerun, and break things.
 #  Every section is independent — you can skip around.
@@ -21,14 +21,14 @@
 #  (b) Installed-package mode. Needed if you're running from RStudio's
 #      console with the package already attached via library():
 #
-#          detach("package:grass", unload = TRUE)           # if already loaded
+#          detach("package:grassr", unload = TRUE)           # if already loaded
 #          devtools::install(quick = TRUE, upgrade = "never")
-#          library(grass)
+#          library(grassr)
 #
 # If you get "could not find function grass_report" after a rename, you're
 # running stale code — redo one of the two blocks above.
 
-library(grass)
+library(grassr)
 library(ggplot2)
 
 
@@ -121,7 +121,7 @@ grass_report(tab_skewed, format = "matrix", prevalence = 0.50)
 # 8. The full reference table
 # ---------------------------------------------------------------------
 head(grass_reference_table(), 5)
-# 23 prevalence points; grass uses linear interpolation between them.
+# 23 prevalence points; grassr uses linear interpolation between them.
 
 
 # ---------------------------------------------------------------------
@@ -158,7 +158,7 @@ grass_format_report(r_skewed, ascii = TRUE)
 # ---------------------------------------------------------------------
 # 10. Downstream analysis — tidy output
 # ---------------------------------------------------------------------
-# Every grass object supports as.data.frame().
+# Every grassr object supports as.data.frame().
 as.data.frame(r_skewed)
 as.data.frame(r_skewed$metrics)
 as.data.frame(r_skewed$reference)

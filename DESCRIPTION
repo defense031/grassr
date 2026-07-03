@@ -1,7 +1,7 @@
-Package: grass
+Package: grassr
 Type: Package
 Title: Context-Conditioned Reporting for Binary Rater Reliability
-Version: 0.6.0
+Version: 0.6.1
 Authors@R: c(
     person("Austin", "Semmel", email = "austinsemmel@gmail.com",
            role = c("aut", "cre")),
@@ -44,5 +44,5 @@ VignetteBuilder: knitr
 Config/testthat/edition: 3
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
-URL: https://defense031.github.io/grass/, https://github.com/defense031/grass
-BugReports: https://github.com/defense031/grass/issues
+URL: https://defense031.github.io/grassr/, https://github.com/defense031/grassr
+BugReports: https://github.com/defense031/grassr/issues

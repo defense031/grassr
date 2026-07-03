@@ -19,7 +19,7 @@ knitr::opts_chunk$set(
   fig.height = 4.5,
   dpi = 110
 )
-library(grass)
+library(grassr)
 ```
 
 ## Abstract
@@ -60,7 +60,7 @@ The entire workflow is three lines: load the package, pass an `N x k`
 binary rating matrix, print the result.
 
 ```{r}
-library(grass)
+library(grassr)
 set.seed(2026)
 
 # Tiny demo: 5 raters, 200 subjects, modest agreement.

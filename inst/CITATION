@@ -1,11 +1,11 @@
 bibentry(
   bibtype = "Manual",
-  title   = "{grass}: Prevalence-Aware Interpretation of Binary Inter-Rater Agreement",
+  title   = "{grassr}: Context-Conditioned Reporting for Binary Rater Reliability",
   author  = c(
     person("Austin", "Semmel"),
     person("Rachel", "Gidaro")
   ),
   year    = "2026",
-  note    = "R package version 0.2.3",
-  url     = "https://github.com/defense031/grass"
+  note    = "R package version 0.6.1",
+  url     = "https://github.com/defense031/grassr"
 )

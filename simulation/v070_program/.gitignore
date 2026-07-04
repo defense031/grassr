@@ -1,0 +1,5 @@
+# transient simulation outputs — never committed (multi-GB at full scale)
+*/*/per_scenario/
+*/*/PROGRESS.txt
+*/*/*.log
+*.log

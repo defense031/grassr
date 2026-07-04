@@ -1,0 +1,44 @@
+as.data.frame.grass_asymmetry
+                        Coerce a 'grass_asymmetry' result to a one-row
+                        data.frame
+as.data.frame.grass_card
+                        Coerce a grass_card to a tidy data.frame
+                        (panel; per_rater appended on divergent)
+as.data.frame.grass_classification
+                        Coerce a 'grass_classification' result to a
+                        one-row data.frame
+as.data.frame.grass_surface_position
+                        Coerce a grass_surface_position to a one-row
+                        data.frame
+check_asymmetry         Cross-coefficient panel asymmetry diagnostic
+check_rater_asymmetry   Per-rater Se/Sp asymmetry diagnostic
+format.grass_card       Format a grass_card as a character vector
+grass_compute           Compute the full inter-rater agreement panel
+grass_plot              Plot a grass object
+grass_prevalence        Estimate prevalence of the positive class from
+                        rater data
+grass_reference         Look up prevalence-conditioned reference values
+                        for agreement metrics
+grass_reference_table   Return the full internal reference table
+grass_report            Generate a GRASS Report Card from a rating
+                        matrix
+grass_roadmap           The grass ecosystem roadmap
+grass_spec_binary       Binary two-rater agreement spec
+grass_spec_continuous   Continuous agreement spec (planned)
+grass_spec_multirater   Multi-rater nominal agreement spec (planned)
+grass_spec_ordinal      Ordinal two-rater agreement spec (planned)
+latent_class_fit        Latent-class fit: per-rater Sensitivity and
+                        Specificity from a binary rating matrix
+obs_krippendorff_alpha
+                        Krippendorff's alpha (nominal, binary, fully
+                        crossed)
+pairwise_agreement      Pairwise reliability for a divergent panel
+plot.grass_card         Plot a 'grass_card' Report Card object
+plot.grass_result       Plot a grass report
+plot_surface            Standalone reference-surface plot for
+                        prospective study design
+position_on_surface     Position an observed agreement coefficient on
+                        its DGP-calibrated surface
+reset_grass_warnings    Reset grass's once-per-session message cache
+scale_grass_metric      Color scale for grass metrics
+theme_grass             ggplot2 theme for grass plots

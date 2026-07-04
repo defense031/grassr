@@ -1,0 +1,5 @@
+stage2 2026-07-04 16:10:21.339652: 4 failures need adjudication
+test-sysdata-regression-anchors.R :: k=2 surface index has the 12-point q-grid (canonical + 0.94, 0.97)
+test-sysdata-regression-anchors.R :: k=2 surface scenario count = 1872 (52 F x 12 q x 3 N)
+test-sysdata-regression-anchors.R :: k=25 surface scenario count = 2028 (52 F x 13 q x 3 N)
+test-sysdata-regression-anchors.R :: total surface = 10,140 scenarios across 6 k values

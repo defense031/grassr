@@ -1,0 +1,4 @@
+candidate sysdata: 6.84 MB (shipped 0.6.2: 2.83 MB)
+surface cells: 44616 (was 10,140)
+N grid: 15, 20, 30, 50, 75, 100, 150, 200, 300, 500, 1000
+q grid sizes by k: 13, 13, 13, 13, 13, 13

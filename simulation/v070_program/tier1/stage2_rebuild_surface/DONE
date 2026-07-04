@@ -1,0 +1,5 @@
+stage2 verified 2026-07-04 (adjudicated): 643 passed, 4 failed — all four
+are structural grid-shape anchors pinning the pre-densification counts
+(12-pt k=2 q-grid; 1872/2028/10140 scenario counts). Zero value anchors
+failed. Anchor tests to be updated to new counts (44,616 cells) on the
+0.7.0 branch at Stage 5. Candidate: 6.84 MB.

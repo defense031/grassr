@@ -16,7 +16,8 @@ pkg <- file.path(scratch, "grassr")
 unlink(file.path(pkg, "simulation"), recursive = TRUE)  # keep the copy light
 file.copy(CANDIDATE, file.path(pkg, "R", "sysdata.rda"), overwrite = TRUE)
 
-res <- as.data.frame(testthat::test_local(pkg, reporter = "silent"))
+res <- as.data.frame(testthat::test_local(pkg, reporter = "silent",
+                                          stop_on_failure = FALSE))
 fails <- res[res$failed > 0 | res$error, c("file", "test")]
 cat(sprintf("suite vs candidate: %d passed, %d failed/errored\n",
             sum(res$passed), nrow(fails)))

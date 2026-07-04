@@ -1,0 +1,40 @@
+Package: grassr
+Type: Package
+Title: Context-Conditioned Reporting for Binary Rater Reliability
+Version: 0.6.2
+Authors@R: c(
+    person("Austin", "Semmel", email = "austinsemmel@gmail.com",
+           role = c("aut", "cre")),
+    person("Rachel", "Gidaro", role = "aut"))
+Description: Generates a Report Card for rater reliability on binary
+    outcomes from an N x k subject-by-rater rating matrix, on both the
+    inter-rater and intra-rater axes. Each panel coefficient (PABAK,
+    Gwet's AC1, Fleiss' kappa, and observed intraclass correlation) is
+    positioned on a simulation-calibrated reference surface conditioned
+    on the study's rater count, sample size, and prevalence, yielding a
+    surface-position percentile with a bootstrap confidence qualifier.
+    A cross-coefficient discordance diagnostic (delta-hat), with
+    per-design thresholds calibrated to fixed false-positive rates,
+    flags panels for which no single coefficient is a stable summary;
+    for such divergent panels the report routes to a pairwise PABAK
+    matrix and per-rater sensitivity and specificity recovered from a
+    Dawid-Skene latent-class fit (Hui-Walter bounds at k = 2).
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: false
+Depends: R (>= 4.0)
+Imports: stats
+Suggests: boot, ggplot2, broom, future, future.apply, irr, irrCAC,
+        patchwork, progressr, knitr, lme4 (>= 1.1-30), rmarkdown,
+        testthat (>= 3.0.0), viridisLite
+VignetteBuilder: knitr
+Config/testthat/edition: 3
+RoxygenNote: 7.3.2
+Roxygen: list(markdown = TRUE)
+URL: https://defense031.github.io/grassr/,
+        https://github.com/defense031/grassr
+BugReports: https://github.com/defense031/grassr/issues
+Author: Austin Semmel [aut, cre],
+  Rachel Gidaro [aut]
+Maintainer: Austin Semmel <austinsemmel@gmail.com>
+Built: R 4.3.1; ; 2026-07-04 20:10:50 UTC; unix

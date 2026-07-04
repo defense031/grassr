@@ -3,7 +3,7 @@ title: "GRASS methods companion: notation, calibration detail, and auxiliary dia
 author:
   - Austin Semmel
   - Rachel Gidaro
-date: "2026-07-04"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{GRASS methods companion: notation, calibration detail, and auxiliary diagnostics}
@@ -11,7 +11,17 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 4.5,
+  dpi = 110,
+  eval = FALSE   # populate to TRUE per-chunk as content lands
+)
+library(grassr)
+```
 
 ## Scope of this companion
 
@@ -215,8 +225,7 @@ paper's diagonal DGP at a stated `seed`, `k`, `N`, per-rater
 `Se`/`Sp`, target prevalence `pi`, and logit-normal spread
 parameter `F_sigma2`:
 
-
-```r
+```{r dgp-helper, eval = TRUE}
 library(grassr)
 
 simulate_panel <- function(seed, k, N, Se, Sp, pi, F_sigma2 = 0.25) {
@@ -235,8 +244,7 @@ simulate_panel <- function(seed, k, N, Se, Sp, pi, F_sigma2 = 0.25) {
 
 ### Aligned case (paper §4.1)
 
-
-```r
+```{r aligned-example, eval = TRUE}
 # Se = Sp = 0.85, k = 5, N = 1000, seed = 5
 Y_aligned <- simulate_panel(
   seed = 5L, k = 5L, N = 1000L,
@@ -245,23 +253,6 @@ Y_aligned <- simulate_panel(
 )
 card_aligned <- grass_report(Y_aligned)
 card_aligned
-#> GRASS Report Card
-#> 
-#>   sample      = 5 raters, N = 1000, pi_hat = 0.21
-#>   PABAK        = 0.49  ->  46th percentile  (decisive)  <- primary
-#>   AC1          = 0.62  ->  46th percentile
-#>   Fleiss kappa = 0.23  ->  47th percentile
-#>   ICC          = 0.33  ->  50th percentile  [distribution-sensitive]
-#>   delta       =   1 pp (aligned)
-#>   thresholds  = (8.50, 9.75) [calibrated at nearest grid cell (snapped)]
-#> 
-#>   Notes:
-#>     - (k = 5, N = 1000) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 5, N = 500).
-#>     - Fitted-ICC F_key picked via glmer: mu_hat=-1.716, tau2_hat=1.633 -> F_key tau2=1.0000, mu=-1.386.
-#>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-1.386_tau2=1.0000, k=5, N=1000 (family=logit_normal, M1=0.239).
-#> 
-#>   See `summary(...)` for full panel and CI details.
-#>   See `plot(...)` for a surface-position visualization.
 ```
 
 The three agreement coefficients land within ~1 pp of each
@@ -273,8 +264,7 @@ distribution rather than on `(q, pi_hat)` alone.
 
 ### Divergent case (paper §4.2)
 
-
-```r
+```{r divergent-example, eval = TRUE}
 # op_strong panel: R1,R3,R5 at Se=0.95/Sp=0.75; R2,R4 inverted
 # k = 5, N = 1000, seed = 6, balanced prevalence
 Y_divergent <- simulate_panel(
@@ -285,46 +275,6 @@ Y_divergent <- simulate_panel(
 )
 card_divergent <- grass_report(Y_divergent)
 card_divergent
-#> GRASS Report Card
-#> 
-#>   sample      = 5 raters, N = 1000, pi_hat = 0.50
-#>   PABAK         = 0.49  ->  40th percentile  <- primary
-#>   AC1           = 0.49  ->  58th percentile
-#>   Fleiss kappa  = 0.49  ->  41st percentile
-#>   ICC           = 0.62  ->  50th percentile  [distribution-sensitive]
-#>   panel-agg.  = suppressed (divergent)
-#>   delta       =  18 pp (divergent)
-#>   thresholds  = (8.50, 9.75) [calibrated at nearest grid cell (snapped)]
-#> 
-#>   pairwise PABAK / surface percentile (lower / upper):
-#>     R1     R2     R3     R4     R5    
-#>   R1    --     25%    79%    43%    98% 
-#>   R2    0.47   --     97%    90%    17% 
-#>   R3    0.51   0.41   --     98%    96% 
-#>   R4    0.48   0.52   0.42   --     62% 
-#>   R5    0.55   0.46   0.54   0.50   --  
-#> 
-#>   per-rater vs panel-majority of OTHER raters (pooled-reference):
-#>     R1   Se_tilde = 0.94  Sp_tilde = 0.77  (n_pos = 434, n_neg = 471, excl = 95)
-#>     R2   Se_tilde = 0.71  Sp_tilde = 0.95  (n_pos = 466, n_neg = 439, excl = 95)
-#>     R3   Se_tilde = 0.95  Sp_tilde = 0.71  (n_pos = 433, n_neg = 485, excl = 82)
-#>     R4   Se_tilde = 0.74  Sp_tilde = 0.95  (n_pos = 468, n_neg = 441, excl = 91)
-#>     R5   Se_tilde = 0.96  Sp_tilde = 0.78  (n_pos = 428, n_neg = 476, excl = 96)
-#> 
-#>   per-rater (latent-class fit; alongside pairwise):
-#>     R1   Se = 0.95  (0.21, 0.97)   Sp = 0.78  (0.05, 0.82)
-#>     R2   Se = 0.73  (0.05, 0.77)   Sp = 0.95  (0.27, 0.97)
-#>     R3   Se = 0.96  (0.27, 0.98)   Sp = 0.72  (0.04, 0.76)
-#>     R4   Se = 0.75  (0.05, 0.79)   Sp = 0.95  (0.25, 0.97)
-#>     R5   Se = 0.96  (0.22, 0.98)   Sp = 0.78  (0.04, 0.82)
-#> 
-#>   Notes:
-#>     - (k = 5, N = 1000) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 5, N = 500).
-#>     - Fitted-ICC F_key picked via glmer: mu_hat=0.005, tau2_hat=5.278 -> F_key tau2=4.0000, mu=0.000.
-#>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=+0.000_tau2=4.0000, k=5, N=1000 (family=logit_normal, M1=0.500).
-#> 
-#>   See `summary(...)` for full panel and CI details.
-#>   See `plot(...)` for a surface-position visualization.
 ```
 
 All three agreement coefficients return values around 0.49
@@ -338,8 +288,7 @@ other `k - 1` raters.
 
 ### $k = 2$ counterexample (paper §4.3)
 
-
-```r
+```{r k2-example, eval = TRUE}
 # High-quality k = 2 panel: Se = Sp = 0.97, pi = 0.08, N = 200
 Y_k2 <- simulate_panel(
   seed = 17L, k = 2L, N = 200L,
@@ -348,19 +297,6 @@ Y_k2 <- simulate_panel(
 )
 card_k2 <- grass_report(Y_k2)
 card_k2
-#> GRASS Report Card
-#> 
-#>   sample      = 2 raters, N = 200, pi_hat = 0.11
-#>   PABAK  = 0.89  ->  50th percentile
-#>   AC1    = 0.93  ->  55th percentile  (decisive)  <- primary
-#>   delta       = 5.4 pp (aligned)
-#>   thresholds  = (8.25, 9.75) [calibrated at nearest grid cell (snapped)]
-#> 
-#>   Notes:
-#>     - (k = 2, N = 200) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 3, N = 200).
-#> 
-#>   See `summary(...)` for full panel and CI details.
-#>   See `plot(...)` for a surface-position visualization.
 ```
 
 Single-pair high-quality panel; the bundled k = 2 surface

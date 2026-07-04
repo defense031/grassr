@@ -1,18 +1,29 @@
-# cran-comments.md — grassr 0.6.1
+# cran-comments.md — grassr 0.6.2
 
 ## Submission notes
 
-This is a new submission. It is a resubmission of the package
-previously submitted as 'grass' 0.6.0, revised per CRAN review
-feedback (Uwe Ligges, 2026-07-03):
+This is a new submission (third attempt: 'grass' 0.6.0 was renamed
+per CRAN feedback; 'grassr' 0.6.1 failed the Windows incoming
+pretest). Changes in 0.6.2, addressing the 0.6.1 pretest result:
 
-* Package renamed 'grass' -> 'grassr' (the archived name 'GRASS'
-  is persistent and was not released for reuse).
-* Tarball size reduced from 10.7 MB to under 5 MB: the bundled
-  calibration reference surfaces in R/sysdata.rda are now stored
-  at 5-decimal precision (their Monte Carlo simulation error is
-  on the order of 1e-2, so the discarded digits carried no
-  information). No functional changes.
+The 0.6.1 Windows pretest reported ERRORs in the test and
+vignette-rebuild steps, in both cases a silent termination with no
+diagnostics in the logs. The identical tarball checks clean (R CMD
+check --as-cran, Status: OK) on the same R-devel revision
+(2026-07-03 r90206 ucrt) on Windows via GitHub Actions, on the
+Debian pretest, and locally. We could not reproduce the failure, so
+0.6.2 minimizes what CRAN machines execute:
+
+* Tests on CRAN now run a fast deterministic smoke subset (~190
+  assertions, ~2 s) covering metric arithmetic, input normalization,
+  pairwise agreement, print methods, and regression anchors that pin
+  the bundled reference surfaces. The full ~650-test suite runs on
+  every push on a five-platform CI matrix
+  (https://github.com/defense031/grassr/actions).
+* Both vignettes are precomputed; CRAN machines render static
+  markdown with no computation.
+* A stray 'data.table' class attribute on one bundled lookup table
+  (the package does not depend on data.table) is removed.
 
 ### "Possibly misspelled words in DESCRIPTION"
 
@@ -24,21 +35,19 @@ prevalence-adjusted bias-adjusted kappa (Byrt, Bishop, and Carlin,
 ## Test environments
 
 * local: macOS (Darwin 24.6), R 4.3.1
-* GitHub Actions (2026-07-04): windows-latest R-devel and
-  R-release, macos-latest R-release, ubuntu-latest R-devel and
-  R-release — R CMD check --as-cran, Status: OK on all five
+* GitHub Actions: windows-latest R-devel and R-release, macos-latest
+  R-release, ubuntu-latest R-devel and R-release — R CMD check
+  --as-cran, Status: OK on all five
   (https://github.com/defense031/grassr/actions).
-* win-builder R-devel and R-release were also run (2026-07-03);
-  the result mails never reached the maintainer address.
 
 ## R CMD check results
 
-0 ERRORs, 0 WARNINGs. Remaining local NOTEs:
+0 ERRORs, 0 WARNINGs. One NOTE beyond the new-submission NOTE:
 
-* "unable to verify current time" — local environment artifact.
-* HTML manual tidy warnings (<table> lacks "summary" attribute,
-  <script> type attributes) — produced by the R 4.3 Rd-to-HTML
-  toolchain on every page, not by package markup.
+* installed size is 5.5Mb — the bundled Monte Carlo calibration
+  reference surfaces in R/sysdata.rda (2.8 MB compressed; the
+  package's core functionality) plus the precomputed vignette
+  figures. The source tarball is 4.4 MB.
 
 ## Downstream dependencies
 

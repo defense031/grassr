@@ -29,5 +29,14 @@ f <- e$fitted_icc_reference_curves
 f$curves <- round(f$curves, DIGITS)
 e$fitted_icc_reference_curves <- f
 
+# The thresholds table was built with data.table but the package does not
+# depend on it; strip the class so S3 dispatch can never route into
+# data.table methods on machines where that namespace happens to be loaded
+# (v0.6.2). All package code uses base data.frame syntax on this table.
+d <- e$delta_thresholds_lookup
+attr(d, ".internal.selfref") <- NULL
+class(d) <- "data.frame"
+e$delta_thresholds_lookup <- d
+
 save(list = ls(e), envir = e, file = "R/sysdata.rda", compress = "xz")
 cat(sprintf("R/sysdata.rda written: %.2f MB\n", file.size("R/sysdata.rda") / 1e6))

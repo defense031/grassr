@@ -19,3 +19,4 @@
 ^design$
 ^texput\.log$
 ^vignettes-retired$
+^vignettes/.*\.orig$

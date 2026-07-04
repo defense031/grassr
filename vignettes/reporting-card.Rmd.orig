@@ -3,7 +3,7 @@ title: "GRASS Report Card: a one-call workflow for binary rater reliability"
 author:
   - Austin Semmel
   - Rachel Gidaro
-date: "2026-07-04"
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{GRASS Report Card: a one-call workflow for binary rater reliability}
@@ -11,7 +11,17 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "reporting-card-",
+  fig.width = 7,
+  fig.height = 4.5,
+  dpi = 110
+)
+library(grassr)
+```
 
 ## Abstract
 
@@ -50,8 +60,7 @@ in `NEWS.md`.
 The entire workflow is three lines: load the package, pass an `N x k`
 binary rating matrix, print the result.
 
-
-```r
+```{r}
 library(grassr)
 set.seed(2026)
 
@@ -62,22 +71,6 @@ Y <- sapply(1:5, function(j) {
 })
 
 grass_report(ratings = Y)
-#> GRASS Report Card
-#> 
-#>   sample      = 5 raters, N = 200, pi_hat = 0.34
-#>   PABAK        = 0.47  ->  27th percentile  (decisive)  <- primary
-#>   AC1          = 0.52  ->  26th percentile
-#>   Fleiss kappa = 0.41  ->  31st percentile
-#>   ICC          = 0.53  ->  50th percentile  [distribution-sensitive]
-#>   delta       = 4.7 pp (aligned)
-#>   thresholds  = (9.25, 10.75) [calibrated at this (k, N)]
-#> 
-#>   Notes:
-#>     - Fitted-ICC F_key picked via glmer: mu_hat=-1.039, tau2_hat=3.669 -> F_key tau2=4.0000, mu=-0.847.
-#>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-0.847_tau2=4.0000, k=5, N=200 (family=logit_normal, M1=0.374).
-#> 
-#>   See `summary(...)` for full panel and CI details.
-#>   See `plot(...)` for a surface-position visualization.
 ```
 
 Each block in the printed Report Card means something specific:
@@ -106,8 +99,7 @@ Five raters with the same accuracy (Se = Sp = 0.85) on a moderate-prevalence
 binary task. The panel should land in the *aligned* tier: every coefficient
 agrees about where the panel sits, so a single number is enough.
 
-
-```r
+```{r}
 set.seed(29)
 N <- 200; k <- 5
 truth <- rbinom(N, 1, 0.30)
@@ -117,22 +109,6 @@ Y_sym <- sapply(1:k, function(j) {
 
 card_sym <- grass_report(ratings = Y_sym)
 card_sym
-#> GRASS Report Card
-#> 
-#>   sample      = 5 raters, N = 200, pi_hat = 0.35
-#>   PABAK        = 0.41  ->  95th percentile  (decisive)  <- primary
-#>   AC1          = 0.46  ->  94th percentile
-#>   Fleiss kappa = 0.36  ->  95th percentile
-#>   ICC          = 0.46  ->  50th percentile  [distribution-sensitive]
-#>   delta       = 1.2 pp (aligned)
-#>   thresholds  = (9.25, 10.75) [calibrated at this (k, N)]
-#> 
-#>   Notes:
-#>     - Fitted-ICC F_key picked via glmer: mu_hat=-0.877, tau2_hat=2.801 -> F_key tau2=4.0000, mu=-0.847.
-#>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-0.847_tau2=4.0000, k=5, N=200 (family=logit_normal, M1=0.374).
-#> 
-#>   See `summary(...)` for full panel and CI details.
-#>   See `plot(...)` for a surface-position visualization.
 ```
 
 Note three things:
@@ -163,8 +139,7 @@ across percentiles. This is the configuration where the headline
 `grass_report` flag flips from a single coherent reading to a
 per-rater diagnostic.
 
-
-```r
+```{r}
 set.seed(6)
 N <- 1000; k <- 5
 # Alternating per-rater Se/Sp asymmetry: R1, R3, R5 favor sensitivity;
@@ -181,46 +156,6 @@ for (j in seq_len(k)) {
 
 card_div <- grass_report(ratings = Y_div, bootstrap_B = 200)
 card_div
-#> GRASS Report Card
-#> 
-#>   sample      = 5 raters, N = 1000, pi_hat = 0.50
-#>   PABAK         = 0.49  ->  40th percentile  <- primary
-#>   AC1           = 0.49  ->  58th percentile
-#>   Fleiss kappa  = 0.49  ->  41st percentile
-#>   ICC           = 0.62  ->  50th percentile  [distribution-sensitive]
-#>   panel-agg.  = suppressed (divergent)
-#>   delta       =  18 pp (divergent)
-#>   thresholds  = (8.50, 9.75) [calibrated at nearest grid cell (snapped)]
-#> 
-#>   pairwise PABAK / surface percentile (lower / upper):
-#>     R1     R2     R3     R4     R5    
-#>   R1    --     25%    79%    43%    98% 
-#>   R2    0.47   --     97%    90%    17% 
-#>   R3    0.51   0.41   --     98%    96% 
-#>   R4    0.48   0.52   0.42   --     62% 
-#>   R5    0.55   0.46   0.54   0.50   --  
-#> 
-#>   per-rater vs panel-majority of OTHER raters (pooled-reference):
-#>     R1   Se_tilde = 0.94  Sp_tilde = 0.77  (n_pos = 434, n_neg = 471, excl = 95)
-#>     R2   Se_tilde = 0.71  Sp_tilde = 0.95  (n_pos = 466, n_neg = 439, excl = 95)
-#>     R3   Se_tilde = 0.95  Sp_tilde = 0.71  (n_pos = 433, n_neg = 485, excl = 82)
-#>     R4   Se_tilde = 0.74  Sp_tilde = 0.95  (n_pos = 468, n_neg = 441, excl = 91)
-#>     R5   Se_tilde = 0.96  Sp_tilde = 0.78  (n_pos = 428, n_neg = 476, excl = 96)
-#> 
-#>   per-rater (latent-class fit; alongside pairwise):
-#>     R1   Se = 0.95  (0.23, 0.97)   Sp = 0.78  (0.06, 0.82)
-#>     R2   Se = 0.73  (0.05, 0.77)   Sp = 0.95  (0.29, 0.97)
-#>     R3   Se = 0.96  (0.29, 0.97)   Sp = 0.72  (0.05, 0.76)
-#>     R4   Se = 0.75  (0.05, 0.79)   Sp = 0.95  (0.26, 0.97)
-#>     R5   Se = 0.96  (0.22, 0.98)   Sp = 0.78  (0.04, 0.82)
-#> 
-#>   Notes:
-#>     - (k = 5, N = 1000) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 5, N = 500).
-#>     - Fitted-ICC F_key picked via glmer: mu_hat=0.005, tau2_hat=5.278 -> F_key tau2=4.0000, mu=0.000.
-#>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=+0.000_tau2=4.0000, k=5, N=1000 (family=logit_normal, M1=0.500).
-#> 
-#>   See `summary(...)` for full panel and CI details.
-#>   See `plot(...)` for a surface-position visualization.
 ```
 
 The flag is `divergent`: the cross-coefficient percentile spread
@@ -260,34 +195,9 @@ pooled-reference per-rater table avoids the latent-class
 identifiability problem (label-switching is moot because the
 "reference" is the observable panel majority, not a latent class).
 
-
-```r
+```{r}
 pw <- pairwise_agreement(Y_div)
 pw
-#> GRASS Pairwise Reliability
-#> 
-#>   sample      = 5 raters, N = 1000, pi_hat = 0.50, tau2_hat = 0.122, axis = inter
-#> 
-#>   Pairwise PABAK (lower triangle = PABAK_ij; upper triangle = surface percentile):
-#> 
-#>    R1     R2     R3     R4     R5    
-#> R1     --   25%    79%    43%    98% 
-#> R2   0.47     --   97%    90%    17% 
-#> R3   0.51   0.41     --   98%    96% 
-#> R4   0.48   0.52   0.42     --   62% 
-#> R5   0.55   0.46   0.54   0.50     --
-#> 
-#>   Per-rater behavior against pooled panel-majority:
-#> 
-#>  rater Se_tilde Sp_tilde n_pos n_neg n_excl
-#>     R1     0.94     0.77   434   471     95
-#>     R2     0.71     0.95   466   439     95
-#>     R3     0.95     0.71   433   485     82
-#>     R4     0.74     0.95   468   441     91
-#>     R5     0.96     0.78   428   476     96
-#>   (Se_tilde, Sp_tilde are calls vs panel-majority of OTHER raters,
-#>    not against external truth. n_excl: subjects with tied majority,
-#>    excluded from the per-rater pool.)
 ```
 
 Read the per-rater table: with R1, R3, R5 favoring sensitivity and
@@ -313,38 +223,8 @@ summary would have averaged away.
 
 Every field beneath the printed Report Card is available on demand.
 
-
-```r
+```{r}
 summary(card_sym)
-#> GRASS Report Card -- summary
-#> 
-#>   sample       : k = 5 raters, N = 200, pi_hat = 0.354, axis = inter
-#>   tau2_hat     : 0.083
-#> 
-#>   primary coefficient
-#>     name         : pabak
-#>     observed     : 0.414
-#>     percentile   : 95.42 pp
-#>     band         : Strong
-#>     qualifier    : decisive
-#> 
-#>   delta (cross-coefficient asymmetry)
-#>     delta_hat    : 1.20 pp
-#>     flag         : aligned
-#>     thresholds   : caution = 9.25, divergent = 10.75
-#> 
-#>   panel (full table)
-#>     pabak           observed = 0.414  pct = 95.42 pp  band = Strong       qualifier = decisive
-#>     mean_ac1        observed = 0.460  pct = 94.22 pp  band = Strong       qualifier = decisive
-#>     fleiss_kappa    observed = 0.359  pct = 94.67 pp  band = Strong       qualifier = decisive
-#>     icc             observed = 0.464  pct = 50.00 pp  band = Strong       qualifier = decisive
-#> 
-#>   notes
-#>     - Fitted-ICC F_key picked via glmer: mu_hat=-0.877, tau2_hat=2.801 -> F_key tau2=4.0000, mu=-0.847.
-#>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-0.847_tau2=4.0000, k=5, N=200 (family=logit_normal, M1=0.374).
-#> 
-#>   grass version : 0.6.2
-#>   timestamp     : 2026-07-04 10:43:05
 ```
 
 `summary()` is the *audit view*: full panel of coefficients with
@@ -352,24 +232,8 @@ percentiles and bands, all caveats from the surface lookup, the GRASS
 version, the timestamp. Use it when you want to see what the headline
 hides.
 
-
-```r
+```{r}
 head(as.data.frame(card_sym), 5)
-#>    coefficient observed_value surface_percentile   band qualifier
-#> 1        pabak      0.4140000           95.41694 Strong  decisive
-#> 2     mean_ac1      0.4601604           94.21535 Strong  decisive
-#> 3 fleiss_kappa      0.3593780           94.66860 Strong  decisive
-#> 4          icc      0.4641657           50.00000 Strong  decisive
-#>   band_probability_modal     q_hat    se_q_hat clamped reference_used
-#> 1                      1 0.8217138 0.013797700   FALSE    closed-form
-#> 2                      1 0.8217650 0.013796793   FALSE    closed-form
-#> 3                      1 0.8217138 0.013797700   FALSE    closed-form
-#> 4                      1 0.8075234 0.005569156   FALSE     fitted-icc
-#>   in_delta_hat is_primary
-#> 1         TRUE       TRUE
-#> 2         TRUE      FALSE
-#> 3         TRUE      FALSE
-#> 4        FALSE      FALSE
 ```
 
 `as.data.frame()` is the *tidy view*: one row per coefficient with
@@ -378,34 +242,13 @@ head(as.data.frame(card_sym), 5)
 into one table for a meta-analysis or to feed the panel into another
 analysis pipeline.
 
-
-```r
+```{r plot-surface, fig.alt = "Surface position plot"}
 plot(card_sym)                       # default: surface with observation pinned
-#> Warning: The following aesthetics were dropped during statistical transformation: fill.
-#> ℹ This can happen when ggplot fails to infer the correct grouping structure in
-#>   the data.
-#> ℹ Did you forget to specify a `group` aesthetic or to convert a numerical
-#>   variable into a factor?
-#> Warning: Removed 120 rows containing missing values or values outside the scale range
-#> (`geom_raster()`).
 ```
 
-<div class="figure">
-<img src="reporting-card-plot-surface-1.png" alt="Surface position plot"  />
-<p class="caption">plot of chunk plot-surface</p>
-</div>
-
-
-```r
+```{r plot-thermometer, fig.alt = "Thermometer view"}
 plot(card_sym, type = "thermometer") # delta_hat thermometer
-#> Warning: Removed 1 row containing missing values or values outside the scale range
-#> (`geom_rect()`).
 ```
-
-<div class="figure">
-<img src="reporting-card-plot-thermometer-1.png" alt="Thermometer view"  />
-<p class="caption">plot of chunk plot-thermometer</p>
-</div>
 
 The default `plot()` view is a heatmap of the expected primary
 coefficient over `(M_1, q)` at the study's `(k, N)`, with a single
@@ -422,69 +265,23 @@ combined patchwork) are documented in `?plot.grass_card`.
 For users who want lower-level control, three of the internals
 `grass_report()` calls are exported:
 
-
-```r
+```{r}
 position_on_surface(ratings = Y_sym, metric = "pabak")
-#> grass surface-position report (Target-2 reporting convention)
-#>   metric               : pabak
-#>   observed value       : 0.414
-#>   design (pi_hat,k,N)  : (0.354, 5, 200)
-#>   q_hat (scaffold)     : 0.822 +/- 0.014
-#>   surface percentile   : 0.954
-#>   band probabilities   :
-#>     Poor       0.000
-#>     Moderate   0.000
-#>     Strong     1.000 <- modal
-#>     Excellent  0.000
-#>   label                : Strong (decisive)
-#>   sampling method      : empirical
 ```
 
 `position_on_surface()` does the surface lookup for a single coefficient
 and returns the percentile, band, and band-probability vector.
 
-
-```r
+```{r}
 check_asymmetry(ratings = Y_sym)
-#> GRASS panel asymmetry diagnostic
-#> 
-#>   delta_hat = 1.2 pp
-#>   flag      = aligned  (< 9.2)
-#> 
-#>   panel:
-#>     coefficient        observed   percentile (pp)   in delta_hat
-#>     pabak              0.41       95.4             yes
-#>     mean_ac1           0.46       94.2             yes
-#>     fleiss_kappa       0.36       94.7             yes
-#>     icc                0.46       50.0             no [distribution-sensitive]
-#> 
-#>   Surface caveats:
-#>     - Fitted-ICC F_key picked via glmer: mu_hat=-0.877, tau2_hat=2.801 -> F_key tau2=4.0000, mu=-0.847.
-#>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-0.847_tau2=4.0000, k=5, N=200 (family=logit_normal, M1=0.374).
-#>     - delta_hat is computed over the agreement family (PABAK, AC1, Fleiss, alpha). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference surface depends on the full subject-prevalence distribution F and does not share the (q, pi_+) sufficient statistic the agreement family does).
 ```
 
 `check_asymmetry()` returns the cross-coefficient percentile spread and
 the (aligned / caution / divergent) flag without computing per-rater
 detail. Cheap when you want only the diagnostic.
 
-
-```r
+```{r}
 latent_class_fit(ratings = Y_div, B = 200)
-#> grass latent-class fit
-#>   method        : dawid_skene_em
-#>   raters (k)    : 5
-#>   bootstrap B   : 200
-#>   converged     : TRUE
-#>   iterations    : 10
-#>   prevalence_hat: 0.475
-#>   log-likelihood: -2504.371
-#>   per-rater
-#>     R1    Se = 0.950  (0.201, 0.970)   Sp = 0.783  (0.050, 0.817)
-#>     R2    Se = 0.729  (0.042, 0.770)   Sp = 0.953  (0.259, 0.973)
-#>     R3    Se = 0.956  (0.262, 0.973)   Sp = 0.718  (0.036, 0.764)
-#>     R4    Se = 0.750  (0.044, 0.784)   Sp = 0.949  (0.259, 0.965)
-#>     R5    Se = 0.962  (0.206, 0.980)   Sp = 0.781  (0.038, 0.812)
 ```
 
 `latent_class_fit()` produces the per-rater Se/Sp table directly, with
@@ -494,8 +291,7 @@ Dawid-Skene EM and a nonparametric bootstrap CI at k >= 3.
 
 The headline call works at k = 2 with no signature change:
 
-
-```r
+```{r}
 set.seed(42)
 N <- 200
 truth <- rbinom(N, 1, 0.30)
@@ -505,19 +301,6 @@ Y_k2 <- cbind(
 )
 
 grass_report(ratings = Y_k2)
-#> GRASS Report Card
-#> 
-#>   sample      = 2 raters, N = 200, pi_hat = 0.39
-#>   PABAK  = 0.50  ->  56th percentile  (decisive)  <- primary
-#>   AC1    = 0.52  ->  57th percentile
-#>   delta       = 0.4 pp (aligned)
-#>   thresholds  = (8.25, 9.75) [calibrated at nearest grid cell (snapped)]
-#> 
-#>   Notes:
-#>     - (k = 2, N = 200) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 3, N = 200).
-#> 
-#>   See `summary(...)` for full panel and CI details.
-#>   See `plot(...)` for a surface-position visualization.
 ```
 
 When the panel goes divergent at k = 2, per-rater Se and Sp are not
@@ -525,21 +308,8 @@ point-identified from the rating matrix alone (there is one fewer
 constraint than parameter). The latent-class fit returns Hui-Walter
 *bounds* rather than point estimates:
 
-
-```r
+```{r}
 latent_class_fit(ratings = Y_k2, B = 200)
-#> grass latent-class fit
-#>   method        : hui_walter
-#>   raters (k)    : 2
-#>   bootstrap B   : 200
-#>   per-rater
-#>     R1    Se in [0.395, 1.000]   Sp in [0.605, 1.000]   (bounds)
-#>     R2    Se in [0.385, 1.000]   Sp in [0.615, 1.000]   (bounds)
-#> 
-#>   Note: at k = 2, per-rater Se/Sp are not point-identified
-#>         without external information. The intervals are
-#>         Hui-Walter (1980) inequality bounds, not point
-#>         estimates with sampling uncertainty.
 ```
 
 The bounds carry the same meaning as the k >= 3 point estimates: an
@@ -564,8 +334,7 @@ function falls back to the oracle ICC reference (closed-form, no
 GLMM-gap correction), which over-predicts the practitioner's
 glmer-fit ICC and clamps the percentile to 0:
 
-
-```r
+```{r}
 # A panel where ICC clamps but the three agreement coefficients align.
 set.seed(5)
 N <- 1000L; k <- 5L
@@ -578,23 +347,6 @@ for (j in seq_len(k)) {
 }
 card_clamp <- grass_report(Y_clamp, bootstrap_B = 50)
 card_clamp
-#> GRASS Report Card
-#> 
-#>   sample      = 5 raters, N = 1000, pi_hat = 0.21
-#>   PABAK        = 0.49  ->  46th percentile  (decisive)  <- primary
-#>   AC1          = 0.62  ->  46th percentile
-#>   Fleiss kappa = 0.23  ->  47th percentile
-#>   ICC          = 0.33  ->  50th percentile  [distribution-sensitive]
-#>   delta       =   1 pp (aligned)
-#>   thresholds  = (8.50, 9.75) [calibrated at nearest grid cell (snapped)]
-#> 
-#>   Notes:
-#>     - (k = 5, N = 1000) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 5, N = 500).
-#>     - Fitted-ICC F_key picked via glmer: mu_hat=-1.716, tau2_hat=1.633 -> F_key tau2=1.0000, mu=-1.386.
-#>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-1.386_tau2=1.0000, k=5, N=1000 (family=logit_normal, M1=0.239).
-#> 
-#>   See `summary(...)` for full panel and CI details.
-#>   See `plot(...)` for a surface-position visualization.
 ```
 
 The printed Report Card surfaces the clamp in two places: the
@@ -604,15 +356,9 @@ coefficient row with `[clamped - excluded from delta]`. The `panel`
 data.frame on the returned object also carries a `clamped` logical
 column for programmatic inspection:
 
-
-```r
+```{r}
 card_clamp$panel[, c("coefficient", "surface_percentile",
                      "band", "clamped")]
-#>    coefficient surface_percentile   band clamped
-#> 1        pabak           46.27444 Strong   FALSE
-#> 2     mean_ac1           45.50669 Strong   FALSE
-#> 3 fleiss_kappa           46.52487 Strong   FALSE
-#> 4          icc           50.00000 Strong   FALSE
 ```
 
 The trade-off: a coefficient with no calibrated reference at the
@@ -640,39 +386,19 @@ on the `q`-axis (computational scaffolding for the qualifier; not
 displayed on the headline Report Card), so the reader can see which
 combinations of prevalence and rater quality land where:
 
-
-```r
+```{r plot-surface-bare, fig.width = 7, fig.height = 4.5}
 plot_surface("fleiss_kappa")
-#> Warning: The following aesthetics were dropped during statistical transformation: fill.
-#> ℹ This can happen when ggplot fails to infer the correct grouping structure in
-#>   the data.
-#> ℹ Did you forget to specify a `group` aesthetic or to convert a numerical
-#>   variable into a factor?
-#> Warning: Removed 120 rows containing missing values or values outside the scale range
-#> (`geom_raster()`).
 ```
-
-![plot of chunk plot-surface-bare](reporting-card-plot-surface-bare-1.png)
 
 Adding a design context overlays a dashed reference at the planned
 marginal:
 
-
-```r
+```{r plot-surface-design, fig.width = 7, fig.height = 4.5}
 plot_surface("mean_ac1",
              pi_hat = 0.30,
              k      = 8,
              N      = 200)
-#> Warning: The following aesthetics were dropped during statistical transformation: fill.
-#> ℹ This can happen when ggplot fails to infer the correct grouping structure in
-#>   the data.
-#> ℹ Did you forget to specify a `group` aesthetic or to convert a numerical
-#>   variable into a factor?
-#> Warning: Removed 120 rows containing missing values or values outside the scale range
-#> (`geom_raster()`).
 ```
-
-![plot of chunk plot-surface-design](reporting-card-plot-surface-design-1.png)
 
 Adding a hypothetical observed value pins a marker at
 `(pi_hat, hat q)`, where `hat q` is recovered by closed-form
@@ -680,23 +406,13 @@ inversion against the reference curve at `pi_hat`. This answers
 "if I observe Fleiss kappa = 0.50 in a panel at this design,
 where on the surface would I sit?":
 
-
-```r
+```{r plot-surface-pinned, fig.width = 7, fig.height = 4.5}
 plot_surface("fleiss_kappa",
              pi_hat   = 0.30,
              observed = 0.50,
              k        = 8,
              N        = 200)
-#> Warning: The following aesthetics were dropped during statistical transformation: fill.
-#> ℹ This can happen when ggplot fails to infer the correct grouping structure in
-#>   the data.
-#> ℹ Did you forget to specify a `group` aesthetic or to convert a numerical
-#>   variable into a factor?
-#> Warning: Removed 120 rows containing missing values or values outside the scale range
-#> (`geom_raster()`).
 ```
-
-![plot of chunk plot-surface-pinned](reporting-card-plot-surface-pinned-1.png)
 
 `plot_surface()` supports the four closed-form non-ICC metrics
 (PABAK, Fleiss kappa, mean-pairwise AC1, and — although it no longer

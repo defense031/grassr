@@ -1,3 +1,28 @@
+# grassr 0.6.2
+
+CRAN resubmission release. No changes to package functionality.
+
+## CRAN check surface reduced
+
+The 0.6.1 incoming pretest failed on CRAN's Windows R-devel machine
+with silent process deaths in the test and vignette-rebuild steps (no
+diagnostics in either log; the same tarball checks clean on the same
+R revision -- 2026-07-03 r90206 ucrt -- on independent Windows
+infrastructure, and on the Debian pretest). 0.6.2 minimizes what CRAN
+machines execute, which is recommended practice regardless:
+
+* Tests: on CRAN, a fast deterministic smoke subset now runs (~190
+  assertions: metric arithmetic, input normalization, pairwise
+  agreement, print methods, and the sysdata regression anchors). The
+  full ~650-test suite runs on every push via the GitHub Actions
+  matrix (windows/macos/ubuntu x devel/release).
+* Vignettes: both vignettes are precomputed from `.Rmd.orig` sources
+  (kept in the repository, regenerated with `knitr::knit()`); CRAN
+  machines render static markdown only.
+* `delta_thresholds_lookup` in sysdata is now a plain data.frame; it
+  previously carried a stray `data.table` class from its build script
+  although the package never depended on data.table.
+
 # grassr 0.6.1
 
 CRAN resubmission release. No functional changes.

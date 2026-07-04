@@ -24,7 +24,13 @@ prevalence-adjusted bias-adjusted kappa (Byrt, Bishop, and Carlin,
 ## Test environments
 
 * local: macOS (Darwin 24.6), R 4.3.1
-* win-builder: R-devel and R-release
+* win-builder R-devel and R-release: uploaded and processed
+  2026-07-03, but the result mails never reached the maintainer,
+  so those results are unverified. The prior submission of this
+  codebase (as 'grass' 0.6.0, 2026-07-02) passed the incoming
+  pretests on Windows and Debian with the name conflict as the
+  only ERROR; the only changes since are the rename and the
+  reduced storage precision of the bundled data.
 
 ## R CMD check results
 

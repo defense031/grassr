@@ -24,13 +24,12 @@ prevalence-adjusted bias-adjusted kappa (Byrt, Bishop, and Carlin,
 ## Test environments
 
 * local: macOS (Darwin 24.6), R 4.3.1
-* win-builder R-devel and R-release: uploaded and processed
-  2026-07-03, but the result mails never reached the maintainer,
-  so those results are unverified. The prior submission of this
-  codebase (as 'grass' 0.6.0, 2026-07-02) passed the incoming
-  pretests on Windows and Debian with the name conflict as the
-  only ERROR; the only changes since are the rename and the
-  reduced storage precision of the bundled data.
+* GitHub Actions (2026-07-04): windows-latest R-devel and
+  R-release, macos-latest R-release, ubuntu-latest R-devel and
+  R-release — R CMD check --as-cran, Status: OK on all five
+  (https://github.com/defense031/grassr/actions).
+* win-builder R-devel and R-release were also run (2026-07-03);
+  the result mails never reached the maintainer address.
 
 ## R CMD check results
 

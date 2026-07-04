@@ -27,7 +27,7 @@ run_stage() {  # $1 = stage dir, $2 = command
 # ---------------- Tier 1 ----------------
 run_stage "tier1/stage1_surface_ndense"  "Rscript run_surface_ndense.R"
 [ -f "$PROG/tier1/stage1_surface_ndense/DONE" ] || { log "halt: stage1 split incomplete (merge + DONE pending)"; exit 0; }
-run_stage "tier1/stage2_rebuild_surface" "Rscript rebuild_surface.R"
+run_stage "tier1/stage2_rebuild_surface" "(cd ../../../../.. && Rscript grassr/simulation/v070_program/tier1/stage2_rebuild_surface/rebuild_surface.R && Rscript grassr/simulation/v070_program/tier1/stage2_rebuild_surface/verify_candidate.R)"
 [ -f "$PROG/tier1/stage2_rebuild_surface/DONE" ] || { log "halt: stage2 verification pending"; exit 0; }
 run_stage "tier1/stage3_threshold_grid"  "Rscript run_threshold_grid.R"
 [ -f "$PROG/tier1/stage3_threshold_grid/DONE" ] || { log "halt: stage3 split incomplete"; exit 0; }

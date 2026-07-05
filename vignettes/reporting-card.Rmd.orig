@@ -86,7 +86,7 @@ Each block in the printed Report Card means something specific:
 - **`delta`** is the cross-coefficient percentile spread in pp across
   the agreement family (PABAK, AC1, Fleiss kappa;
   ICC excluded by construction). The caution and divergent cuts are
-  size-α calibrated per `(k, N)` (`delta_thresholds_lookup`); at the
+  read as a percentile on the matched `(k, N, q̂)` null distribution (`delta_null_ecdf`); at the
   modal applied design `(k = 5, N = 200)` the pair is `(9.25, 10.75)`
   pp. Below the caution cut the panel is *aligned* and the primary
   coefficient is safe to cite; above the divergent cut the panel-
@@ -114,7 +114,7 @@ card_sym
 Note three things:
 
 1. The `flag` is `aligned` (`delta = 1.2 pp`, well below the
-   9.25-pp caution threshold). One coefficient is safe to cite.
+   95th-percentile caution convention on the matched null). One coefficient is safe to cite.
 2. Only the primary coefficient prints (PABAK, picked automatically by
    the `(k, pi_hat)` rule from Table 2 of the paper). The full panel of
    four coefficients is still computed and stored on the object; it is
@@ -159,7 +159,7 @@ card_div
 ```
 
 The flag is `divergent`: the cross-coefficient percentile spread
-clears the divergent threshold printed on the card (9.75 pp, snapped
+clears the divergent convention printed on the card (99th percentile of the matched null; the implied cut in pp is shown, snapped
 from the nearest calibrated cell) even though the three agreement
 coefficients (PABAK, AC1, Fleiss kappa) all sit
 near the same observed value. Three things change in the printed
@@ -253,7 +253,7 @@ plot(card_sym, type = "thermometer") # delta_hat thermometer
 The default `plot()` view is a heatmap of the expected primary
 coefficient over `(M_1, q)` at the study's `(k, N)`, with a single
 point pinned at the observed coordinates. The `thermometer` view
-isolates `delta_hat` against the caution and divergent thresholds; useful
+isolates `delta_hat` against the matched-null caution and divergent conventions; useful
 when the question is *"is the panel stable enough to cite a single
 number?"*. Additional views (`type = "panel"` for the cross-coefficient
 spread, `type = "intervals"` for forest-style CIs, `type = "per_rater"`

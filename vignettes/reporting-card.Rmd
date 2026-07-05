@@ -3,7 +3,7 @@ title: "GRASS Report Card: a one-call workflow for binary rater reliability"
 author:
   - Austin Semmel
   - Rachel Gidaro
-date: "2026-07-04"
+date: "2026-07-05"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{GRASS Report Card: a one-call workflow for binary rater reliability}
@@ -70,11 +70,13 @@ grass_report(ratings = Y)
 #>   Fleiss kappa = 0.41  ->  31st percentile
 #>   ICC          = 0.53  ->  50th percentile  [distribution-sensitive]
 #>   delta       = 4.7 pp (aligned)
-#>   thresholds  = (9.25, 10.75) [calibrated at this (k, N)]
+#>   matched null = (k=5, N=200, q=0.85): delta_hat at the 68.7 percentile [design snapped]
 #> 
 #>   Notes:
 #>     - Fitted-ICC F_key picked via glmer: mu_hat=-1.039, tau2_hat=3.669 -> F_key tau2=4.0000, mu=-0.847.
 #>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-0.847_tau2=4.0000, k=5, N=200 (family=logit_normal, M1=0.374).
+#>     - delta_hat is computed over the agreement family (PABAK, AC1, Fleiss, alpha). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference surface depends on the full subject-prevalence distribution F and does not share the (q, pi_+) sufficient statistic the agreement family does).
+#>     - flag from delta_hat's percentile on the matched null (k=5, N=200, q=0.85; 50,000 draws); design snapped to nearest calibrated cell.
 #> 
 #>   See `summary(...)` for full panel and CI details.
 #>   See `plot(...)` for a surface-position visualization.
@@ -93,7 +95,7 @@ Each block in the printed Report Card means something specific:
 - **`delta`** is the cross-coefficient percentile spread in pp across
   the agreement family (PABAK, AC1, Fleiss kappa;
   ICC excluded by construction). The caution and divergent cuts are
-  size-α calibrated per `(k, N)` (`delta_thresholds_lookup`); at the
+  read as a percentile on the matched `(k, N, q̂)` null distribution (`delta_null_ecdf`); at the
   modal applied design `(k = 5, N = 200)` the pair is `(9.25, 10.75)`
   pp. Below the caution cut the panel is *aligned* and the primary
   coefficient is safe to cite; above the divergent cut the panel-
@@ -125,11 +127,13 @@ card_sym
 #>   Fleiss kappa = 0.36  ->  95th percentile
 #>   ICC          = 0.46  ->  50th percentile  [distribution-sensitive]
 #>   delta       = 1.2 pp (aligned)
-#>   thresholds  = (9.25, 10.75) [calibrated at this (k, N)]
+#>   matched null = (k=5, N=200, q=0.85): delta_hat at the 5.1 percentile [design snapped]
 #> 
 #>   Notes:
 #>     - Fitted-ICC F_key picked via glmer: mu_hat=-0.877, tau2_hat=2.801 -> F_key tau2=4.0000, mu=-0.847.
 #>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-0.847_tau2=4.0000, k=5, N=200 (family=logit_normal, M1=0.374).
+#>     - delta_hat is computed over the agreement family (PABAK, AC1, Fleiss, alpha). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference surface depends on the full subject-prevalence distribution F and does not share the (q, pi_+) sufficient statistic the agreement family does).
+#>     - flag from delta_hat's percentile on the matched null (k=5, N=200, q=0.85; 50,000 draws); design snapped to nearest calibrated cell.
 #> 
 #>   See `summary(...)` for full panel and CI details.
 #>   See `plot(...)` for a surface-position visualization.
@@ -138,7 +142,7 @@ card_sym
 Note three things:
 
 1. The `flag` is `aligned` (`delta = 1.2 pp`, well below the
-   9.25-pp caution threshold). One coefficient is safe to cite.
+   95th-percentile caution convention on the matched null). One coefficient is safe to cite.
 2. Only the primary coefficient prints (PABAK, picked automatically by
    the `(k, pi_hat)` rule from Table 2 of the paper). The full panel of
    four coefficients is still computed and stored on the object; it is
@@ -190,7 +194,7 @@ card_div
 #>   ICC           = 0.62  ->  50th percentile  [distribution-sensitive]
 #>   panel-agg.  = suppressed (divergent)
 #>   delta       =  18 pp (divergent)
-#>   thresholds  = (8.50, 9.75) [calibrated at nearest grid cell (snapped)]
+#>   matched null = (k=5, N=1000, q=0.85): delta_hat at the 99.5 percentile [design snapped]
 #> 
 #>   pairwise PABAK / surface percentile (lower / upper):
 #>     R1     R2     R3     R4     R5    
@@ -215,16 +219,17 @@ card_div
 #>     R5   Se = 0.96  (0.22, 0.98)   Sp = 0.78  (0.04, 0.82)
 #> 
 #>   Notes:
-#>     - (k = 5, N = 1000) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 5, N = 500).
 #>     - Fitted-ICC F_key picked via glmer: mu_hat=0.005, tau2_hat=5.278 -> F_key tau2=4.0000, mu=0.000.
 #>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=+0.000_tau2=4.0000, k=5, N=1000 (family=logit_normal, M1=0.500).
+#>     - delta_hat is computed over the agreement family (PABAK, AC1, Fleiss, alpha). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference surface depends on the full subject-prevalence distribution F and does not share the (q, pi_+) sufficient statistic the agreement family does).
+#>     - flag from delta_hat's percentile on the matched null (k=5, N=1000, q=0.85; 50,000 draws); design snapped to nearest calibrated cell.
 #> 
 #>   See `summary(...)` for full panel and CI details.
 #>   See `plot(...)` for a surface-position visualization.
 ```
 
 The flag is `divergent`: the cross-coefficient percentile spread
-clears the divergent threshold printed on the card (9.75 pp, snapped
+clears the divergent convention printed on the card (99th percentile of the matched null; the implied cut in pp is shown, snapped
 from the nearest calibrated cell) even though the three agreement
 coefficients (PABAK, AC1, Fleiss kappa) all sit
 near the same observed value. Three things change in the printed
@@ -331,7 +336,7 @@ summary(card_sym)
 #>   delta (cross-coefficient asymmetry)
 #>     delta_hat    : 1.20 pp
 #>     flag         : aligned
-#>     thresholds   : caution = 9.25, divergent = 10.75
+#>     thresholds   : caution = 9.02, divergent = 10.35
 #> 
 #>   panel (full table)
 #>     pabak           observed = 0.414  pct = 95.42 pp  band = Strong       qualifier = decisive
@@ -342,9 +347,11 @@ summary(card_sym)
 #>   notes
 #>     - Fitted-ICC F_key picked via glmer: mu_hat=-0.877, tau2_hat=2.801 -> F_key tau2=4.0000, mu=-0.847.
 #>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-0.847_tau2=4.0000, k=5, N=200 (family=logit_normal, M1=0.374).
+#>     - delta_hat is computed over the agreement family (PABAK, AC1, Fleiss, alpha). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference surface depends on the full subject-prevalence distribution F and does not share the (q, pi_+) sufficient statistic the agreement family does).
+#>     - flag from delta_hat's percentile on the matched null (k=5, N=200, q=0.85; 50,000 draws); design snapped to nearest calibrated cell.
 #> 
-#>   grass version : 0.6.2
-#>   timestamp     : 2026-07-04 10:43:05
+#>   grass version : 0.7.0
+#>   timestamp     : 2026-07-05 14:03:33
 ```
 
 `summary()` is the *audit view*: full panel of coefficients with
@@ -410,7 +417,7 @@ plot(card_sym, type = "thermometer") # delta_hat thermometer
 The default `plot()` view is a heatmap of the expected primary
 coefficient over `(M_1, q)` at the study's `(k, N)`, with a single
 point pinned at the observed coordinates. The `thermometer` view
-isolates `delta_hat` against the caution and divergent thresholds; useful
+isolates `delta_hat` against the matched-null caution and divergent conventions; useful
 when the question is *"is the panel stable enough to cite a single
 number?"*. Additional views (`type = "panel"` for the cross-coefficient
 spread, `type = "intervals"` for forest-style CIs, `type = "per_rater"`
@@ -449,7 +456,7 @@ check_asymmetry(ratings = Y_sym)
 #> GRASS panel asymmetry diagnostic
 #> 
 #>   delta_hat = 1.2 pp
-#>   flag      = aligned  (< 9.2)
+#>   flag      = aligned  (5.1 percentile of matched null: k=5, N=200, q=0.85)
 #> 
 #>   panel:
 #>     coefficient        observed   percentile (pp)   in delta_hat
@@ -462,6 +469,7 @@ check_asymmetry(ratings = Y_sym)
 #>     - Fitted-ICC F_key picked via glmer: mu_hat=-0.877, tau2_hat=2.801 -> F_key tau2=4.0000, mu=-0.847.
 #>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-0.847_tau2=4.0000, k=5, N=200 (family=logit_normal, M1=0.374).
 #>     - delta_hat is computed over the agreement family (PABAK, AC1, Fleiss, alpha). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference surface depends on the full subject-prevalence distribution F and does not share the (q, pi_+) sufficient statistic the agreement family does).
+#>     - flag from delta_hat's percentile on the matched null (k=5, N=200, q=0.85; 50,000 draws); design snapped to nearest calibrated cell.
 ```
 
 `check_asymmetry()` returns the cross-coefficient percentile spread and
@@ -511,10 +519,10 @@ grass_report(ratings = Y_k2)
 #>   PABAK  = 0.50  ->  56th percentile  (decisive)  <- primary
 #>   AC1    = 0.52  ->  57th percentile
 #>   delta       = 0.4 pp (aligned)
-#>   thresholds  = (8.25, 9.75) [calibrated at nearest grid cell (snapped)]
+#>   matched null = (k=2, N=200, q=0.85): delta_hat at the 30.0 percentile [design snapped]
 #> 
 #>   Notes:
-#>     - (k = 2, N = 200) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 3, N = 200).
+#>     - flag from delta_hat's percentile on the matched null (k=2, N=200, q=0.85; 50,000 draws); design snapped to nearest calibrated cell.
 #> 
 #>   See `summary(...)` for full panel and CI details.
 #>   See `plot(...)` for a surface-position visualization.
@@ -586,12 +594,13 @@ card_clamp
 #>   Fleiss kappa = 0.23  ->  47th percentile
 #>   ICC          = 0.33  ->  50th percentile  [distribution-sensitive]
 #>   delta       =   1 pp (aligned)
-#>   thresholds  = (8.50, 9.75) [calibrated at nearest grid cell (snapped)]
+#>   matched null = (k=5, N=1000, q=0.85): delta_hat at the 12.5 percentile [design snapped]
 #> 
 #>   Notes:
-#>     - (k = 5, N = 1000) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 5, N = 500).
 #>     - Fitted-ICC F_key picked via glmer: mu_hat=-1.716, tau2_hat=1.633 -> F_key tau2=1.0000, mu=-1.386.
 #>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-1.386_tau2=1.0000, k=5, N=1000 (family=logit_normal, M1=0.239).
+#>     - delta_hat is computed over the agreement family (PABAK, AC1, Fleiss, alpha). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference surface depends on the full subject-prevalence distribution F and does not share the (q, pi_+) sufficient statistic the agreement family does).
+#>     - flag from delta_hat's percentile on the matched null (k=5, N=1000, q=0.85; 50,000 draws); design snapped to nearest calibrated cell.
 #> 
 #>   See `summary(...)` for full panel and CI details.
 #>   See `plot(...)` for a surface-position visualization.

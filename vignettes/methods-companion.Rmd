@@ -3,7 +3,7 @@ title: "GRASS methods companion: notation, calibration detail, and auxiliary dia
 author:
   - Austin Semmel
   - Rachel Gidaro
-date: "2026-07-04"
+date: "2026-07-05"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{GRASS methods companion: notation, calibration detail, and auxiliary diagnostics}
@@ -109,53 +109,37 @@ companion expands the same dataset across the full grid.
 
 ---
 
-## 5. $\hat\delta$ thresholds and operating characteristics
+## 5. $\hat\delta$: the matched-null percentile convention
 
-The paper's Appendix~D carries the per-$(k, N)$ calibrated threshold
-table, the adopted-thresholds at the modal applied design, the
-TPR-by-asymmetry-magnitude tables for both caution and divergent
-flags, and the shared-bias vs split-bias detection comparison. This
-section populates the practitioner-facing detail that didn't make
-the paper.
+As of grassr 0.7.0 the flag is not a threshold crossing. $\hat\delta$
+is reported as its **percentile on the null distribution of
+$\hat\delta$ at the matched $(k, N, \hat q)$ cell** — the
+distribution of cross-coefficient disagreement among simulated panels
+where nothing is wrong, at the user's design and estimated panel
+quality. Flags are conventions on that percentile: **caution at the
+95th, divergent at the 99th**. The card prints the matched cell, its
+draw count, and any snap.
 
-**How the thresholds are derived.** At each $(k, N)$ design point,
-the cuts are size-$\alpha$ calibrated against the diagonal-symmetric
-null distribution of $\hat\delta$ following the Neyman-Pearson
-construction: pick the smallest $t$ such that
-$P(\hat\delta > t \mid \text{symmetric panel at } (k, N)) \leq \alpha$
-on the calibration grid, with $\alpha = 0.05$ for caution and
-$\alpha = 0.01$ for divergent. The thresholds are therefore a function
-of $(k, N)$, not a fixed pair. At the modal applied design ($k = 5$,
-$N = 200$) the cuts are $(9.25, 10.75)$ pp; at smaller designs they
-shift upward (the snapped pair at $k = 5$, $N = 50$ is
-$(10.25, 16.00)$ pp).
+**Why not thresholds.** The retired per-$(k, N)$ table was calibrated
+at a single panel quality ($q = 0.85$); recalibration across quality
+showed the null cuts move strongly with $q$ (they rise as quality
+rises, because tight sampling distributions amplify small coefficient
+disagreements into large percentile spreads), and at small $N$ the
+null is a mixture whose extreme quantiles are not stably invertible.
+Reading the observed $\hat\delta$'s ECDF position on the matched
+null — exactly how every coefficient on the card is already read — is
+stable where quantile inversion is not, holds its false-positive rate
+at every quality by construction, and degrades honestly: at very low
+quality and small $N$ the null is so wide that no observable
+disagreement exceeds chance, and the percentile says so.
 
-**Small-design behavior.** At $k = 2$ and at $k = 3$ with
-$N \leq 30$, the diagonal-null distribution of $\hat\delta$ has heavy
-tails that no size-$\alpha$ cut controls. The lookup snaps such
-panels to the nearest fully-calibrated cell on the
-$(k, \log_{10} N)$ grid and surfaces the snap on the Report Card; this
-is an optimistic lower bound rather than a calibrated cut at the
-user's design. At $k = 2$ the snap collapses to $k = 3$ at the same
-$N$, because the panel-level coefficient battery at $k = 2$ (PABAK, AC1,
-Cohen's $\kappa$) measures effectively the same
-agreement structure under both the symmetric null and the asymmetric
-alternatives. This is why the framework's $k = 2$ prescription routes
-to direct pairwise reporting and identifiable bounds on per-rater
-$(\Se_j, \Sp_j)$ rather than relying on $\hat\delta$ to fire.
-
-**What $\hat\delta$ targets.** $\hat\delta$ targets cross-coefficient
-surface-percentile inversion --- the asymmetry pattern in which
-different chance-correction baselines respond differently to per-rater
-heterogeneity. Independently-drawn-sign asymmetry produces this
-inversion; uniform shared bias, conditional dependence, and other
-panel pathologies that move all coefficients together do not. Paper Appendix~D documents the gap: at $A = 0.20$ the divergent
-flag's TPR plateaus near $0.40$--$0.46$ under split-bias asymmetry,
-while shared-bias panels move all three coefficients together and
-leave $\hat\delta$ nearly unmoved; the percentile, not $\hat\delta$,
-carries the shared-bias signal.
-
----
+**Calibration.** The null ECDFs are generated through the production
+pipeline itself (`check_asymmetry()` per draw: real normalization,
+constant-rater dropping, clamp-guard), pooled over prevalence:
+440 $(k, N, q)$ cells, at least 50{,}000 draws each, 24.85M panels in
+total. Cells whose extreme tail is not stably invertible carry a
+transparency flag in the bundled object; the percentile reading is
+unaffected (its Monte Carlo error is at most 0.22 pp everywhere).
 
 ## 5b. Pairwise PABAK and pooled-reference recovery
 
@@ -253,12 +237,13 @@ card_aligned
 #>   Fleiss kappa = 0.23  ->  47th percentile
 #>   ICC          = 0.33  ->  50th percentile  [distribution-sensitive]
 #>   delta       =   1 pp (aligned)
-#>   thresholds  = (8.50, 9.75) [calibrated at nearest grid cell (snapped)]
+#>   matched null = (k=5, N=1000, q=0.85): delta_hat at the 12.5 percentile [design snapped]
 #> 
 #>   Notes:
-#>     - (k = 5, N = 1000) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 5, N = 500).
 #>     - Fitted-ICC F_key picked via glmer: mu_hat=-1.716, tau2_hat=1.633 -> F_key tau2=1.0000, mu=-1.386.
 #>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-1.386_tau2=1.0000, k=5, N=1000 (family=logit_normal, M1=0.239).
+#>     - delta_hat is computed over the agreement family (PABAK, AC1, Fleiss, alpha). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference surface depends on the full subject-prevalence distribution F and does not share the (q, pi_+) sufficient statistic the agreement family does).
+#>     - flag from delta_hat's percentile on the matched null (k=5, N=1000, q=0.85; 50,000 draws); design snapped to nearest calibrated cell.
 #> 
 #>   See `summary(...)` for full panel and CI details.
 #>   See `plot(...)` for a surface-position visualization.
@@ -294,7 +279,7 @@ card_divergent
 #>   ICC           = 0.62  ->  50th percentile  [distribution-sensitive]
 #>   panel-agg.  = suppressed (divergent)
 #>   delta       =  18 pp (divergent)
-#>   thresholds  = (8.50, 9.75) [calibrated at nearest grid cell (snapped)]
+#>   matched null = (k=5, N=1000, q=0.85): delta_hat at the 99.5 percentile [design snapped]
 #> 
 #>   pairwise PABAK / surface percentile (lower / upper):
 #>     R1     R2     R3     R4     R5    
@@ -319,9 +304,10 @@ card_divergent
 #>     R5   Se = 0.96  (0.22, 0.98)   Sp = 0.78  (0.04, 0.82)
 #> 
 #>   Notes:
-#>     - (k = 5, N = 1000) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 5, N = 500).
 #>     - Fitted-ICC F_key picked via glmer: mu_hat=0.005, tau2_hat=5.278 -> F_key tau2=4.0000, mu=0.000.
 #>     - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=+0.000_tau2=4.0000, k=5, N=1000 (family=logit_normal, M1=0.500).
+#>     - delta_hat is computed over the agreement family (PABAK, AC1, Fleiss, alpha). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference surface depends on the full subject-prevalence distribution F and does not share the (q, pi_+) sufficient statistic the agreement family does).
+#>     - flag from delta_hat's percentile on the matched null (k=5, N=1000, q=0.85; 50,000 draws); design snapped to nearest calibrated cell.
 #> 
 #>   See `summary(...)` for full panel and CI details.
 #>   See `plot(...)` for a surface-position visualization.
@@ -354,10 +340,10 @@ card_k2
 #>   PABAK  = 0.89  ->  50th percentile
 #>   AC1    = 0.93  ->  55th percentile  (decisive)  <- primary
 #>   delta       = 5.4 pp (aligned)
-#>   thresholds  = (8.25, 9.75) [calibrated at nearest grid cell (snapped)]
+#>   matched null = (k=2, N=200, q=0.97): delta_hat at the 91.5 percentile [design snapped]
 #> 
 #>   Notes:
-#>     - (k = 2, N = 200) has no fully-calibrated threshold pair on the grid (or is off-grid); using nearest fully-calibrated cell (k = 3, N = 200).
+#>     - flag from delta_hat's percentile on the matched null (k=2, N=200, q=0.97; 50,000 draws); design snapped to nearest calibrated cell.
 #> 
 #>   See `summary(...)` for full panel and CI details.
 #>   See `plot(...)` for a surface-position visualization.

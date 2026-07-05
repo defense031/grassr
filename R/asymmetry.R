@@ -455,25 +455,27 @@ check_asymmetry <- function(ratings,
   Y <- normalize_ratings(ratings)
   panel_obs <- compute_panel(Y, axis = axis, occasion = occasion)
 
-  # Resolve delta_thresholds. NULL (default) -> per-(k, N) lookup against
-  # the calibration grid; non-NULL -> honor user-supplied pair after the
-  # usual validation. Lookup result includes a source tag so callers can
-  # surface the choice transparently.
-  thresholds_source <- "user_supplied"
+  # v0.7.0: the per-(k, N) threshold table is retired. The flag comes from
+  # delta_hat's percentile on the matched (k, N, q_hat) null ECDF
+  # (>= 95th caution, >= 99th divergent), resolved after the panel's
+  # q_hat is known. A user-supplied `delta_thresholds` pair is honored
+  # with the legacy pp-cut semantics, with a deprecation warning.
+  legacy_thresholds <- NULL
   thresholds_note   <- ""
-  if (is.null(delta_thresholds)) {
-    lk <- lookup_delta_thresholds(k = ncol(Y), N = nrow(Y))
-    delta_thresholds  <- lk$thresholds
-    thresholds_source <- lk$source
-    thresholds_note   <- lk$note
-  }
-  if (length(delta_thresholds) != 2L ||
-      !is.numeric(delta_thresholds) ||
-      !all(is.finite(delta_thresholds)) ||
-      delta_thresholds[1L] <= 0 ||
-      delta_thresholds[2L] <= delta_thresholds[1L]) {
-    stop("`delta_thresholds` must be a length-2 numeric vector with ",
-         "0 < caution < divergent (in pp).", call. = FALSE)
+  if (!is.null(delta_thresholds)) {
+    if (length(delta_thresholds) != 2L ||
+        !is.numeric(delta_thresholds) ||
+        !all(is.finite(delta_thresholds)) ||
+        delta_thresholds[1L] <= 0 ||
+        delta_thresholds[2L] <= delta_thresholds[1L]) {
+      stop("`delta_thresholds` must be a length-2 numeric vector with ",
+           "0 < caution < divergent (in pp).", call. = FALSE)
+    }
+    warning("`delta_thresholds` is deprecated as of grassr 0.7.0: the flag ",
+            "is now delta_hat's percentile on the matched null ",
+            "distribution. The supplied pp cuts are honored for this call.",
+            call. = FALSE)
+    legacy_thresholds <- delta_thresholds
   }
 
   # The panel-name -> surface-metric mapping. compute_panel() returns
@@ -562,13 +564,54 @@ check_asymmetry <- function(ratings,
     }
   }
 
-  flag <- if (delta_hat < delta_thresholds[1L]) {
-    "aligned"
-  } else if (delta_hat < delta_thresholds[2L]) {
-    "caution"
+  # ---- Matched-null resolution + flag (v0.7.0 convention) ----------------
+  qh <- vapply(positions[names(positions) %in% .DELTA_AGREEMENT_COEFS],
+               function(p) p$q_hat, numeric(1L))
+  q_hat_panel <- stats::median(qh[is.finite(qh)])
+  null_cell <- if (is.finite(q_hat_panel))
+    lookup_delta_null(k = ncol(Y), N = nrow(Y), q_hat = q_hat_panel)
+  else NULL
+
+  delta_percentile <- NA_real_
+  implied_cuts <- c(caution = NA_real_, divergent = NA_real_)
+  matched_null <- NULL
+  if (!is.null(null_cell)) {
+    delta_percentile <- delta_null_percentile(delta_hat, null_cell)
+    i95 <- which(abs(null_cell$probs - 0.95) < 1e-9)
+    i99 <- which(abs(null_cell$probs - 0.99) < 1e-9)
+    implied_cuts <- c(caution = unname(null_cell$values[i95]),
+                      divergent = unname(null_cell$values[i99]))
+    matched_null <- list(k = null_cell$k, N = null_cell$N, q = null_cell$q,
+                         q_hat_panel = unname(q_hat_panel),
+                         n_draws = null_cell$n_draws,
+                         snapped = null_cell$snapped,
+                         unstable_tail = null_cell$unstable_tail)
+    thresholds_note <- sprintf(
+      "flag from delta_hat's percentile on the matched null (k=%d, N=%d, q=%.2f; %s draws)%s%s.",
+      null_cell$k, null_cell$N, null_cell$q,
+      format(null_cell$n_draws, big.mark = ","),
+      if (null_cell$snapped) "; design snapped to nearest calibrated cell" else "",
+      if (null_cell$unstable_tail)
+        "; this cell's extreme tail is flagged as not stably invertible (percentile reading unaffected)" else "")
   } else {
-    "divergent"
+    thresholds_note <- "delta_null_ecdf unavailable; flag not calibrated."
   }
+
+  flag <- if (!is.null(legacy_thresholds)) {
+    if (delta_hat < legacy_thresholds[1L]) "aligned"
+    else if (delta_hat < legacy_thresholds[2L]) "caution"
+    else "divergent"
+  } else {
+    delta_flag_from_percentile(delta_percentile,
+      if (!is.null(null_cell)) null_cell$conventions
+      else c(caution = 0.95, divergent = 0.99))
+  }
+  thresholds_source <- if (!is.null(legacy_thresholds)) "user_supplied_legacy"
+                       else if (!is.null(null_cell)) "matched_null_ecdf"
+                       else "not_calibrated"
+  report_cuts <- if (!is.null(legacy_thresholds))
+    setNames(as.numeric(legacy_thresholds), c("caution", "divergent"))
+  else implied_cuts
 
   combined_notes <- unique(c(
     unlist(lapply(positions, `[[`, "notes")),
@@ -578,9 +621,10 @@ check_asymmetry <- function(ratings,
 
   out <- list(
     delta_hat  = unname(delta_hat),
+    delta_percentile = unname(delta_percentile),
     flag       = flag,
-    thresholds = setNames(as.numeric(delta_thresholds),
-                          c("caution", "divergent")),
+    matched_null = matched_null,
+    thresholds = report_cuts,
     thresholds_source = thresholds_source,
     panel      = data.frame(
       coefficient   = names(panel_obs),
@@ -601,13 +645,13 @@ print.grass_asymmetry_panel <- function(x, digits = 1, ...) {
   cat("GRASS panel asymmetry diagnostic\n\n", sep = "")
   cat(sprintf("  delta_hat = %.*f pp\n",
               digits, x$delta_hat))
-  cat(sprintf("  flag      = %s  (%s %.*f)\n",
-              x$flag,
-              if (x$flag == "aligned") "<" else ">=",
-              digits,
-              if (x$flag == "aligned") x$thresholds[["caution"]]
-              else if (x$flag == "caution") x$thresholds[["caution"]]
-              else x$thresholds[["divergent"]]))
+  if (is.finite(x$delta_percentile %||% NA_real_)) {
+    cat(sprintf("  flag      = %s  (%.1f percentile of matched null: k=%d, N=%d, q=%.2f)\n",
+                x$flag, x$delta_percentile,
+                x$matched_null$k, x$matched_null$N, x$matched_null$q))
+  } else {
+    cat(sprintf("  flag      = %s\n", x$flag))
+  }
   cat("\n  panel:\n")
   cat("    coefficient        observed   percentile (pp)   in delta_hat\n")
   pn <- x$panel

@@ -1,3 +1,42 @@
+# grassr 0.7.0
+
+The calibration release. Two structural changes, both from the v0.7.0
+calibration program (July 2026).
+
+## delta-hat flag redesigned: percentile on the matched null
+
+The per-(k, N) threshold table is retired. `check_asymmetry()` and
+`grass_report()` now report delta-hat as its **percentile on the null
+distribution of delta-hat at the matched (k, N, q-hat) cell**, with
+flags as conventions on that percentile (>= 95th caution, >= 99th
+divergent). Motivation: recalibration across panel quality showed the
+old single-quality (q = 0.85) thresholds were mis-sized off their
+calibration point, and at small N the null's extreme quantiles are not
+stably invertible; the ECDF-position reading is stable, holds its
+false-positive rate at every quality by construction, and matches how
+every other quantity on the card is read.
+
+* New sysdata object `delta_null_ecdf`: 440 (k, N, q) null ECDFs
+  generated through the production pipeline (24.85M panels, >= 50k
+  draws per cell), with per-cell instability metadata.
+* New card fields: `delta$delta_percentile`, `delta$matched_null`;
+  `delta$thresholds` now carries the implied pp cuts (95th/99th of the
+  matched null) as context.
+* `delta_thresholds` argument deprecated (honored with legacy
+  semantics plus a warning); `delta_thresholds_lookup` removed.
+* Bug fix: a missing lme4 (Suggests) no longer hard-errors
+  `check_asymmetry()`; non-finite panel entries are dropped before
+  positioning.
+
+## Reference surface densified
+
+`empirical_q_hat_surface` grows from 10,140 to 44,616 cells:
+N in {15, 20, 30, 50, 75, 100, 150, 200, 300, 500, 1000} (was
+{50, 200, 1000}) and a unified 13-point q-grid at every k. Lookups
+that previously clamped (e.g. N = 22 -> 50) now resolve to near
+cells. sysdata is 6.91 MB (storage-precision reduction to follow
+before any CRAN submission of this line).
+
 # grassr 0.6.2
 
 CRAN resubmission release. No changes to package functionality.

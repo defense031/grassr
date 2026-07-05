@@ -4,3 +4,5 @@
 **/PROGRESS.txt
 **/*.log
 *.log
+tier1/stage6_production_null/null_ecdf_cells.rds
+tier1/stage6_production_null/nulls_production.json

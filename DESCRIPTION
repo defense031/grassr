@@ -1,7 +1,7 @@
 Package: grassr
 Type: Package
 Title: Context-Conditioned Reporting for Binary Rater Reliability
-Version: 0.6.2
+Version: 0.7.0
 Authors@R: c(
     person("Austin", "Semmel", email = "austinsemmel@gmail.com",
            role = c("aut", "cre")),

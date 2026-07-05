@@ -35,8 +35,8 @@ test_that("symmetric panel returns aligned kappa-family + 5-row panel at k=5", {
   out <- check_asymmetry(Y)
 
   expect_s3_class(out, "grass_asymmetry_panel")
-  expect_named(out, c("delta_hat", "flag", "thresholds", "thresholds_source",
-                      "panel", "notes"))
+  expect_named(out, c("delta_hat", "delta_percentile", "flag", "matched_null",
+                      "thresholds", "thresholds_source", "panel", "notes"))
   expect_named(out$thresholds, c("caution", "divergent"))
 
   # Structural: panel has 4 rows with the documented metric names at k = 5

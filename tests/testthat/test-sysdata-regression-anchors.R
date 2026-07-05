@@ -119,14 +119,13 @@ test_that("§4.3 k=2 easy case: q=0.97 augmentation prevents clamp-to-0", {
   expect_lt(res$percentile * 100, 80)
 })
 
-test_that("k=2 surface index has the 12-point q-grid (canonical + 0.94, 0.97)", {
+test_that("k=2 surface index has the unified 13-point q-grid (v0.7.0)", {
   surf <- get("empirical_q_hat_surface",
               envir = asNamespace("grassr"), inherits = FALSE)
   k2_qs <- sort(unique(surf$index$q_true[surf$index$k == 2L]))
   expect_setequal(
     k2_qs,
-    c(0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90,
-      0.94, 0.95, 0.97, 0.99)
+    c(0.55, 0.60, 0.65, 0.70, 0.75, 0.80, 0.85, 0.90, 0.92, 0.94, 0.95, 0.97, 0.99)
   )
 })
 
@@ -165,21 +164,21 @@ test_that("k=2 surface F-key set matches canonical k>=3 set (52 keys)", {
   expect_setequal(k2_F, k3_F)
 })
 
-test_that("k=2 surface scenario count = 1872 (52 F x 12 q x 3 N)", {
+test_that("k=2 surface scenario count = 7436 (52 F x 13 q x 11 N)", {
   surf <- get("empirical_q_hat_surface",
               envir = asNamespace("grassr"), inherits = FALSE)
-  expect_equal(sum(surf$index$k == 2L), 1872L)
+  expect_equal(sum(surf$index$k == 2L), 7436L)
 })
 
-test_that("k=25 surface scenario count = 2028 (52 F x 13 q x 3 N)", {
+test_that("k=25 surface scenario count = 7436 (52 F x 13 q x 11 N)", {
   surf <- get("empirical_q_hat_surface",
               envir = asNamespace("grassr"), inherits = FALSE)
-  expect_equal(sum(surf$index$k == 25L), 2028L)
+  expect_equal(sum(surf$index$k == 25L), 7436L)
 })
 
-test_that("total surface = 10,140 scenarios across 6 k values", {
+test_that("total surface = 44,616 scenarios across 6 k values (v0.7.0 densified)", {
   surf <- get("empirical_q_hat_surface",
               envir = asNamespace("grassr"), inherits = FALSE)
-  expect_equal(nrow(surf$index), 10140L)
+  expect_equal(nrow(surf$index), 44616L)
   expect_setequal(unique(surf$index$k), c(2L, 3L, 5L, 8L, 15L, 25L))
 })

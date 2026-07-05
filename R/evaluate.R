@@ -108,21 +108,10 @@ grass_report <- function(ratings,
          k, ".", call. = FALSE)
   }
 
-  # Resolve delta_thresholds. NULL (default) -> per-(k, N) lookup against
-  # the calibration grid bundled in sysdata.rda; non-NULL -> honor user
-  # supplied pair. Source is recorded on the card so it can be surfaced
-  # in print() and audit output.
-  thresholds_source <- "user_supplied"
-  thresholds_note   <- ""
-  if (is.null(delta_thresholds)) {
-    lk <- lookup_delta_thresholds(k = k, N = N)
-    delta_thresholds  <- lk$thresholds
-    thresholds_source <- lk$source
-    thresholds_note   <- lk$note
-    if (nzchar(thresholds_note)) {
-      notes <- c(notes, thresholds_note)
-    }
-  }
+  # v0.7.0: threshold resolution retired. check_asymmetry() resolves the
+  # matched (k, N, q_hat) null and flags by percentile convention; a
+  # user-supplied `delta_thresholds` pair passes through with legacy
+  # semantics (deprecation warning raised there).
   if (N < 10L) {
     warning("N = ", N, " is below 10; inference unreliable. ",
             "Reference percentiles and bootstrap CIs will be very noisy.",
@@ -206,6 +195,8 @@ grass_report <- function(ratings,
   )
   delta_hat_pp <- asym$delta_hat
   flag         <- asym$flag
+  thresholds_source <- asym$thresholds_source
+  if (length(asym$notes)) notes <- unique(c(notes, asym$notes))
 
   # ---- Subject-bootstrap CI on delta_hat + tier-membership probabilities --
   # When bootstrap_delta_B > 0, resample subjects with replacement and
@@ -227,12 +218,12 @@ grass_report <- function(ratings,
       idx  <- sample.int(N, N, replace = TRUE)
       Y_b  <- Y[idx, , drop = FALSE]
       asym_b <- tryCatch(
-        check_asymmetry(
+        suppressWarnings(check_asymmetry(
           ratings          = Y_b,
           axis             = axis,
           occasion         = occasion,
           delta_thresholds = delta_thresholds
-        ),
+        )),
         error = function(e) list(delta_hat = NA_real_))
       delta_boot[b] <- asym_b$delta_hat
     }
@@ -241,12 +232,26 @@ grass_report <- function(ratings,
       delta_boot_ci <- as.numeric(stats::quantile(delta_boot,
                                                    probs = c(0.025, 0.975),
                                                    na.rm = TRUE))
-      tier_probabilities <- c(
-        aligned   = mean(delta_boot < delta_thresholds[1]),
-        caution   = mean(delta_boot >= delta_thresholds[1] &
-                         delta_boot <  delta_thresholds[2]),
-        divergent = mean(delta_boot >= delta_thresholds[2])
-      )
+      # Tier membership: each bootstrap delta_hat positioned on the SAME
+      # matched null as the point estimate (v0.7.0 percentile convention).
+      # Falls back to the legacy pp cuts only when the user supplied them.
+      cuts <- asym$thresholds
+      if (identical(asym$thresholds_source, "matched_null_ecdf") &&
+          all(is.finite(cuts))) {
+        tier_probabilities <- c(
+          aligned   = mean(delta_boot < cuts[["caution"]]),
+          caution   = mean(delta_boot >= cuts[["caution"]] &
+                           delta_boot <  cuts[["divergent"]]),
+          divergent = mean(delta_boot >= cuts[["divergent"]])
+        )
+      } else if (all(is.finite(cuts))) {
+        tier_probabilities <- c(
+          aligned   = mean(delta_boot < cuts[["caution"]]),
+          caution   = mean(delta_boot >= cuts[["caution"]] &
+                           delta_boot <  cuts[["divergent"]]),
+          divergent = mean(delta_boot >= cuts[["divergent"]])
+        )
+      }
     } else {
       notes <- c(notes,
         sprintf("delta_hat bootstrap returned %d valid replicates (< 50); CI / tier probabilities suppressed.",
@@ -402,9 +407,10 @@ grass_report <- function(ratings,
     ),
     delta = list(
       delta_hat          = as.numeric(delta_hat_pp),
+      delta_percentile   = as.numeric(asym$delta_percentile),
       flag               = flag,
-      thresholds         = setNames(as.numeric(delta_thresholds),
-                                    c("caution", "divergent")),
+      matched_null       = asym$matched_null,
+      thresholds         = asym$thresholds,
       thresholds_source  = thresholds_source,
       delta_hat_ci       = delta_boot_ci,
       tier_probabilities = tier_probabilities,
@@ -421,7 +427,8 @@ grass_report <- function(ratings,
     inputs = list(
       ratings_dim      = c(N = as.integer(N), k = as.integer(k)),
       axis             = axis,
-      delta_thresholds = as.numeric(delta_thresholds),
+      delta_thresholds = if (is.null(delta_thresholds)) NULL
+                         else as.numeric(delta_thresholds),
       bands            = as.numeric(bands),
       band_labels      = as.character(band_labels)
     ),

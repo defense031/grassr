@@ -31,19 +31,22 @@
 # -> "calibrated, k=k', N=N' (snapped)", default_fallback -> "modal-design
 # default", user_supplied -> "user-supplied".
 .fmt_thresholds_line <- function(delta_list) {
-  thr <- delta_list$thresholds
-  if (is.null(thr) || length(thr) != 2L) return(character(0L))
-  src <- delta_list$thresholds_source %||% "user_supplied"
-  src_str <- switch(
-    src,
-    calibrated_at_k_N             = "calibrated at this (k, N)",
-    snapped_to_nearest_calibrated = "calibrated at nearest grid cell (snapped)",
-    default_fallback              = "modal-design default (calibration table missing)",
-    user_supplied                 = "user-supplied",
-    src
-  )
-  sprintf("  thresholds  = (%.2f, %.2f) [%s]",
-          unname(thr[1]), unname(thr[2]), src_str)
+  # v0.7.0: the flag is delta_hat's percentile on the matched null; the
+  # implied pp cuts (95th/99th of that null) are shown as context.
+  mn <- delta_list$matched_null
+  pct <- delta_list$delta_percentile
+  if (!is.null(mn) && is.finite(pct %||% NA_real_)) {
+    sprintf("  matched null = (k=%d, N=%d, q=%.2f): delta_hat at the %.1f percentile%s%s",
+            mn$k, mn$N, mn$q, pct,
+            if (isTRUE(mn$snapped)) " [design snapped]" else "",
+            if (isTRUE(mn$unstable_tail)) " [tail not stably invertible]" else "")
+  } else if (identical(delta_list$thresholds_source, "user_supplied_legacy")) {
+    thr <- delta_list$thresholds
+    sprintf("  thresholds  = (%.2f, %.2f) [user-supplied, legacy pp cuts]",
+            thr[["caution"]], thr[["divergent"]])
+  } else {
+    "  matched null = unavailable (flag not calibrated)"
+  }
 }
 
 # Render the bootstrap-CI and tier-probability lines when bootstrap_delta_B

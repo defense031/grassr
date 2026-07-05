@@ -489,6 +489,12 @@ check_asymmetry <- function(ratings,
   panel_obs <- panel_obs[panel_keep]
   # Re-key so the printed panel uses the surface metric names (paper labels).
   names(panel_obs) <- unname(surface_metric_for[panel_keep])
+  # Drop non-finite panel entries before positioning. compute_panel()
+  # returns icc = NA when lme4 (Suggests) is unavailable or glmer fails;
+  # positioning an NA is an error, and a missing coefficient must degrade
+  # to "absent from the panel", never to a hard failure (v0.7.0 fix).
+  panel_obs <- panel_obs[vapply(panel_obs, function(v)
+    is.numeric(v) && is.finite(v), logical(1L))]
 
   positions <- lapply(names(panel_obs), function(m) {
     position_on_surface(ratings = Y, metric = m, ...)

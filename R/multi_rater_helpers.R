@@ -169,8 +169,10 @@ compute_tau2_hat <- function(Y) {
 #' panel at v0.6.0; see [obs_krippendorff_alpha()] for manual computation.
 #'
 #' @param ratings N x k binary matrix / data.frame / k=2 list.
-#' @param axis "inter" (default) or "intra". Phase 1A treats both the same;
-#'   the intra-axis cube-reshape lands in Phase 4+.
+#' @param axis "inter" (default) or "intra". Both compute the same panel:
+#'   under the reference model an intra matrix of W occasions is
+#'   distributionally identical to an inter panel at k = W (equivalence
+#'   proposition, v0.7.1), so no axis-specific reshape is needed.
 #' @param occasion Reserved for axis = "intra"; ignored in Phase 1A.
 #' @return Named list of observed metric values.
 #' @keywords internal

@@ -148,12 +148,16 @@ grass_report <- function(ratings,
   }
   if (identical(axis, "intra")) {
     notes <- c(notes,
-               paste0("Intra-rater axis: surface percentile uses the bundled ",
-                      "inter-rater diagonal calibration as an approximation. ",
-                      "The dedicated intra-axis calibration cube (1,500-rep ",
-                      "intra-rater extension from paper2/code/31_intra_dgp.R) ",
-                      "is queued for a follow-on data release. Treat this ",
-                      "Report Card's intra-axis percentile as approximate."))
+               paste0("Intra-rater axis: under the reference model (stable ",
+                      "rater, conditionally independent occasions) the ",
+                      "inter-rater diagonal calibration at k = W is EXACT ",
+                      "for W repeated viewings. Two deviations the reference ",
+                      "model excludes move the reading in known directions: ",
+                      "occasion drift deflates it, and within-subject ",
+                      "dependence (memory or a rater's own consistent rubric ",
+                      "-- unidentifiable from a single rater's matrix) ",
+                      "inflates it. Read intra percentiles as favorable-case ",
+                      "values under dependence."))
   }
 
   # ---- Compute the observed panel ---------------------------------------
@@ -214,11 +218,25 @@ grass_report <- function(ratings,
     }
   }
   if (!primary %in% names(panel_obs)) {
-    stop("Selected primary coefficient `", primary, "` is not in the ",
-         "computed panel (", paste(shQuote(names(panel_obs)),
-                                   collapse = ", "), "). ",
-         "Either pass `metric = \"auto\"` or pick from the panel.",
-         call. = FALSE)
+    if (identical(metric, "auto") && length(panel_obs)) {
+      # The auto pick can name a coefficient that was dropped from the
+      # panel (e.g. axis = "intra" picks ICC, but lme4 is absent so ICC
+      # is not computable). Degrade to the inter-axis auto pick over the
+      # coefficients that DID compute, with a note -- never a hard error.
+      fallback <- unname(surface_metric_for[
+        pick_primary_coefficient(k, pi_hat, axis = "inter")])
+      if (!fallback %in% names(panel_obs)) fallback <- names(panel_obs)[1L]
+      notes <- c(notes, sprintf(
+        "Auto-selected primary `%s` is not computable on this input; primary degraded to `%s`.",
+        primary, fallback))
+      primary <- fallback
+    } else {
+      stop("Selected primary coefficient `", primary, "` is not in the ",
+           "computed panel (", paste(shQuote(names(panel_obs)),
+                                     collapse = ", "), "). ",
+           "Either pass `metric = \"auto\"` or pick from the panel.",
+           call. = FALSE)
+    }
   }
 
   # ---- Cross-coefficient delta_hat --------------------------------------

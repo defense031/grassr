@@ -62,8 +62,9 @@ footer{margin-top:40px;color:var(--muted);font-size:12.5px;border-top:1px solid 
 <h2>One statistic, five nulls</h2>
 <p class="body">Every ridge is the null distribution of &delta;&#770; at one panel quality q, for the design you
 pick &mdash; what disagreement between PABAK, AC1, and Fleiss&rsquo; &kappa; looks like when <b>nothing is wrong</b>.
-Bin widths adapt per ridge (~0.1&ndash;0.9&nbsp;pp), so comb-like structure at high q and small N is the
-true discreteness of the null, not rendering. The dot is the median; the amber and rust ticks are the 95th and 99th percentiles &mdash; the &ldquo;cuts&rdquo; a
+Bin widths adapt to each ridge&rsquo;s draw count, and the smooth-display toggle applies a light
+moving average to the drawn shape only &mdash; every percentile readout and cut is computed from raw draws.
+Comb-like structure that survives smoothing at high q and small N is the true discreteness of the null. The dot is the median; the amber and rust ticks are the 95th and 99th percentiles &mdash; the &ldquo;cuts&rdquo; a
 threshold table would ship &mdash; and the rust bar is the bootstrap uncertainty of that 99th percentile.
 The green line is your panel. Flip on the tail zoom to see what the cut-line was actually riding.</p>
 <div class="instrument">
@@ -75,6 +76,7 @@ The green line is your panel. Flip on the tail zoom to see what the cut-line was
     <div class="ctl"><label for="qsl">Your q&#770; <span class="val mono" id="qval"></span> &rarr; matched null in <span style="color:var(--match)">steelblue</span></label>
       <input type="range" id="qsl" min="0.60" max="0.99" step="0.01" value="0.80"></div>
     <div class="toggle"><input type="checkbox" id="tailzoom"><label for="tailzoom" style="all:unset;cursor:pointer">show the full tail (to 70 pp)</label></div>
+    <div class="toggle"><input type="checkbox" id="smooth" checked><label for="smooth" style="all:unset;cursor:pointer">smooth display <span style="font-size:11px">(readouts always use raw draws)</span></label></div>
     <div class="presets">
       <button data-p="8,20,13.4">the U (k=8, N=20)</button>
       <button data-p="3,50,13.4">the cliff (k=3, N=50)</button>
@@ -169,12 +171,20 @@ function render(){
   s+=`<text x="${(L+W-R)/2}" y="${H-10}" text-anchor="middle" font-size="12.5" fill="var(--muted)">null &delta;&#770; (pp) &mdash; disagreement when nothing is wrong</text>`;
   cells.forEach((c,i)=>{
     const y0=T+rh*(i+1)-8, amp=rh*1.35;
-    const bw=c.h2max/80;
-    const nb2=Math.min(80,Math.ceil(xmax/bw));
-    const mx=Math.max(...c.h2.slice(0,nb2),1e-6);
+    // bins scale with draw count (thin ridges -> wider bins); optional
+    // 3-bin moving average for display only — readouts use raw ECDF.
+    const nbins=Math.max(24,Math.min(80,Math.round(Math.sqrt(c.n)/4)));
+    const agg=Math.max(1,Math.round(80/nbins));
+    let hv=[];for(let b=0;b<80;b+=agg){let s2=0;for(let j=b;j<Math.min(b+agg,80);j++)s2+=c.h2[j];hv.push(s2);}
+    if($("smooth").checked&&hv.length>6){
+      const sm=hv.map((v,i)=>{const a=hv[Math.max(0,i-1)],b2=hv[Math.min(hv.length-1,i+1)];return (a+2*v+b2)/4;});
+      hv=sm;}
+    const bw=c.h2max/hv.length;
+    const nb2=Math.min(hv.length,Math.ceil(xmax/bw));
+    const mx=Math.max(...hv.slice(0,nb2),1e-6);
     let path=`M ${x(0)} ${y0}`;
-    for(let b=0;b<80;b++){const cx=(b+0.5)*bw;if(cx>xmax)break;
-      path+=` L ${x(cx)} ${y0-c.h2[b]/mx*amp}`;}
+    for(let b=0;b<hv.length;b++){const cx=(b+0.5)*bw;if(cx>xmax)break;
+      path+=` L ${x(cx)} ${y0-hv[b]/mx*amp}`;}
     path+=` L ${x(Math.min(c.h2max,xmax))} ${y0} Z`;
     const matched=(i===mi_);
     s+=`<path d="${path}" fill="${matched?"var(--match)":"var(--muted)"}" opacity="${matched?"0.32":"0.10"}"/>`;
@@ -215,7 +225,7 @@ function render(){
   }
 }
 $("selk").addEventListener("change",()=>{fillN(+$("seln").value);render();});
-["seln","dsl","qsl","tailzoom"].forEach(id=>$(id).addEventListener("input",render));
+["seln","dsl","qsl","tailzoom","smooth"].forEach(id=>$(id).addEventListener("input",render));
 document.querySelectorAll(".presets button").forEach(b=>b.addEventListener("click",()=>{
   const[k,N,d]=b.dataset.p.split(",").map(Number);
   $("selk").value=k;fillN(N);$("seln").value=N;$("dsl").value=d;render();}));

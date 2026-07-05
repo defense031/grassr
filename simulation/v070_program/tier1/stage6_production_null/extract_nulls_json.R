@@ -4,7 +4,9 @@
 # grid, median/p95/p99 + bootstrap CI) plus the shipped-object precursor
 # (fine tail grid) per (k, N, q).
 S6 <- "grassr/simulation/v070_program/tier1/stage6_production_null"
-files <- list.files(file.path(S6, "per_cell"), full.names = TRUE)
+files <- c(list.files(file.path(S6, "per_cell"), full.names = TRUE),
+           list.files("grassr/simulation/v070_program/tier1/stage6b_topup/per_cell",
+                      full.names = TRUE))
 cells <- lapply(files, readRDS)
 key <- sapply(cells, function(x) paste(x$cell$k, x$cell$N, x$cell$q))
 BR <- seq(0, 70, length.out = 57)

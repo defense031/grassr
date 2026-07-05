@@ -6,6 +6,8 @@
 S6 <- "grassr/simulation/v070_program/tier1/stage6_production_null"
 files <- c(list.files(file.path(S6, "per_cell"), full.names = TRUE),
            list.files("grassr/simulation/v070_program/tier1/stage6b_topup/per_cell",
+                      full.names = TRUE),
+           list.files("grassr/simulation/v070_program/tier1/stage6c_highq/per_cell",
                       full.names = TRUE))
 cells <- lapply(files, readRDS)
 key <- sapply(cells, function(x) paste(x$cell$k, x$cell$N, x$cell$q))
@@ -23,6 +25,10 @@ out <- lapply(split(seq_along(cells), key), function(idx) {
        p99 = round(quantile(d, .99), 2),
        p99lo = round(quantile(bt, .025), 2), p99hi = round(quantile(bt, .975), 2),
        hist = round(hist(dd, breaks = BR, plot = FALSE)$counts / length(dd), 5),
+       h2max = { hm <- min(70, max(10, quantile(d, .995) * 1.3)); round(hm, 1) },
+       h2 = { hm <- min(70, max(10, quantile(d, .995) * 1.3))
+              round(hist(pmin(d, hm - 1e-6), breaks = seq(0, hm, length.out = 81),
+                         plot = FALSE)$counts / length(d), 5) },
        qs = round(quantile(d, PROBS, names = FALSE), 2),
        fine = round(quantile(d, FINE, names = FALSE), 3))
 })

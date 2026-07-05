@@ -1,0 +1,207 @@
+<title>delta-hat envelope explorer — grassr</title>
+<style>
+:root{
+  --paper:#FAFAF8; --ink:#1F2A24; --muted:#5C6B61; --grid:#DEE4DF;
+  --green:#3E7A52; --amber:#C98A1B; --rust:#B0432F; --slate:#40556E;
+  --card:#FFFFFF; --line:#CBD4CD;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--paper);color:var(--ink);
+  font-family:"Avenir Next","Seravek",ui-sans-serif,system-ui,sans-serif;
+  font-size:15px;line-height:1.45;padding:28px 32px 40px}
+.mono{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+header{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:18px;gap:16px;flex-wrap:wrap}
+h1{font-size:21px;font-weight:600;letter-spacing:-.01em}
+h1 .dh{color:var(--green)}
+header .sub{color:var(--muted);font-size:13px;max-width:46ch;text-align:right}
+.layout{display:grid;grid-template-columns:250px 1fr;gap:24px;align-items:start}
+@media(max-width:820px){.layout{grid-template-columns:1fr}}
+.rail{display:flex;flex-direction:column;gap:18px}
+.ctl label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:5px;font-weight:600}
+select,input[type=range]{width:100%}
+select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--card)}
+.val{font-size:18px;font-weight:600}
+.presets{display:flex;flex-direction:column;gap:6px}
+.presets button{font:inherit;font-size:13px;text-align:left;padding:7px 10px;border:1px solid var(--line);
+  border-radius:4px;background:var(--card);cursor:pointer}
+.presets button:hover{border-color:var(--green)}
+.presets button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--green);outline-offset:1px}
+.chartwrap{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 10px 4px}
+svg{width:100%;height:auto;display:block}
+.verdicts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+@media(max-width:820px){.verdicts{grid-template-columns:1fr}}
+.scheme{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.scheme h3{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+  font-weight:600;margin-bottom:8px}
+.scheme .cuts{font-size:13px;color:var(--muted);margin-bottom:8px}
+.pill{display:inline-block;padding:3px 12px;border-radius:99px;font-weight:600;font-size:14px;color:#fff}
+.pill.aligned{background:var(--green)} .pill.caution{background:var(--amber)}
+.pill.divergent{background:var(--rust)} .pill.na{background:var(--muted)}
+.note{margin-top:20px;color:var(--muted);font-size:13px;max-width:78ch}
+.note b{color:var(--ink)}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);
+  padding:6px 6px 10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:18px;height:0;border-top:3px solid}
+</style>
+<header>
+  <h1>The <span class="dh">&delta;&#770;</span> envelope explorer</h1>
+  <div class="sub">Divergent/caution cuts calibrated per panel quality q (Stage&nbsp;4, 13.2M draws).
+  Pick a design, place your panel, compare the three calibration schemes.
+  Prototype for <span class="mono">grassr::plot_delta_envelope()</span>.</div>
+</header>
+<div class="layout">
+  <div class="rail">
+    <div class="ctl"><label for="selk">Raters k</label><select id="selk"></select></div>
+    <div class="ctl"><label for="seln">Subjects N</label><select id="seln"></select></div>
+    <div class="ctl"><label for="deltasl">Your panel&rsquo;s &delta;&#770; &nbsp;<span class="val mono" id="deltaval"></span> pp</label>
+      <input type="range" id="deltasl" min="0" max="45" step="0.1" value="13.4"></div>
+    <div class="ctl"><label for="qsl">Your panel&rsquo;s q&#770; &nbsp;<span class="val mono" id="qval"></span></label>
+      <input type="range" id="qsl" min="0.60" max="0.99" step="0.01" value="0.75"></div>
+    <div class="ctl"><label>Worked examples</label>
+      <div class="presets">
+        <button data-p="8,200,13.4,0.75">Hinde Scenario Z (k=8, N=200)</button>
+        <button data-p="5,1000,17.9,0.85">Case 2 divergent (k=5, N=1000)</button>
+        <button data-p="5,200,5.9,0.88">Card row 3 aligned (k=5, N=200)</button>
+        <button data-p="10,500,14,0.93">High-quality panel (k=10, N=500)</button>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="chartwrap">
+      <svg id="chart" viewBox="0 0 760 430" role="img" aria-label="delta-hat cuts by panel quality"></svg>
+      <div class="legend">
+        <span><span class="sw" style="border-color:var(--rust)"></span>divergent cut t<sub>d</sub>(q)</span>
+        <span><span class="sw" style="border-color:var(--amber)"></span>caution cut t<sub>c</sub>(q)</span>
+        <span><span class="sw" style="border-color:var(--slate)"></span>two-band envelope</span>
+        <span><span class="sw" style="border-color:var(--muted);border-top-style:dashed"></span>pure envelope (max over q)</span>
+        <span><span class="sw" style="border-color:var(--green)"></span>your panel</span>
+      </div>
+    </div>
+    <div class="verdicts">
+      <div class="scheme"><h3>Single-q calibration (q = 0.85)</h3>
+        <div class="cuts mono" id="c1"></div><span class="pill" id="p1"></span></div>
+      <div class="scheme"><h3>Pure envelope (max over all q)</h3>
+        <div class="cuts mono" id="c2"></div><span class="pill" id="p2"></span></div>
+      <div class="scheme"><h3>Two-band envelope (by q&#770;)</h3>
+        <div class="cuts mono" id="c3"></div><span class="pill" id="p3"></span></div>
+    </div>
+    <div class="note" id="story"></div>
+  </div>
+</div>
+<script>
+const DATA = [{"k":2,"N":15,"q":0.65,"tc":14.75,"td":15.00},{"k":2,"N":15,"q":0.75,"tc":14.75,"td":15.00},{"k":2,"N":15,"q":0.85,"tc":15.00,"td":17.00},{"k":2,"N":15,"q":0.92,"tc":16.75,"td":17.00},{"k":2,"N":15,"q":0.97,"tc":15.25,"td":25.25},{"k":2,"N":20,"q":0.65,"tc":13.00,"td":13.50},{"k":2,"N":20,"q":0.75,"tc":13.00,"td":14.50},{"k":2,"N":20,"q":0.85,"tc":14.50,"td":18.75},{"k":2,"N":20,"q":0.92,"tc":17.50,"td":25.25},{"k":2,"N":20,"q":0.97,"tc":17.50,"td":25.25},{"k":2,"N":30,"q":0.65,"tc":12.75,"td":13.00},{"k":2,"N":30,"q":0.75,"tc":12.75,"td":13.00},{"k":2,"N":30,"q":0.85,"tc":12.75,"td":13.00},{"k":2,"N":30,"q":0.92,"tc":13.00,"td":14.25},{"k":2,"N":30,"q":0.97,"tc":13.50,"td":24.75},{"k":2,"N":50,"q":0.65,"tc":8.25,"td":11.75},{"k":2,"N":50,"q":0.75,"tc":8.25,"td":10.00},{"k":2,"N":50,"q":0.85,"tc":9.00,"td":10.75},{"k":2,"N":50,"q":0.92,"tc":11.25,"td":13.25},{"k":2,"N":50,"q":0.97,"tc":12.75,"td":20.50},{"k":2,"N":75,"q":0.65,"tc":7.25,"td":8.00},{"k":2,"N":75,"q":0.75,"tc":7.50,"td":8.75},{"k":2,"N":75,"q":0.85,"tc":8.25,"td":10.50},{"k":2,"N":75,"q":0.92,"tc":9.25,"td":12.25},{"k":2,"N":75,"q":0.97,"tc":12.25,"td":13.75},{"k":2,"N":100,"q":0.65,"tc":6.50,"td":9.00},{"k":2,"N":100,"q":0.75,"tc":6.75,"td":7.50},{"k":2,"N":100,"q":0.85,"tc":8.25,"td":10.25},{"k":2,"N":100,"q":0.92,"tc":9.75,"td":12.00},{"k":2,"N":100,"q":0.97,"tc":11.50,"td":12.75},{"k":2,"N":150,"q":0.65,"tc":5.25,"td":6.00},{"k":2,"N":150,"q":0.75,"tc":6.00,"td":6.75},{"k":2,"N":150,"q":0.85,"tc":8.00,"td":8.75},{"k":2,"N":150,"q":0.92,"tc":8.00,"td":9.75},{"k":2,"N":150,"q":0.97,"tc":10.25,"td":12.50},{"k":2,"N":200,"q":0.65,"tc":4.25,"td":5.00},{"k":2,"N":200,"q":0.75,"tc":5.50,"td":6.75},{"k":2,"N":200,"q":0.85,"tc":7.00,"td":8.25},{"k":2,"N":200,"q":0.92,"tc":7.25,"td":9.50},{"k":2,"N":200,"q":0.97,"tc":7.50,"td":10.50},{"k":2,"N":300,"q":0.65,"tc":4.00,"td":4.75},{"k":2,"N":300,"q":0.75,"tc":5.25,"td":6.25},{"k":2,"N":300,"q":0.85,"tc":7.25,"td":9.75},{"k":2,"N":300,"q":0.92,"tc":8.25,"td":10.25},{"k":2,"N":300,"q":0.97,"tc":7.75,"td":9.75},{"k":2,"N":500,"q":0.65,"tc":3.50,"td":4.75},{"k":2,"N":500,"q":0.75,"tc":6.00,"td":7.00},{"k":2,"N":500,"q":0.85,"tc":6.25,"td":7.75},{"k":2,"N":500,"q":0.92,"tc":7.00,"td":9.25},{"k":2,"N":500,"q":0.97,"tc":8.00,"td":9.25},{"k":2,"N":1000,"q":0.65,"tc":3.00,"td":4.00},{"k":2,"N":1000,"q":0.75,"tc":6.00,"td":7.25},{"k":2,"N":1000,"q":0.85,"tc":6.25,"td":7.50},{"k":2,"N":1000,"q":0.92,"tc":7.25,"td":8.50},{"k":2,"N":1000,"q":0.97,"tc":6.75,"td":9.25},{"k":3,"N":15,"q":0.65,"tc":27.25,"td":30.50},{"k":3,"N":15,"q":0.75,"tc":27.50,"td":31.50},{"k":3,"N":15,"q":0.85,"tc":18.25,"td":29.25},{"k":3,"N":15,"q":0.92,"tc":19.00,"td":25.25},{"k":3,"N":15,"q":0.97,"tc":24.25,"td":25.50},{"k":3,"N":20,"q":0.65,"tc":43.75,"td":48.25},{"k":3,"N":20,"q":0.75,"tc":29.25,"td":44.50},{"k":3,"N":20,"q":0.85,"tc":13.50,"td":20.50},{"k":3,"N":20,"q":0.92,"tc":13.25,"td":16.25},{"k":3,"N":20,"q":0.97,"tc":14.00,"td":20.75},{"k":3,"N":30,"q":0.65,"tc":25.25,"td":36.00},{"k":3,"N":30,"q":0.75,"tc":31.25,"td":47.75},{"k":3,"N":30,"q":0.85,"tc":13.25,"td":48.75},{"k":3,"N":30,"q":0.92,"tc":12.75,"td":13.50},{"k":3,"N":30,"q":0.97,"tc":14.50,"td":25.00},{"k":3,"N":50,"q":0.65,"tc":11.50,"td":38.50},{"k":3,"N":50,"q":0.75,"tc":11.00,"td":42.00},{"k":3,"N":50,"q":0.85,"tc":11.00,"td":13.75},{"k":3,"N":50,"q":0.92,"tc":11.25,"td":13.50},{"k":3,"N":50,"q":0.97,"tc":12.75,"td":14.00},{"k":3,"N":75,"q":0.65,"tc":22.25,"td":25.50},{"k":3,"N":75,"q":0.75,"tc":8.25,"td":11.00},{"k":3,"N":75,"q":0.85,"tc":9.25,"td":11.00},{"k":3,"N":75,"q":0.92,"tc":9.50,"td":11.25},{"k":3,"N":75,"q":0.97,"tc":12.75,"td":13.75},{"k":3,"N":100,"q":0.65,"tc":8.25,"td":42.75},{"k":3,"N":100,"q":0.75,"tc":7.25,"td":8.75},{"k":3,"N":100,"q":0.85,"tc":8.75,"td":11.50},{"k":3,"N":100,"q":0.92,"tc":9.00,"td":11.75},{"k":3,"N":100,"q":0.97,"tc":10.00,"td":13.00},{"k":3,"N":150,"q":0.65,"tc":6.50,"td":27.50},{"k":3,"N":150,"q":0.75,"tc":6.50,"td":7.75},{"k":3,"N":150,"q":0.85,"tc":9.00,"td":11.25},{"k":3,"N":150,"q":0.92,"tc":10.00,"td":12.50},{"k":3,"N":150,"q":0.97,"tc":10.50,"td":11.75},{"k":3,"N":200,"q":0.65,"tc":5.50,"td":7.00},{"k":3,"N":200,"q":0.75,"tc":6.25,"td":8.50},{"k":3,"N":200,"q":0.85,"tc":7.75,"td":9.75},{"k":3,"N":200,"q":0.92,"tc":10.00,"td":null},{"k":3,"N":200,"q":0.97,"tc":9.75,"td":14.00},{"k":3,"N":300,"q":0.65,"tc":4.75,"td":null},{"k":3,"N":300,"q":0.75,"tc":5.75,"td":7.00},{"k":3,"N":300,"q":0.85,"tc":7.00,"td":8.50},{"k":3,"N":300,"q":0.92,"tc":8.50,"td":10.00},{"k":3,"N":300,"q":0.97,"tc":10.50,"td":12.50},{"k":3,"N":500,"q":0.65,"tc":3.75,"td":5.00},{"k":3,"N":500,"q":0.75,"tc":5.50,"td":6.50},{"k":3,"N":500,"q":0.85,"tc":7.00,"td":8.50},{"k":3,"N":500,"q":0.92,"tc":8.50,"td":10.75},{"k":3,"N":500,"q":0.97,"tc":9.50,"td":12.00},{"k":3,"N":1000,"q":0.65,"tc":3.25,"td":3.75},{"k":3,"N":1000,"q":0.75,"tc":5.00,"td":6.25},{"k":3,"N":1000,"q":0.85,"tc":7.50,"td":9.00},{"k":3,"N":1000,"q":0.92,"tc":8.00,"td":9.25},{"k":3,"N":1000,"q":0.97,"tc":7.75,"td":9.25},{"k":5,"N":15,"q":0.65,"tc":39.25,"td":43.75},{"k":5,"N":15,"q":0.75,"tc":37.50,"td":43.00},{"k":5,"N":15,"q":0.85,"tc":22.75,"td":45.00},{"k":5,"N":15,"q":0.92,"tc":19.00,"td":40.50},{"k":5,"N":15,"q":0.97,"tc":22.00,"td":25.50},{"k":5,"N":20,"q":0.65,"tc":41.00,"td":46.00},{"k":5,"N":20,"q":0.75,"tc":40.50,"td":49.00},{"k":5,"N":20,"q":0.85,"tc":17.50,"td":null},{"k":5,"N":20,"q":0.92,"tc":24.75,"td":31.75},{"k":5,"N":20,"q":0.97,"tc":15.00,"td":25.25},{"k":5,"N":30,"q":0.65,"tc":41.75,"td":47.50},{"k":5,"N":30,"q":0.75,"tc":15.00,"td":48.75},{"k":5,"N":30,"q":0.85,"tc":13.75,"td":48.25},{"k":5,"N":30,"q":0.92,"tc":12.75,"td":24.50},{"k":5,"N":30,"q":0.97,"tc":13.00,"td":16.25},{"k":5,"N":50,"q":0.65,"tc":30.50,"td":null},{"k":5,"N":50,"q":0.75,"tc":11.00,"td":null},{"k":5,"N":50,"q":0.85,"tc":14.00,"td":null},{"k":5,"N":50,"q":0.92,"tc":12.25,"td":35.00},{"k":5,"N":50,"q":0.97,"tc":13.25,"td":21.75},{"k":5,"N":75,"q":0.65,"tc":10.50,"td":null},{"k":5,"N":75,"q":0.75,"tc":9.25,"td":13.50},{"k":5,"N":75,"q":0.85,"tc":11.00,"td":null},{"k":5,"N":75,"q":0.92,"tc":11.75,"td":17.00},{"k":5,"N":75,"q":0.97,"tc":12.25,"td":17.25},{"k":5,"N":100,"q":0.65,"tc":8.00,"td":null},{"k":5,"N":100,"q":0.75,"tc":8.75,"td":10.50},{"k":5,"N":100,"q":0.85,"tc":10.50,"td":15.00},{"k":5,"N":100,"q":0.92,"tc":11.25,"td":null},{"k":5,"N":100,"q":0.97,"tc":12.75,"td":16.75},{"k":5,"N":150,"q":0.65,"tc":6.75,"td":null},{"k":5,"N":150,"q":0.75,"tc":7.75,"td":9.25},{"k":5,"N":150,"q":0.85,"tc":9.75,"td":12.25},{"k":5,"N":150,"q":0.92,"tc":11.25,"td":13.50},{"k":5,"N":150,"q":0.97,"tc":13.25,"td":16.25},{"k":5,"N":200,"q":0.65,"tc":5.75,"td":null},{"k":5,"N":200,"q":0.75,"tc":7.00,"td":8.25},{"k":5,"N":200,"q":0.85,"tc":9.25,"td":10.50},{"k":5,"N":200,"q":0.92,"tc":11.00,"td":15.50},{"k":5,"N":200,"q":0.97,"tc":12.50,"td":15.75},{"k":5,"N":300,"q":0.65,"tc":4.75,"td":5.50},{"k":5,"N":300,"q":0.75,"tc":5.75,"td":7.00},{"k":5,"N":300,"q":0.85,"tc":8.25,"td":9.75},{"k":5,"N":300,"q":0.92,"tc":11.25,"td":13.75},{"k":5,"N":300,"q":0.97,"tc":11.25,"td":14.50},{"k":5,"N":500,"q":0.65,"tc":4.25,"td":5.25},{"k":5,"N":500,"q":0.75,"tc":6.25,"td":7.25},{"k":5,"N":500,"q":0.85,"tc":7.75,"td":9.50},{"k":5,"N":500,"q":0.92,"tc":11.25,"td":12.75},{"k":5,"N":500,"q":0.97,"tc":12.00,"td":13.75},{"k":5,"N":1000,"q":0.65,"tc":3.25,"td":3.50},{"k":5,"N":1000,"q":0.75,"tc":4.75,"td":5.50},{"k":5,"N":1000,"q":0.85,"tc":7.50,"td":8.75},{"k":5,"N":1000,"q":0.92,"tc":11.25,"td":12.00},{"k":5,"N":1000,"q":0.97,"tc":11.25,"td":12.75},{"k":6,"N":15,"q":0.65,"tc":37.75,"td":43.50},{"k":6,"N":15,"q":0.75,"tc":33.50,"td":44.00},{"k":6,"N":15,"q":0.85,"tc":25.00,"td":45.50},{"k":6,"N":15,"q":0.92,"tc":18.75,"td":42.50},{"k":6,"N":15,"q":0.97,"tc":17.50,"td":19.00},{"k":6,"N":20,"q":0.65,"tc":37.25,"td":44.00},{"k":6,"N":20,"q":0.75,"tc":31.75,"td":47.25},{"k":6,"N":20,"q":0.85,"tc":23.25,"td":49.75},{"k":6,"N":20,"q":0.92,"tc":23.75,"td":38.75},{"k":6,"N":20,"q":0.97,"tc":21.75,"td":38.25},{"k":6,"N":30,"q":0.65,"tc":38.00,"td":44.25},{"k":6,"N":30,"q":0.75,"tc":16.00,"td":null},{"k":6,"N":30,"q":0.85,"tc":14.75,"td":null},{"k":6,"N":30,"q":0.92,"tc":14.25,"td":36.00},{"k":6,"N":30,"q":0.97,"tc":14.00,"td":17.25},{"k":6,"N":50,"q":0.65,"tc":32.75,"td":49.25},{"k":6,"N":50,"q":0.75,"tc":10.75,"td":null},{"k":6,"N":50,"q":0.85,"tc":13.50,"td":null},{"k":6,"N":50,"q":0.92,"tc":12.50,"td":38.25},{"k":6,"N":50,"q":0.97,"tc":13.50,"td":18.50},{"k":6,"N":75,"q":0.65,"tc":9.75,"td":null},{"k":6,"N":75,"q":0.75,"tc":9.50,"td":null},{"k":6,"N":75,"q":0.85,"tc":10.00,"td":15.00},{"k":6,"N":75,"q":0.92,"tc":12.25,"td":48.00},{"k":6,"N":75,"q":0.97,"tc":12.00,"td":17.75},{"k":6,"N":100,"q":0.65,"tc":7.75,"td":null},{"k":6,"N":100,"q":0.75,"tc":8.75,"td":null},{"k":6,"N":100,"q":0.85,"tc":10.25,"td":14.75},{"k":6,"N":100,"q":0.92,"tc":11.00,"td":null},{"k":6,"N":100,"q":0.97,"tc":12.50,"td":16.75},{"k":6,"N":150,"q":0.65,"tc":6.75,"td":null},{"k":6,"N":150,"q":0.75,"tc":7.50,"td":8.75},{"k":6,"N":150,"q":0.85,"tc":9.50,"td":11.25},{"k":6,"N":150,"q":0.92,"tc":11.25,"td":14.25},{"k":6,"N":150,"q":0.97,"tc":13.00,"td":16.75},{"k":6,"N":200,"q":0.65,"tc":5.50,"td":8.25},{"k":6,"N":200,"q":0.75,"tc":7.00,"td":8.25},{"k":6,"N":200,"q":0.85,"tc":9.00,"td":10.25},{"k":6,"N":200,"q":0.92,"tc":11.00,"td":15.25},{"k":6,"N":200,"q":0.97,"tc":12.00,"td":15.50},{"k":6,"N":300,"q":0.65,"tc":4.50,"td":5.75},{"k":6,"N":300,"q":0.75,"tc":5.75,"td":6.75},{"k":6,"N":300,"q":0.85,"tc":8.00,"td":9.50},{"k":6,"N":300,"q":0.92,"tc":11.00,"td":13.75},{"k":6,"N":300,"q":0.97,"tc":11.50,"td":14.25},{"k":6,"N":500,"q":0.65,"tc":4.25,"td":5.00},{"k":6,"N":500,"q":0.75,"tc":6.25,"td":7.25},{"k":6,"N":500,"q":0.85,"tc":7.50,"td":9.25},{"k":6,"N":500,"q":0.92,"tc":11.00,"td":12.75},{"k":6,"N":500,"q":0.97,"tc":11.75,"td":13.75},{"k":6,"N":1000,"q":0.65,"tc":3.00,"td":3.50},{"k":6,"N":1000,"q":0.75,"tc":4.75,"td":5.25},{"k":6,"N":1000,"q":0.85,"tc":7.50,"td":8.75},{"k":6,"N":1000,"q":0.92,"tc":11.00,"td":12.00},{"k":6,"N":1000,"q":0.97,"tc":11.00,"td":12.75},{"k":8,"N":15,"q":0.65,"tc":45.25,"td":49.75},{"k":8,"N":15,"q":0.75,"tc":39.25,"td":null},{"k":8,"N":15,"q":0.85,"tc":40.75,"td":null},{"k":8,"N":15,"q":0.92,"tc":27.75,"td":46.50},{"k":8,"N":15,"q":0.97,"tc":26.50,"td":28.00},{"k":8,"N":20,"q":0.65,"tc":47.50,"td":null},{"k":8,"N":20,"q":0.75,"tc":39.25,"td":null},{"k":8,"N":20,"q":0.85,"tc":23.50,"td":null},{"k":8,"N":20,"q":0.92,"tc":25.25,"td":46.25},{"k":8,"N":20,"q":0.97,"tc":41.50,"td":null},{"k":8,"N":30,"q":0.65,"tc":null,"td":null},{"k":8,"N":30,"q":0.75,"tc":16.75,"td":null},{"k":8,"N":30,"q":0.85,"tc":18.00,"td":null},{"k":8,"N":30,"q":0.92,"tc":25.50,"td":43.00},{"k":8,"N":30,"q":0.97,"tc":21.00,"td":null},{"k":8,"N":50,"q":0.65,"tc":48.50,"td":null},{"k":8,"N":50,"q":0.75,"tc":12.50,"td":null},{"k":8,"N":50,"q":0.85,"tc":14.50,"td":null},{"k":8,"N":50,"q":0.92,"tc":15.50,"td":null},{"k":8,"N":50,"q":0.97,"tc":17.00,"td":21.00},{"k":8,"N":75,"q":0.65,"tc":11.50,"td":null},{"k":8,"N":75,"q":0.75,"tc":11.00,"td":null},{"k":8,"N":75,"q":0.85,"tc":13.00,"td":18.25},{"k":8,"N":75,"q":0.92,"tc":14.50,"td":null},{"k":8,"N":75,"q":0.97,"tc":16.75,"td":null},{"k":8,"N":100,"q":0.65,"tc":9.50,"td":null},{"k":8,"N":100,"q":0.75,"tc":9.50,"td":11.75},{"k":8,"N":100,"q":0.85,"tc":12.75,"td":16.25},{"k":8,"N":100,"q":0.92,"tc":14.50,"td":null},{"k":8,"N":100,"q":0.97,"tc":15.50,"td":20.00},{"k":8,"N":150,"q":0.65,"tc":7.25,"td":null},{"k":8,"N":150,"q":0.75,"tc":7.75,"td":9.50},{"k":8,"N":150,"q":0.85,"tc":12.00,"td":13.50},{"k":8,"N":150,"q":0.92,"tc":14.00,"td":19.25},{"k":8,"N":150,"q":0.97,"tc":14.75,"td":19.75},{"k":8,"N":200,"q":0.65,"tc":6.50,"td":null},{"k":8,"N":200,"q":0.75,"tc":7.00,"td":8.00},{"k":8,"N":200,"q":0.85,"tc":11.50,"td":13.00},{"k":8,"N":200,"q":0.92,"tc":14.75,"td":18.25},{"k":8,"N":200,"q":0.97,"tc":15.00,"td":19.00},{"k":8,"N":300,"q":0.65,"tc":5.25,"td":6.00},{"k":8,"N":300,"q":0.75,"tc":6.75,"td":7.75},{"k":8,"N":300,"q":0.85,"tc":10.50,"td":12.00},{"k":8,"N":300,"q":0.92,"tc":15.00,"td":18.00},{"k":8,"N":300,"q":0.97,"tc":14.00,"td":18.50},{"k":8,"N":500,"q":0.65,"tc":4.50,"td":5.50},{"k":8,"N":500,"q":0.75,"tc":6.75,"td":7.75},{"k":8,"N":500,"q":0.85,"tc":11.00,"td":12.50},{"k":8,"N":500,"q":0.92,"tc":14.75,"td":16.25},{"k":8,"N":500,"q":0.97,"tc":14.00,"td":16.75},{"k":8,"N":1000,"q":0.65,"tc":3.50,"td":4.25},{"k":8,"N":1000,"q":0.75,"tc":6.00,"td":7.00},{"k":8,"N":1000,"q":0.85,"tc":10.50,"td":12.00},{"k":8,"N":1000,"q":0.92,"tc":14.00,"td":16.25},{"k":8,"N":1000,"q":0.97,"tc":13.75,"td":16.00},{"k":10,"N":15,"q":0.65,"tc":45.75,"td":null},{"k":10,"N":15,"q":0.75,"tc":37.00,"td":null},{"k":10,"N":15,"q":0.85,"tc":40.50,"td":null},{"k":10,"N":15,"q":0.92,"tc":26.50,"td":46.50},{"k":10,"N":15,"q":0.97,"tc":21.00,"td":46.75},{"k":10,"N":20,"q":0.65,"tc":48.25,"td":null},{"k":10,"N":20,"q":0.75,"tc":42.00,"td":null},{"k":10,"N":20,"q":0.85,"tc":46.50,"td":null},{"k":10,"N":20,"q":0.92,"tc":27.50,"td":37.75},{"k":10,"N":20,"q":0.97,"tc":20.00,"td":49.25},{"k":10,"N":30,"q":0.65,"tc":null,"td":null},{"k":10,"N":30,"q":0.75,"tc":16.75,"td":null},{"k":10,"N":30,"q":0.85,"tc":17.75,"td":null},{"k":10,"N":30,"q":0.92,"tc":25.25,"td":42.50},{"k":10,"N":30,"q":0.97,"tc":19.50,"td":null},{"k":10,"N":50,"q":0.65,"tc":null,"td":null},{"k":10,"N":50,"q":0.75,"tc":12.25,"td":null},{"k":10,"N":50,"q":0.85,"tc":13.25,"td":null},{"k":10,"N":50,"q":0.92,"tc":15.00,"td":null},{"k":10,"N":50,"q":0.97,"tc":18.25,"td":null},{"k":10,"N":75,"q":0.65,"tc":10.75,"td":null},{"k":10,"N":75,"q":0.75,"tc":11.25,"td":null},{"k":10,"N":75,"q":0.85,"tc":12.50,"td":18.50},{"k":10,"N":75,"q":0.92,"tc":14.25,"td":null},{"k":10,"N":75,"q":0.97,"tc":15.00,"td":20.00},{"k":10,"N":100,"q":0.65,"tc":9.25,"td":null},{"k":10,"N":100,"q":0.75,"tc":9.50,"td":11.50},{"k":10,"N":100,"q":0.85,"tc":12.50,"td":14.25},{"k":10,"N":100,"q":0.92,"tc":14.75,"td":null},{"k":10,"N":100,"q":0.97,"tc":15.50,"td":19.75},{"k":10,"N":150,"q":0.65,"tc":7.00,"td":null},{"k":10,"N":150,"q":0.75,"tc":7.75,"td":9.25},{"k":10,"N":150,"q":0.85,"tc":11.75,"td":13.25},{"k":10,"N":150,"q":0.92,"tc":14.00,"td":19.50},{"k":10,"N":150,"q":0.97,"tc":15.00,"td":19.25},{"k":10,"N":200,"q":0.65,"tc":6.25,"td":7.25},{"k":10,"N":200,"q":0.75,"tc":7.00,"td":8.00},{"k":10,"N":200,"q":0.85,"tc":11.25,"td":12.50},{"k":10,"N":200,"q":0.92,"tc":14.25,"td":17.75},{"k":10,"N":200,"q":0.97,"tc":14.50,"td":19.00},{"k":10,"N":300,"q":0.65,"tc":5.25,"td":5.75},{"k":10,"N":300,"q":0.75,"tc":6.75,"td":7.75},{"k":10,"N":300,"q":0.85,"tc":10.25,"td":12.00},{"k":10,"N":300,"q":0.92,"tc":14.25,"td":17.00},{"k":10,"N":300,"q":0.97,"tc":13.75,"td":18.00},{"k":10,"N":500,"q":0.65,"tc":4.25,"td":5.00},{"k":10,"N":500,"q":0.75,"tc":6.75,"td":8.00},{"k":10,"N":500,"q":0.85,"tc":10.25,"td":12.25},{"k":10,"N":500,"q":0.92,"tc":14.50,"td":16.50},{"k":10,"N":500,"q":0.97,"tc":14.00,"td":16.75},{"k":10,"N":1000,"q":0.65,"tc":3.50,"td":4.25},{"k":10,"N":1000,"q":0.75,"tc":6.00,"td":7.00},{"k":10,"N":1000,"q":0.85,"tc":10.50,"td":12.00},{"k":10,"N":1000,"q":0.92,"tc":13.50,"td":15.50},{"k":10,"N":1000,"q":0.97,"tc":13.25,"td":15.75},{"k":15,"N":15,"q":0.65,"tc":null,"td":null},{"k":15,"N":15,"q":0.75,"tc":null,"td":null},{"k":15,"N":15,"q":0.85,"tc":null,"td":null},{"k":15,"N":15,"q":0.92,"tc":36.25,"td":null},{"k":15,"N":15,"q":0.97,"tc":27.50,"td":null},{"k":15,"N":20,"q":0.65,"tc":null,"td":null},{"k":15,"N":20,"q":0.75,"tc":null,"td":null},{"k":15,"N":20,"q":0.85,"tc":null,"td":null},{"k":15,"N":20,"q":0.92,"tc":39.00,"td":48.25},{"k":15,"N":20,"q":0.97,"tc":null,"td":null},{"k":15,"N":30,"q":0.65,"tc":null,"td":null},{"k":15,"N":30,"q":0.75,"tc":20.25,"td":null},{"k":15,"N":30,"q":0.85,"tc":20.00,"td":null},{"k":15,"N":30,"q":0.92,"tc":46.00,"td":null},{"k":15,"N":30,"q":0.97,"tc":22.00,"td":null},{"k":15,"N":50,"q":0.65,"tc":null,"td":null},{"k":15,"N":50,"q":0.75,"tc":14.50,"td":null},{"k":15,"N":50,"q":0.85,"tc":17.75,"td":null},{"k":15,"N":50,"q":0.92,"tc":20.00,"td":null},{"k":15,"N":50,"q":0.97,"tc":20.50,"td":29.00},{"k":15,"N":75,"q":0.65,"tc":13.50,"td":null},{"k":15,"N":75,"q":0.75,"tc":12.75,"td":null},{"k":15,"N":75,"q":0.85,"tc":16.50,"td":19.25},{"k":15,"N":75,"q":0.92,"tc":19.50,"td":null},{"k":15,"N":75,"q":0.97,"tc":20.75,"td":27.50},{"k":15,"N":100,"q":0.65,"tc":11.00,"td":null},{"k":15,"N":100,"q":0.75,"tc":10.25,"td":11.50},{"k":15,"N":100,"q":0.85,"tc":15.50,"td":17.00},{"k":15,"N":100,"q":0.92,"tc":19.25,"td":null},{"k":15,"N":100,"q":0.97,"tc":19.75,"td":24.50},{"k":15,"N":150,"q":0.65,"tc":8.75,"td":10.00},{"k":15,"N":150,"q":0.75,"tc":8.50,"td":9.50},{"k":15,"N":150,"q":0.85,"tc":15.25,"td":16.75},{"k":15,"N":150,"q":0.92,"tc":19.50,"td":25.50},{"k":15,"N":150,"q":0.97,"tc":19.50,"td":24.75},{"k":15,"N":200,"q":0.65,"tc":7.50,"td":9.00},{"k":15,"N":200,"q":0.75,"tc":8.50,"td":9.75},{"k":15,"N":200,"q":0.85,"tc":14.75,"td":16.00},{"k":15,"N":200,"q":0.92,"tc":19.75,"td":23.50},{"k":15,"N":200,"q":0.97,"tc":18.75,"td":22.25},{"k":15,"N":300,"q":0.65,"tc":7.75,"td":8.75},{"k":15,"N":300,"q":0.75,"tc":8.50,"td":10.25},{"k":15,"N":300,"q":0.85,"tc":14.00,"td":15.75},{"k":15,"N":300,"q":0.92,"tc":18.75,"td":21.75},{"k":15,"N":300,"q":0.97,"tc":18.50,"td":22.75},{"k":15,"N":500,"q":0.65,"tc":5.50,"td":6.25},{"k":15,"N":500,"q":0.75,"tc":8.25,"td":8.75},{"k":15,"N":500,"q":0.85,"tc":14.75,"td":17.00},{"k":15,"N":500,"q":0.92,"tc":18.50,"td":21.00},{"k":15,"N":500,"q":0.97,"tc":17.75,"td":20.25},{"k":15,"N":1000,"q":0.65,"tc":4.00,"td":4.50},{"k":15,"N":1000,"q":0.75,"tc":8.75,"td":9.75},{"k":15,"N":1000,"q":0.85,"tc":14.25,"td":16.25},{"k":15,"N":1000,"q":0.92,"tc":18.75,"td":21.00},{"k":15,"N":1000,"q":0.97,"tc":17.75,"td":19.50},{"k":25,"N":15,"q":0.65,"tc":null,"td":null},{"k":25,"N":15,"q":0.75,"tc":null,"td":null},{"k":25,"N":15,"q":0.85,"tc":null,"td":null},{"k":25,"N":15,"q":0.92,"tc":44.25,"td":null},{"k":25,"N":15,"q":0.97,"tc":38.75,"td":null},{"k":25,"N":20,"q":0.65,"tc":null,"td":null},{"k":25,"N":20,"q":0.75,"tc":null,"td":null},{"k":25,"N":20,"q":0.85,"tc":25.50,"td":null},{"k":25,"N":20,"q":0.92,"tc":48.00,"td":null},{"k":25,"N":20,"q":0.97,"tc":29.00,"td":null},{"k":25,"N":30,"q":0.65,"tc":null,"td":null},{"k":25,"N":30,"q":0.75,"tc":21.50,"td":null},{"k":25,"N":30,"q":0.85,"tc":22.25,"td":null},{"k":25,"N":30,"q":0.92,"tc":null,"td":null},{"k":25,"N":30,"q":0.97,"tc":27.50,"td":null},{"k":25,"N":50,"q":0.65,"tc":null,"td":null},{"k":25,"N":50,"q":0.75,"tc":15.75,"td":null},{"k":25,"N":50,"q":0.85,"tc":20.25,"td":24.00},{"k":25,"N":50,"q":0.92,"tc":25.00,"td":null},{"k":25,"N":50,"q":0.97,"tc":23.75,"td":31.50},{"k":25,"N":75,"q":0.65,"tc":14.75,"td":null},{"k":25,"N":75,"q":0.75,"tc":15.00,"td":17.00},{"k":25,"N":75,"q":0.85,"tc":19.25,"td":21.25},{"k":25,"N":75,"q":0.92,"tc":24.25,"td":null},{"k":25,"N":75,"q":0.97,"tc":23.75,"td":30.75},{"k":25,"N":100,"q":0.65,"tc":12.25,"td":null},{"k":25,"N":100,"q":0.75,"tc":12.00,"td":13.50},{"k":25,"N":100,"q":0.85,"tc":19.75,"td":21.25},{"k":25,"N":100,"q":0.92,"tc":24.50,"td":null},{"k":25,"N":100,"q":0.97,"tc":23.00,"td":28.00},{"k":25,"N":150,"q":0.65,"tc":10.50,"td":11.50},{"k":25,"N":150,"q":0.75,"tc":11.50,"td":13.50},{"k":25,"N":150,"q":0.85,"tc":18.00,"td":19.75},{"k":25,"N":150,"q":0.92,"tc":23.25,"td":26.75},{"k":25,"N":150,"q":0.97,"tc":22.50,"td":26.50},{"k":25,"N":200,"q":0.65,"tc":8.75,"td":9.50},{"k":25,"N":200,"q":0.75,"tc":11.00,"td":13.25},{"k":25,"N":200,"q":0.85,"tc":18.50,"td":21.25},{"k":25,"N":200,"q":0.92,"tc":22.50,"td":26.50},{"k":25,"N":200,"q":0.97,"tc":22.50,"td":26.50},{"k":25,"N":300,"q":0.65,"tc":7.50,"td":8.50},{"k":25,"N":300,"q":0.75,"tc":10.75,"td":13.50},{"k":25,"N":300,"q":0.85,"tc":18.50,"td":20.00},{"k":25,"N":300,"q":0.92,"tc":22.00,"td":25.00},{"k":25,"N":300,"q":0.97,"tc":22.00,"td":26.00},{"k":25,"N":500,"q":0.65,"tc":5.75,"td":6.75},{"k":25,"N":500,"q":0.75,"tc":10.75,"td":12.75},{"k":25,"N":500,"q":0.85,"tc":18.25,"td":19.50},{"k":25,"N":500,"q":0.92,"tc":22.00,"td":24.25},{"k":25,"N":500,"q":0.97,"tc":22.25,"td":25.75},{"k":25,"N":1000,"q":0.65,"tc":4.50,"td":5.00},{"k":25,"N":1000,"q":0.75,"tc":11.00,"td":12.50},{"k":25,"N":1000,"q":0.85,"tc":17.25,"td":20.00},{"k":25,"N":1000,"q":0.92,"tc":22.75,"td":24.50},{"k":25,"N":1000,"q":0.97,"tc":22.50,"td":24.50}];
+const cells = {};
+DATA.forEach(r => { const key = r.k + "," + r.N;
+  (cells[key] = cells[key] || []).push(r); });
+Object.values(cells).forEach(a => a.sort((x,y)=>x.q-y.q));
+const ks = [...new Set(DATA.map(r=>r.k))].sort((a,b)=>a-b);
+const $ = id => document.getElementById(id);
+
+function nsFor(k){ return [...new Set(DATA.filter(r=>r.k===k).map(r=>r.N))].sort((a,b)=>a-b); }
+ks.forEach(k => $("selk").add(new Option(k, k)));
+function fillN(keepN){
+  const k = +$("selk").value; const ns = nsFor(k);
+  $("seln").innerHTML = "";
+  ns.forEach(n => $("seln").add(new Option(n, n)));
+  if (keepN && ns.includes(keepN)) $("seln").value = keepN;
+  else $("seln").value = ns.includes(200) ? 200 : ns[Math.floor(ns.length/2)];
+}
+$("selk").value = 8; fillN(200);
+
+function envelope(rows, qs){
+  const v = rows.filter(r => qs.includes(r.q));
+  const td = Math.max(...v.map(r => r.td ?? -1));
+  const tc = Math.max(...v.map(r => r.tc ?? -1));
+  return { tc: tc < 0 ? null : tc, td: td < 0 ? null : td };
+}
+function flag(delta, tc, td){
+  if (td == null && tc == null) return ["not calibrated","na"];
+  if (td != null && delta >= td) return ["divergent","divergent"];
+  if (tc != null && delta >= tc) return ["caution","caution"];
+  return ["aligned","aligned"];
+}
+
+function render(){
+  const k = +$("selk").value, N = +$("seln").value;
+  const delta = +$("deltasl").value, qhat = +$("qsl").value;
+  $("deltaval").textContent = delta.toFixed(1);
+  $("qval").textContent = qhat.toFixed(2);
+  const rows = cells[k + "," + N] || [];
+
+  const single = rows.find(r => r.q === 0.85) || {tc:null, td:null};
+  const pure  = envelope(rows, rows.map(r=>r.q));
+  const lowB  = envelope(rows, [0.75, 0.85]);
+  const highB = envelope(rows, [0.92, 0.97]);
+  const band  = qhat < 0.70 ? {tc:null, td:null} : (qhat < 0.90 ? lowB : highB);
+
+  const fmt = s => "t_c " + (s.tc==null?"—":s.tc.toFixed(2)) + "  ·  t_d " + (s.td==null?"—":s.td.toFixed(2));
+  const set = (ci, pi, s) => { $(ci).textContent = fmt(s);
+    const [txt, cls] = flag(delta, s.tc, s.td);
+    $(pi).textContent = txt; $(pi).className = "pill " + cls; };
+  set("c1","p1", single); set("c2","p2", pure); set("c3","p3", band);
+
+  const f1 = flag(delta, single.tc, single.td)[0],
+        f2 = flag(delta, pure.tc, pure.td)[0],
+        f3 = flag(delta, band.tc, band.td)[0];
+  $("story").innerHTML = (f2 !== f3)
+    ? "<b>The schemes disagree here.</b> The pure envelope calls this panel <b>" + f2 +
+      "</b> because its ceiling protects qualities this panel doesn&rsquo;t have; the two-band scheme reads the " +
+      (qhat < 0.90 ? "low" : "high") + "-quality band&rsquo;s own ceiling and calls it <b>" + f3 + "</b>."
+    : "All envelope schemes agree: <b>" + f3 + "</b>. Quality band: " +
+      (qhat < 0.70 ? "below calibrated range (q&#770; &lt; 0.70)" : (qhat < 0.90 ? "low (0.70&ndash;0.90)" : "high (&ge; 0.90)")) + ".";
+
+  // ---- chart ----
+  const W=760, H=430, L=52, R=18, T=18, B=44;
+  const qmin=0.62, qmax=1.0;
+  const ymax = Math.max(20, delta+3,
+    ...rows.flatMap(r=>[r.tc||0, r.td||0])) * 1.08;
+  const x = q => L + (q-qmin)/(qmax-qmin)*(W-L-R);
+  const y = v => H-B - v/ymax*(H-T-B);
+  let s = "";
+  for (let g=0; g<=ymax; g+=5)
+    s += `<line x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}" stroke="var(--grid)"/>`+
+         `<text x="${L-8}" y="${y(g)+4}" text-anchor="end" font-size="11" fill="var(--muted)" class="mono">${g}</text>`;
+  [0.65,0.75,0.85,0.92,0.97].forEach(q=>{
+    s += `<text x="${x(q)}" y="${H-B+18}" text-anchor="middle" font-size="11" fill="var(--muted)" class="mono">${q.toFixed(2)}</text>`;});
+  s += `<text x="${(L+W-R)/2}" y="${H-8}" text-anchor="middle" font-size="12" fill="var(--muted)">panel quality q</text>`;
+  s += `<text transform="translate(14 ${(T+H-B)/2}) rotate(-90)" text-anchor="middle" font-size="12" fill="var(--muted)">&delta;&#770; (pp)</text>`;
+
+  // band regions
+  s += `<rect x="${x(0.70)}" y="${T}" width="${x(0.90)-x(0.70)}" height="${H-T-B}" fill="var(--slate)" opacity="0.045"/>`;
+  s += `<rect x="${x(0.90)}" y="${T}" width="${x(qmax)-x(0.90)}" height="${H-T-B}" fill="var(--slate)" opacity="0.09"/>`;
+  s += `<text x="${x(0.80)}" y="${T+14}" text-anchor="middle" font-size="11" fill="var(--slate)">low band</text>`;
+  s += `<text x="${x(0.945)}" y="${T+14}" text-anchor="middle" font-size="11" fill="var(--slate)">high band</text>`;
+
+  const line = (key, color) => {
+    const pts = rows.filter(r=>r[key]!=null);
+    if (!pts.length) return "";
+    let d = pts.map((r,i)=>(i?"L":"M")+x(r.q)+" "+y(r[key])).join(" ");
+    return `<path d="${d}" fill="none" stroke="${color}" stroke-width="2.5"/>` +
+      pts.map(r=>`<circle cx="${x(r.q)}" cy="${y(r[key])}" r="4" fill="${color}"/>`).join("");
+  };
+  s += line("tc","var(--amber)") + line("td","var(--rust)");
+
+  const bandSeg = (env, q0, q1) => env.td==null ? "" :
+    `<line x1="${x(q0)}" x2="${x(q1)}" y1="${y(env.td)}" y2="${y(env.td)}" stroke="var(--slate)" stroke-width="3.5"/>`;
+  s += bandSeg(lowB, 0.70, 0.90) + bandSeg(highB, 0.90, qmax);
+  if (pure.td != null)
+    s += `<line x1="${L}" x2="${W-R}" y1="${y(pure.td)}" y2="${y(pure.td)}" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="6 5"/>`;
+
+  s += `<line x1="${L}" x2="${W-R}" y1="${y(delta)}" y2="${y(delta)}" stroke="var(--green)" stroke-width="2"/>`;
+  s += `<circle cx="${x(Math.min(Math.max(qhat,qmin+0.01),qmax-0.01))}" cy="${y(delta)}" r="7" fill="var(--green)" stroke="#fff" stroke-width="2"/>`;
+  s += `<text x="${W-R-4}" y="${y(delta)-7}" text-anchor="end" font-size="12" fill="var(--green)" font-weight="600">your panel</text>`;
+
+  $("chart").innerHTML = s;
+}
+["selk"].forEach(id=>$(id).addEventListener("change",()=>{fillN(+$("seln").value);render();}));
+["seln","deltasl","qsl"].forEach(id=>$(id).addEventListener("input",render));
+document.querySelectorAll(".presets button").forEach(b=>b.addEventListener("click",()=>{
+  const [k,N,d,q] = b.dataset.p.split(",").map(Number);
+  $("selk").value = k; fillN(N); $("seln").value = N;
+  $("deltasl").value = d; $("qsl").value = q; render();
+}));
+render();
+</script>

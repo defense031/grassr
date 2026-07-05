@@ -12,3 +12,7 @@ tier1/stage6_production_null/nulls_production.json
 tier1/stage6_null_deltaB/null_ecdf_cells.rds
 tier1/stage6_null_deltaB/nulls_production.json
 candidate_lib_v071/
+
+# Tier 2 delta-B re-run (per_cell already covered by **/per_cell/; DONE/PROGRESS/
+# logs by the patterns above). Only the pooled results dir needs an explicit rule.
+tier2_deltaB/results/

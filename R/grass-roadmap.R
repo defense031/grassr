@@ -82,16 +82,18 @@
 #' * **surface-position percentile** -- the empirical percentile of the
 #'   observed coefficient against the calibrated reference surface at
 #'   the study's `(k, N, pi_hat)`.
-#' * **four-band label** -- the qualitative tier (`Poor` / `Moderate` /
-#'   `Strong` / `Excellent`) mapped from `q_hat` (the operating-quality
-#'   projection onto the `Se = Sp` diagonal) via the partition
-#'   `c(0.5, 0.625, 0.75, 0.875, 1.0)`.
+#' * **consistency band on quality** -- the 95% test-inversion band on
+#'   panel quality `q_hat` (the operating-quality projection onto the
+#'   `Se = Sp` diagonal): the quality levels whose sampling distributions
+#'   are consistent with the observed coefficient at this design. The
+#'   stipulated four-band `Poor` / `Moderate` / `Strong` / `Excellent`
+#'   partition is retired (0.7.1).
 #' * **delta-hat (`delta_hat`) stability flag** -- the cross-coefficient
-#'   percentile spread (in pp) with three tiers `aligned` / `caution` /
-#'   `divergent` at NP-motivated size-alpha thresholds `c(9.25, 11.75)` (paper Sec.3.2,
-#'   App G operating characteristics). When `divergent`, the band is
-#'   suppressed and per-rater Se/Sp from a latent-class fit are
-#'   reported instead.
+#'   implied-quality spread (in pp of quality) with three flags
+#'   `aligned` / `caution` / `divergent` set by `delta_hat`'s percentile
+#'   on the matched (k, N, q_hat) null (>= 95th caution, >= 99th
+#'   divergent). When `divergent`, the band is suppressed and per-rater
+#'   Se/Sp from a latent-class fit are reported instead.
 #'
 #' @section What is not yet implemented:
 #'

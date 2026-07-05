@@ -5,10 +5,10 @@
 #' four-field Report Card: the sample summary `(k, N, pi_hat)`, the primary
 #' coefficient and its surface position, the cross-coefficient asymmetry
 #' diagnostic `delta_hat` and flag, and (when `flag == "divergent"`) the
-#' per-rater latent-class fit. The full panel of coefficients, surface
-#' percentiles, band probabilities, and reference-surface artifacts ride
-#' along on the same object for `summary()`, `as.data.frame()`, and
-#' `plot()` access.
+#' per-rater latent-class fit. The full panel of coefficients, pooled
+#' percentiles, consistency bands on quality, and reference-surface
+#' artifacts ride along on the same object for `summary()`,
+#' `as.data.frame()`, and `plot()` access.
 #'
 #' The body, in order:
 #'
@@ -22,9 +22,10 @@
 #'    DGP-calibrated reference surface via [position_on_surface()].
 #' 4. Pick the primary coefficient via Table 2 (`metric = "auto"`) or accept
 #'    the user's override.
-#' 5. Compute the cross-coefficient percentile spread `delta_hat` (in pp)
-#'    via [check_asymmetry()] and tier into `aligned` /  `caution` /
-#'    `divergent`.
+#' 5. Compute the cross-coefficient implied-quality spread `delta_hat`
+#'    (in pp of quality) via [check_asymmetry()] and flag `aligned` /
+#'    `caution` / `divergent` by `delta_hat`'s percentile on the matched
+#'    (k, N, q_hat) null.
 #' 6. If `flag == "divergent"`: run a [latent_class_fit()] (Dawid-Skene EM
 #'    at `k >= 3`; Hui-Walter bounds at `k = 2`) and attach the per-rater
 #'    `(Se_j, Sp_j)` table.
@@ -44,12 +45,17 @@
 #'   the binary fully-crossed case. Use [obs_krippendorff_alpha()] or
 #'   [position_on_surface()] to compute it manually.)
 #' @param occasion Reserved for `axis = "intra"`; ignored when `axis = "inter"`.
-#' @param bands Numeric length-5 partition on `q in [0.5, 1]`. Default
-#'   `c(0.5, 0.625, 0.75, 0.875, 1.0)`.
-#' @param band_labels Character length-4 labels for the bands. Default
-#'   `c("Poor", "Moderate", "Strong", "Excellent")`.
-#' @param delta_thresholds Length-2 numeric vector `c(caution, divergent)`
-#'   in percentile points. Default `c(9.25, 11.75)` (paper Sec.3.2, NP-motivated size-alpha).
+#' @param bands Deprecated (grassr 0.7.1) and ignored. The stipulated
+#'   four-band partition of `q` (Poor/Moderate/Strong/Excellent) is
+#'   retired; the card carries a consistency band on quality and a pooled
+#'   percentile instead. Retained in the signature so 0.6.x call sites do
+#'   not error.
+#' @param band_labels Deprecated (grassr 0.7.1) and ignored. See `bands`.
+#' @param delta_thresholds Deprecated (grassr 0.7.0). The per-(k, N)
+#'   size-alpha threshold table is retired; the flag is now `delta_hat`'s
+#'   percentile on the matched null. A supplied length-2 pair is honored
+#'   for one call with the legacy pp-cut semantics and a deprecation
+#'   warning. Default `NULL`.
 #' @param bootstrap_B Integer; bootstrap replicates for the divergent-branch
 #'   latent-class CIs. Default `1000L`. Set lower for fast tests.
 #' @param bootstrap_delta_B Integer; subject-resampling replicates for the
@@ -64,6 +70,21 @@
 #'   `call`, `grass_version`, `timestamp`, `inputs`, `notes`. See the
 #'   v0.2.0 paper-alignment design doc Sec.3.1 for the full structure.
 #'
+#'   **`coefficient`** carries the primary coefficient's `observed_value`,
+#'   its `surface_percentile` (the pooled percentile -- position within the
+#'   design's achievable agreement range -- on the 0-100 scale), the
+#'   implied panel quality `q_hat`, and the 95% test-inversion
+#'   `consistency_band` on quality (suppressed at the divergent flag).
+#'
+#'   **`panel`** is a data.frame with one row per coefficient carrying its
+#'   `observed_value`, `surface_percentile`, consistency-band columns
+#'   (`band_lo`, `band_hi`, `band_open_low`, `band_open_high`), `q_hat`,
+#'   `se_q_hat`, `clamped`, `reference_used`, and `in_delta_hat`.
+#'
+#'   **`delta`** carries `delta_hat` (implied-quality spread, in pp of
+#'   quality), `delta_percentile` (its percentile on the matched null),
+#'   `flag`, `matched_null`, `thresholds`, and `thresholds_source`.
+#'
 #'   **Percentile units.** `card$coefficient$surface_percentile` and
 #'   `card$panel$surface_percentile` are reported on the 0-100 scale
 #'   (e.g., `46.3` means the 46th percentile). The underlying
@@ -74,12 +95,16 @@
 #' @export
 #'
 #' @examples
+#' \donttest{
+#' # k >= 3 computes ICC via a glmer fit, which needs lme4 (Suggests);
+#' # wrapped so the example degrades gracefully when lme4 is absent.
 #' set.seed(1)
 #' Y <- matrix(rbinom(1000, 1, 0.3), nrow = 200, ncol = 5)
 #' card <- grass_report(ratings = Y)
 #' card                       # print
 #' summary(card)              # full panel + per-rater
 #' as.data.frame(card)        # tidy long-format
+#' }
 grass_report <- function(ratings,
                          axis = c("inter", "intra"),
                          metric = "auto",
@@ -151,14 +176,25 @@ grass_report <- function(ratings,
   names(panel_obs) <- unname(surface_metric_for[panel_keep])
 
   # ---- Position each panel coefficient on its reference surface ---------
+  # Drop non-finite panel entries before positioning: compute_panel()
+  # returns icc = NA when lme4 (Suggests) is unavailable or glmer fails,
+  # and positioning an NA is a hard error. A missing coefficient must
+  # degrade to "absent from the panel", never to a failure of the whole
+  # report (0.7.1: the 0.7.0 fix landed in check_asymmetry() only).
+  dropped <- names(panel_obs)[!vapply(panel_obs, function(v)
+    is.numeric(v) && is.finite(v), logical(1L))]
+  if (length(dropped)) {
+    notes <- c(notes, sprintf(
+      "Coefficient(s) dropped from the panel (not computable on this input): %s.",
+      paste(dropped, collapse = ", ")))
+    panel_obs <- panel_obs[setdiff(names(panel_obs), dropped)]
+  }
   if (isTRUE(verbose)) message("grass_report: positioning panel on reference surfaces.")
   positions <- list()
   for (m in names(panel_obs)) {
     positions[[m]] <- position_on_surface(
       ratings     = Y,
       metric      = m,
-      bands       = bands,
-      band_labels = band_labels,
       ...
     )
     notes <- c(notes, positions[[m]]$notes %||% character(0L))
@@ -299,23 +335,25 @@ grass_report <- function(ratings,
   pct_pp <- vapply(positions,
                    function(p) p$percentile * 100,
                    numeric(1))
-  bp_modal <- vapply(
+  band_lo_vec <- vapply(
     positions,
-    function(p) {
-      bp <- p$band_probabilities %||% NA_real_
-      if (length(bp) == 0L || all(!is.finite(bp))) NA_real_ else max(bp)
-    },
+    function(p) if (!is.null(p$band)) (p$band$lo %||% NA_real_) else NA_real_,
     numeric(1)
   )
-  band_vec <- vapply(
+  band_hi_vec <- vapply(
     positions,
-    function(p) p$modal_band_label %||% NA_character_,
-    character(1)
+    function(p) if (!is.null(p$band)) (p$band$hi %||% NA_real_) else NA_real_,
+    numeric(1)
   )
-  qual_vec <- vapply(
+  band_open_low_vec <- vapply(
     positions,
-    function(p) p$confidence %||% NA_character_,
-    character(1)
+    function(p) if (!is.null(p$band)) isTRUE(p$band$open_low) else NA,
+    logical(1)
+  )
+  band_open_high_vec <- vapply(
+    positions,
+    function(p) if (!is.null(p$band)) isTRUE(p$band$open_high) else NA,
+    logical(1)
   )
   q_hat_vec <- vapply(
     positions,
@@ -361,9 +399,10 @@ grass_report <- function(ratings,
     coefficient            = names(panel_obs),
     observed_value         = unlist(panel_obs, use.names = FALSE),
     surface_percentile     = unname(pct_pp),
-    band                   = unname(band_vec),
-    qualifier              = unname(qual_vec),
-    band_probability_modal = unname(bp_modal),
+    band_lo                = unname(band_lo_vec),
+    band_hi                = unname(band_hi_vec),
+    band_open_low          = unname(band_open_low_vec),
+    band_open_high         = unname(band_open_high_vec),
     q_hat                  = unname(q_hat_vec),
     se_q_hat               = unname(se_q_hat_vec),
     clamped                = unname(clamped_vec),
@@ -400,10 +439,13 @@ grass_report <- function(ratings,
       primary             = primary,
       observed_value      = unname(panel_obs[[primary]]),
       surface_percentile  = unname(primary_pos$percentile) * 100,
+      percentile_basis    = primary_pos$percentile_basis %||% NA_character_,
+      q_hat               = unname(primary_pos$q_hat),
+      consistency_band    = if (identical(flag, "divergent")) NULL
+                            else primary_pos$band,
       band                = if (identical(flag, "divergent")) "suppressed"
-                            else (primary_pos$modal_band_label %||% NA_character_),
-      qualifier           = if (identical(flag, "divergent")) NA_character_
-                            else (primary_pos$confidence %||% NA_character_)
+                            else format_consistency_band(primary_pos$band),
+      sweep               = primary_pos$sweep
     ),
     delta = list(
       delta_hat          = as.numeric(delta_hat_pp),

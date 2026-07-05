@@ -20,3 +20,7 @@
 ^texput\.log$
 ^vignettes-retired$
 ^vignettes/.*\.orig$
+^inst/preview$
+^inst/examples/playground\.R$
+^inst/examples/first_tour\.R$
+^inst/examples/plot_r_paradox\.png$

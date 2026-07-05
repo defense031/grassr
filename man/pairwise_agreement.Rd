@@ -29,11 +29,12 @@ observed marginal. Diagonal is \code{NA}.
 \item \code{marginal_matrix} --- \eqn{k \times k} symmetric
 numeric; \eqn{[i, j]} is \eqn{\hat\pi_{+, ij}}. Diagonal is
 \code{NA}.
-\item \code{band_matrix} --- \eqn{k \times k} character matrix;
-four-band label for each pairwise percentile. Diagonal is
-\code{NA}.
-\item \code{qualifier_matrix} --- \eqn{k \times k} character;
-decisive / moderate / weak per pairwise percentile.
+\item \code{band_lo_matrix} --- \eqn{k \times k} numeric matrix;
+lower endpoint of each pair's 95\\% consistency band on quality
+(v0.7.1 sweep convention). Diagonal is \code{NA}.
+\item \code{band_hi_matrix} --- \eqn{k \times k} numeric matrix;
+upper endpoint of each pair's 95\\% consistency band on quality.
+Diagonal is \code{NA}.
 \item \code{pooled_per_rater} --- data frame with \eqn{k} rows,
 one per rater, columns \code{rater}, \code{se_tilde},
 \code{sp_tilde}, \code{n_pool_pos}, \code{n_pool_neg},

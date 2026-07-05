@@ -95,16 +95,18 @@ the percentile and band reported for a coefficient must condition on
 \item \strong{surface-position percentile} -- the empirical percentile of the
 observed coefficient against the calibrated reference surface at
 the study's \verb{(k, N, pi_hat)}.
-\item \strong{four-band label} -- the qualitative tier (\code{Poor} / \code{Moderate} /
-\code{Strong} / \code{Excellent}) mapped from \code{q_hat} (the operating-quality
-projection onto the \code{Se = Sp} diagonal) via the partition
-\code{c(0.5, 0.625, 0.75, 0.875, 1.0)}.
+\item \strong{consistency band on quality} -- the 95\% test-inversion band on
+panel quality \code{q_hat} (the operating-quality projection onto the
+\code{Se = Sp} diagonal): the quality levels whose sampling distributions
+are consistent with the observed coefficient at this design. The
+stipulated four-band \code{Poor} / \code{Moderate} / \code{Strong} / \code{Excellent}
+partition is retired (0.7.1).
 \item \strong{delta-hat (\code{delta_hat}) stability flag} -- the cross-coefficient
-percentile spread (in pp) with three tiers \code{aligned} / \code{caution} /
-\code{divergent} at NP-motivated size-alpha thresholds \code{c(9.25, 11.75)} (paper Sec.3.2,
-App G operating characteristics). When \code{divergent}, the band is
-suppressed and per-rater Se/Sp from a latent-class fit are
-reported instead.
+implied-quality spread (in pp of quality) with three flags
+\code{aligned} / \code{caution} / \code{divergent} set by \code{delta_hat}'s percentile
+on the matched (k, N, q_hat) null (>= 95th caution, >= 99th
+divergent). When \code{divergent}, the band is suppressed and per-rater
+Se/Sp from a latent-class fit are reported instead.
 }
 }
 

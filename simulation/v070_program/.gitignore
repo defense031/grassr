@@ -6,3 +6,9 @@
 *.log
 tier1/stage6_production_null/null_ecdf_cells.rds
 tier1/stage6_production_null/nulls_production.json
+
+# Option-B delta_hat regen (stage 6B/7B) — transient split markers + pooled null
+**/*.DONE
+tier1/stage6_null_deltaB/null_ecdf_cells.rds
+tier1/stage6_null_deltaB/nulls_production.json
+candidate_lib_v071/

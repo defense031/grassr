@@ -42,26 +42,26 @@ supplied (auto-derived as \code{nrow(Y)}).}
 empirical q_hat sampling distribution) or \code{"delta"} (closed-form normal
 approximation from delta-method SE).}
 
-\item{bands}{Numeric vector of length 5 giving band boundaries on \code{q}.
-Must be strictly increasing, start at \code{0.5}, end at \code{1.0}. Default
-\code{c(0.5, 0.625, 0.75, 0.875, 1.0)}.}
+\item{bands}{Deprecated (grassr 0.7.1). The stipulated four-band
+partition of \code{q} is retired; non-default values draw a warning and
+are ignored.}
 
-\item{band_labels}{Character vector of length 4, one label per band.
-Default \code{c("Poor", "Moderate", "Strong", "Excellent")}.}
+\item{band_labels}{Deprecated (grassr 0.7.1). See \code{bands}.}
 
 \item{surface_data}{Optional. A list with one or more of the following
 components, used when \code{method = "empirical"}:
 \itemize{
-\item \code{per_rep}: a matrix of per-rep metric values at the closest simulated
-\verb{(q, pi_hat, k, N)} cell -- this is the empirical sampling distribution
-at that design. Used for the percentile of \code{obs_value}.
-\item \code{q_grid_per_rep}: a matrix of dimension \code{n_q} x \code{n_rep} giving the
-empirical sampling distribution of the metric at each q-grid point,
-which the function uses to integrate P(q in band_j) against the
-inferred posterior shape of \code{q_hat}.
-\item \code{q_grid}: numeric vector of q values for the rows of \code{q_grid_per_rep}.
+\item \code{per_rep}: a vector of per-rep metric values at the caller's own
+\verb{(q, pi_hat, k, N)} cell -- an empirical sampling distribution at
+that design. Honored for reproducibility audits; yields a plain
+cohort percentile with no sweep or consistency band.
+\item \code{q_grid_per_rep}, \code{q_grid}: legacy per-q-grid empirical inputs.
+Retained for backward compatibility but no longer consumed
+internally (the sweep convention consults the bundled per-cell
+quantile surface); supplying them draws a note.
 When \code{surface_data} is \code{NULL} and \code{method = "empirical"}, the function
-signals an error with guidance.
+uses the bundled empirical q_hat surface, falling back to the
+delta-method sweep when that surface is unavailable at the design.
 }}
 
 \item{ratings}{Optional. From v0.2.0 this is the \strong{primary input for all
@@ -94,14 +94,22 @@ A list of class \code{grass_surface_position} with fields:
 \item \code{observed_value} -- echo of \code{obs_value}
 \item \code{metric} -- echo of \code{metric}
 \item \code{design} -- \code{list(pi_hat, k, N)}
-\item \code{q_hat} -- inverted rater quality (internal scaffold)
+\item \code{q_hat} -- implied panel quality (coefficient inverted on the
+reference curve); the point estimate the consistency band surrounds
 \item \code{se_q_hat} -- delta-method SE of \code{q_hat}
-\item \code{percentile} -- surface percentile of \code{obs_value} in \verb{[0, 1]}
-\item \code{band_probabilities} -- named numeric vector of \verb{P(q in band_j)}
-\item \code{modal_band} -- integer index \verb{1..4} of the highest-probability band
-\item \code{modal_band_label} -- character adjective at the modal band
-\item \code{confidence} -- \code{"decisive"} / \code{"moderate"} / \code{"weak"}
+\item \code{percentile} -- POOLED percentile in \verb{[0, 1]}: the observed
+coefficient's position within the design's full achievable range
+(trapezoid-weighted mixture over every calibrated quality level).
+Monotone in \code{obs_value} by construction.
+\item \code{percentile_basis} -- provenance string for \code{percentile}
+\item \code{band} -- 95\% test-inversion consistency band on quality:
+\code{list(lo, hi, level, open_low, open_high, note)}. The quality levels
+whose sampling distributions are consistent with the observed value
+at this design.
+\item \code{sweep} -- \code{data.frame(q, p)}: the full profile
+\verb{p(q) = P(coefficient <= obs_value | quality q, this design)}
 \item \code{sampling_method} -- which method was used
+\item \code{reference_used} -- which reference produced the curve
 \item \code{notes} -- character vector of caveats (e.g. nearest-neighbor gaps)
 }
 }
@@ -109,60 +117,71 @@ A list of class \code{grass_surface_position} with fields:
 \code{position_on_surface()} is the Target-2 reporting primitive for the
 merged GRASS binary-rater-reliability paper. Given an observed coefficient
 value and the study design \verb{(pi_hat, k, N)}, it inverts the coefficient
-to an internal \code{q_hat} (rater operating quality on the Se = Sp diagonal
-under the clustered latent-class DGP), computes where the observed value
-sits on its reference sampling distribution (the surface percentile), and
-assigns a four-band adjective plus a confidence qualifier derived from
-the sampling-probability mass over bands.
+to an implied panel quality \code{q_hat} (rater operating quality on the
+Se = Sp diagonal under the clustered latent-class DGP) and evaluates the
+observed value against EVERY calibrated quality level at the matched
+design -- a sweep -- from which it derives three read-outs: the pooled
+percentile, the consistency band on quality, and the p(q) sweep profile.
 }
 \details{
-The function implements the reporting convention locked on
-\code{2026-04-22}: the practitioner cites the observed coefficient, its
-surface percentile, the band adjective, and the confidence qualifier.
-\code{q_hat} survives as internal scaffolding (surface parameterization and
-delta-method SE carrier) rather than as the labeled output.
+The function implements the v0.7.1 sweep convention (ratified
+2026-07-05): the practitioner cites the observed coefficient, its pooled
+percentile (position within the design's achievable range), and the
+consistency band on panel quality. \code{q_hat} is promoted to the card via
+the consistency band; it also carries the surface parameterization and
+delta-method SE. The stipulated four-band adjective
+(Poor/Moderate/Strong/Excellent) and the modal-band confidence
+qualifier (decisive/moderate/weak) are retired; the \code{bands} /
+\code{band_labels} arguments are deprecated (warned, ignored).
 }
-\section{Label construction (Sec.0.6.5)}{
+\section{The three read-outs of the sweep}{
 
-Four adjacent-exclusive bands partition the above-chance quality range
-\verb{q in [0.5, 1.0]} on equal width: \strong{Poor} \verb{[0.5, 0.625)}, \strong{Moderate}
-\verb{[0.625, 0.75)}, \strong{Strong} \verb{[0.75, 0.875)}, \strong{Excellent}
-\verb{[0.875, 1.0]}. The geometric partition carries no a-priori weight; users
-may supply custom cut points through \code{bands} and matching \code{band_labels}.
-
-The confidence qualifier is derived from the modal band's sampling
-probability \code{p_star}:
+At the matched design \verb{(F/pi_hat, k, N)} the observed coefficient is
+evaluated against every calibrated quality level q with no cell
+selection and no q snapping. Write
+\verb{p(q) = P(coefficient <= obs_value | panel of quality q, this design)}.
 \itemize{
-\item \code{decisive} -- \code{p_star >= 0.90}
-\item \code{moderate} -- \verb{p_star in [0.60, 0.90)}
-\item \code{weak} -- \code{p_star < 0.60}
+\item \strong{\code{percentile}} -- the pooled percentile: a trapezoid-weighted
+average of \code{p(q)} over the calibrated quality axis (trapezoid because
+the grid is non-uniform). It reads as the observed coefficient's
+position within the design's full achievable agreement range and is
+monotone in \code{obs_value} by construction. Returned in \verb{[0, 1]};
+callers such as \code{grass_report()} print it on the \verb{[0, 100]} scale.
+This replaces the retired nearest-q_hat-cell percentile, whose cohort
+selection by a statistic derived from the coefficient made it a
+non-monotone sawtooth (panel review 2026-07-05).
+\item \strong{\code{band}} -- the 95\% test-inversion consistency band on quality: the
+quality levels q with \verb{0.025 <= p(q) <= 0.975}, endpoints
+interpolated where \code{p(q)} crosses 0.975 (lower) and 0.025 (upper).
+Open-ended at the grid boundary is reported with a boundary flag.
+\item \strong{\code{sweep}} -- the full \code{data.frame(q, p)} profile, the object the
+sweep-ridgeline graphic renders.
 }
 }
 
-\section{Sampling-probability construction}{
+\section{Sweep construction}{
 
 Two methods are implemented.
 
-\strong{Delta method} (\code{method = "delta"}, default): assumes \code{q_hat} is
-approximately normal with mean \code{q_hat} and standard deviation \code{se_q_hat}
-obtained from the delta-method SE of the monotone metric inversion, and
-computes \verb{P(q in band_j)} by \code{pnorm()} on the band boundaries. This is
-the summary-stats-only fallback; it does not require the full simulation
-outputs.
+\strong{Empirical method} (\code{method = "empirical"}, default): at the matched
+\verb{(F_key, k, N)} cell of the bundled \code{empirical_q_hat_surface}, ranks
+\code{q_hat} within each calibrated quality cell's \code{q_hat_rep} distribution
+(monotone-equivalent to ranking \code{obs_value} within the cell's
+coefficient distribution). The full per-rep data is not bundled
+(~300 MB); the package ships a precomputed multi-point empirical-quantile
+summary per cell. The whole quality axis is consulted -- there is
+deliberately no q selection. When the design \verb{(pi_hat, k, N)} falls
+outside the simulated grid, nearest-neighbour clamping is applied and
+flagged in \code{notes}.
 
-\strong{Empirical method} (\code{method = "empirical"}, default): uses the
-2,000-replication sampling distribution from \code{multirater_sim_v3} (the
-symmetric-rater reference sim backing Paper 2) to form the empirical
-sampling distribution of \code{q_hat_rep} at the nearest matched scenario cell
-\verb{(metric, F_key nearest to pi_hat, k nearest, N nearest, q_true nearest to q_hat)}. The full per-rep data is not bundled (~300 MB); instead the
-package ships a precomputed 13-point empirical-quantile summary of the
-per-cell q_hat_rep vector. Band probabilities P(q_hat_rep in band_j) are
-recovered by piecewise-linear interpolation on the empirical CDF. Callers
-who want to pass their own per-rep vector may supply
-\code{surface_data$per_rep} or \code{surface_data$q_grid_per_rep}; those paths
-continue to override the bundled lookup. When the design \verb{(pi_hat, k, N)}
-falls outside the simulated grid, nearest-neighbour clamping is applied
-and flagged in \code{notes}.
+\strong{Delta method} (\code{method = "delta"}): the summary-stats-only fallback
+(also used for ICC, whose reference curve carries the F-shape
+conditioning). At each swept q it approximates the sampling distribution
+as \code{Normal(E[metric](q), sd_metric(q))} and evaluates
+\verb{p(q) = pnorm(obs_value; mean, sd)} on the calibrated q axis. A
+caller-supplied \code{surface_data$per_rep} single-cohort vector is still
+honored for reproducibility audits, yielding a plain cohort percentile
+with no sweep or band.
 }
 
 \section{Internal reference-surface arithmetic}{
@@ -206,7 +225,7 @@ position_on_surface(
   metric = "pabak", pi_hat = mean(Y), k = ncol(Y), N = nrow(Y)
 )
 
-# Delta-method positioning -- no sim data needed, summary-stats only.
+# Scalar path -- the three read-outs of the sweep convention.
 r <- position_on_surface(
   obs_value = 0.62,
   metric    = "pabak",
@@ -214,8 +233,9 @@ r <- position_on_surface(
   k         = 5,
   N         = 50
 )
-r$modal_band_label
-r$confidence
+r$percentile   # pooled percentile of the achievable range
+r$band         # consistency band on panel quality
+head(r$sweep)  # the full p(q) profile
 
 # Fleiss kappa at imbalanced prevalence.
 position_on_surface(

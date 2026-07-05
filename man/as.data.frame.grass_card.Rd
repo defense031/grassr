@@ -20,9 +20,15 @@ When the divergent flag fires, returns a list with \code{panel} and
 \code{per_rater} data frames.
 }
 \description{
-Returns the panel of observed coefficients with surface position metadata
-as a data.frame. The primary coefficient is flagged via the \code{is_primary}
-column. When the cross-coefficient flag is \code{divergent} and the per-rater
-latent-class table is populated, returns a list \code{c(panel = ..., per_rater = ...)}
-so tidy consumers can pivot the per-rater rows separately.
+Returns the panel of observed coefficients with surface-position metadata
+as a data.frame. Each row carries the v0.7.1 panel columns
+(\code{surface_percentile}, \code{band_lo} / \code{band_hi} / \code{band_open_low} /
+\code{band_open_high}, \code{q_hat}, \code{se_q_hat}, \code{clamped}, \code{reference_used},
+\code{in_delta_hat}), an \code{is_primary} flag, and the panel-level delta
+diagnostics recycled across rows (\code{delta_hat} implied-quality spread in
+pp, \code{delta_percentile}, \code{delta_flag}, and the matched-null cell
+\code{matched_null_k} / \code{matched_null_N} / \code{matched_null_q}). When the
+cross-coefficient flag is \code{divergent} and the per-rater latent-class
+table is populated, returns a list \code{c(panel = ..., per_rater = ...)} so
+tidy consumers can pivot the per-rater rows separately.
 }

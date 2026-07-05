@@ -21,6 +21,18 @@ test_that("delta_null_percentile is monotone and bounded", {
   expect_lte(p_hi, 99.5 + 1e-9)
 })
 
+test_that("delta_null_percentile resolves a zero-plateau to the top of the tied run", {
+  # Structural (unit-agnostic) test of the zero-plateau lower-tail fix:
+  # at delta_hat <= v[1] the percentile is the prob at the TOP of the
+  # tied run at v[1], not blindly p[1]. Here v[1..3] all equal 0, so
+  # P(D <= 0) resolves to probs[3] = 0.10 -> 10 pct, not probs[1] = 1 pct.
+  cell <- list(values = c(0, 0, 0, 0.5, 1),
+               probs  = c(0.01, 0.05, 0.10, 0.5, 0.99))
+  expect_equal(grassr:::delta_null_percentile(0, cell), 10)
+  # A value strictly inside the plateau (still <= v[1]) resolves the same.
+  expect_equal(grassr:::delta_null_percentile(-1, cell), 10)
+})
+
 test_that("flag conventions map percentiles correctly", {
   f <- grassr:::delta_flag_from_percentile
   expect_equal(f(50), "aligned")

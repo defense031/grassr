@@ -1,7 +1,8 @@
 # Latent-class fit for the divergent branch of the GRASS Reporting Card.
 #
-# When the cross-coefficient panel disagrees (delta_hat >= 11.75 pp),
-# `grass_report()` falls back from a single q_hat summary to per-rater
+# When the cross-coefficient panel disagrees (the divergent flag:
+# delta_hat at or above the 99th percentile of the matched (k, N, q_hat)
+# null), `grass_report()` falls back from a single q_hat summary to per-rater
 # Sensitivity (Se) and Specificity (Sp). This file implements the
 # latent-class machinery that fallback relies on.
 #

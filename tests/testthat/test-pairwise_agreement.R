@@ -41,8 +41,12 @@ test_that("pairwise_agreement returns a grass_pairwise S3 with documented fields
   expect_s3_class(pw, "grass_pairwise")
   expect_type(pw, "list")
 
+  # v0.7.1 sweep redesign: the modal-band label / confidence qualifier are
+  # retired; pairwise now carries the 95% consistency-band endpoints on
+  # quality (band_lo_matrix / band_hi_matrix) instead of band_matrix /
+  # qualifier_matrix.
   fields <- c("pabak_matrix", "percentile_matrix", "marginal_matrix",
-              "band_matrix", "qualifier_matrix", "pooled_per_rater",
+              "band_lo_matrix", "band_hi_matrix", "pooled_per_rater",
               "sample", "notes", "call")
   for (f in fields) expect_true(f %in% names(pw),
                                 info = paste("missing field:", f))

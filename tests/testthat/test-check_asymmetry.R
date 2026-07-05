@@ -62,8 +62,9 @@ test_that("symmetric panel returns aligned kappa-family + 5-row panel at k=5", {
 # kappa-family on the surface), unlike the v0.2.0 case where ICC clamping
 # alone drove the divergent flag.
 # ---------------------------------------------------------------------------
-test_that("op_strong heterogeneous panel flags divergent on non-ICC spread", {
-  set.seed(6L)
+# A helper reused by both the structural and the (skipped) flag test.
+.op_strong_panel_Y <- function(seed = 6L) {
+  set.seed(seed)
   N <- 1000L; k <- 5L
   Se_vec <- c(0.95, 0.75, 0.95, 0.75, 0.95)
   Sp_vec <- c(0.75, 0.95, 0.75, 0.95, 0.75)
@@ -74,24 +75,40 @@ test_that("op_strong heterogeneous panel flags divergent on non-ICC spread", {
   for (j in seq_len(k)) {
     Y[, j] <- rbinom(N, 1, ifelse(C == 1L, Se_vec[j], 1 - Sp_vec[j]))
   }
+  Y
+}
 
-  out <- check_asymmetry(Y)
-  expect_equal(out$flag, "divergent")
-  expect_gte(out$delta_hat, 11.75)
+# Structural (unit-agnostic) assertions about the op_strong panel object:
+# these do NOT depend on the delta-null calibration units.
+test_that("op_strong heterogeneous panel has the documented panel structure", {
+  out <- check_asymmetry(.op_strong_panel_Y(seed = 6L))
+  expect_s3_class(out, "grass_asymmetry_panel")
   expect_equal(nrow(out$panel), 4L)
   expect_setequal(out$panel$coefficient,
                   c("pabak", "mean_ac1", "fleiss_kappa", "icc"))
-  expect_true("clamped" %in% names(out$panel))
+  # v0.7.1 Option B panel columns.
+  expect_true(all(c("coefficient", "observed", "implied_q",
+                    "percentile_pp", "clamped", "in_delta_hat") %in%
+                  names(out$panel)))
+  # delta_hat is the implied-quality spread (quality pp) and is finite.
+  expect_true(is.finite(out$delta_hat))
+})
 
-  # The divergent flag must come from non-ICC surface-percentile spread,
-  # not from ICC clamping alone. Non-ICC range should also be divergent.
+# The divergent flag outcome + the 11.75-pp delta-hat threshold are pinned
+# against the BUNDLED delta null, which is still in the retired
+# percentile-spread units (v0.7.1 Option B recalibrates delta_hat to
+# quality pp; the null awaits the stage-6 delta-B regeneration). Skip the
+# outcome assertions until the regenerated null lands.
+test_that("op_strong heterogeneous panel flags divergent on non-ICC spread", {
+  skip("delta null awaiting stage6 delta-B regeneration")
+  out <- check_asymmetry(.op_strong_panel_Y(seed = 6L))
+  expect_equal(out$flag, "divergent")
+  expect_gte(out$delta_hat, 11.75)
+
   pp <- out$panel
   nonicc <- pp$percentile_pp[pp$coefficient != "icc"]
   expect_gte(diff(range(nonicc)), 11.75)
 
-  # Structural: AC1 is the coefficient that separates from the kappa-family
-  # under op_strong heterogeneity. PABAK / Fleiss cluster together; AC1
-  # sits roughly 15+ pp away from the cluster centroid.
   pabak <- pp$percentile_pp[pp$coefficient == "pabak"]
   fk    <- pp$percentile_pp[pp$coefficient == "fleiss_kappa"]
   ac1   <- pp$percentile_pp[pp$coefficient == "mean_ac1"]

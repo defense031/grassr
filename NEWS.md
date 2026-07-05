@@ -1,3 +1,90 @@
+# grassr 0.7.1
+
+The card-redesign release. The headline reading changes from a
+nearest-cell surface percentile with a four-band adjective to a pooled
+percentile plus a consistency band on panel quality, and `delta_hat`
+becomes an implied-quality spread. Supersedes the 0.7.0 tarball.
+
+## Pooled percentile + consistency band (sweep redesign)
+
+`position_on_surface()` now evaluates the observed coefficient against
+every calibrated quality level at the matched design -- a sweep -- and
+reports three read-outs of one object:
+
+* **Pooled percentile** -- the trapezoid-weighted average of
+  `p(q) = P(coefficient <= obs | quality q, this design)` over the
+  calibrated quality axis: the coefficient's position within the
+  design's achievable agreement range, monotone in the coefficient by
+  construction. This retires the nearest-q_hat-cell percentile, whose
+  cohort selection by a statistic derived from the coefficient made it a
+  non-monotone sawtooth (7-9 full 0-100 cycles across the PABAK range at
+  k=8-10, N=200; five-agent panel review 2026-07-05).
+* **Consistency band** -- the 95% test-inversion band on panel quality
+  `q_hat`: the quality levels whose sampling distributions are
+  consistent with the observed value at this design. `q_hat` is promoted
+  to the card via this band (previously internal scaffolding, never
+  printed).
+* **`sweep`** -- the full `p(q)` profile (the sweep-ridgeline graphic).
+
+The stipulated four-band partition (Poor / Moderate / Strong /
+Excellent) and the modal-band bootstrap qualifier (decisive / moderate /
+weak), with their 0.60 / 0.90 cuts, are retired. The `bands` and
+`band_labels` arguments to `position_on_surface()` and `grass_report()`
+are deprecated (non-default values warn and are ignored).
+
+## delta-hat is now an implied-quality spread (Option B)
+
+`delta_hat` becomes the max-min spread of the agreement family's
+*implied panel qualities* (PABAK, mean AC1, Fleiss kappa), in quality
+percentage points: each coefficient inverts to its own `q_hat` on the
+shared (q, pi_+) reference, and their spread measures cross-coefficient
+model discordance in interpretable units (Option B, ratified
+2026-07-05). The previous definition -- spread of surface percentiles
+across four coefficients including Krippendorff alpha -- ran through the
+retired sawtooth machinery. Krippendorff alpha left the panel at 0.6.0
+and does not re-enter; ICC is never in `delta_hat`. The flag convention
+(percentile on the matched (k, N, q_hat) null, >= 95th caution,
+>= 99th divergent) is unchanged in form.
+
+* The delta-null ECDF and the power-table numbers are being regenerated
+  under the Option-B implied-quality definition (stage 6 + stage 7
+  regeneration). Until that lands, the bundled `delta_null_ecdf` and the
+  reported power figures reflect the 0.7.0 percentile-spread definition;
+  treat the calibrated flag cuts as provisional on this line.
+
+## Bug fixes
+
+* **Zero-plateau percentile.** `delta_null_percentile()` now resolves a
+  value at or below the null's lowest stored quantile to the TOP of the
+  zero/floor plateau. At small N the null often has a point mass at
+  `delta_hat = 0` reaching well past the 1st percentile; 0.7.0 reported a
+  value at the plateau's lowest prob, so identical raters printed
+  "1.0 percentile" on cells where `P(D <= 0)` was ~35%.
+* **`grass_report()` lme4 NA-skip.** A missing lme4 (Suggests) or a
+  failed glmer no longer hard-errors `grass_report()`: non-finite panel
+  entries (e.g. ICC when lme4 is unavailable) are dropped before
+  positioning and the coefficient degrades to "absent from the panel".
+  0.7.0's NEWS claimed this fix, but the 0.7.0 code landed it in
+  `check_asymmetry()` only; the `grass_report()` positioning loop still
+  errored. It is genuinely fixed here.
+
+## Documentation layer
+
+* DESCRIPTION, the roxygen sources for `check_asymmetry()`,
+  `grass_report()`, `position_on_surface()`, and `?grass_roadmap`, and
+  the README were still describing the 0.6.x conventions (per-(k, N)
+  size-alpha thresholds `c(9.25, 11.75)`, the four-band adjective, the
+  four-coefficient percentile spread). All corrected to the 0.7.1 card
+  convention. Suggests-dependent examples wrapped in `\donttest{}`.
+
+## Hygiene
+
+* Removed macOS duplicate `" 2"` file strays from the source tree.
+* `inst/preview/` and dev-scratch example scripts excluded from the
+  build via `.Rbuildignore`.
+* `data-raw/round_sysdata_for_release.R` skips sysdata objects that are
+  absent (the retired `delta_thresholds_lookup`) instead of erroring.
+
 # grassr 0.7.0
 
 The calibration release. Two structural changes, both from the v0.7.0

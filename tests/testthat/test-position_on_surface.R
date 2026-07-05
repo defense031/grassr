@@ -10,10 +10,17 @@ test_that("returns a grass_surface_position with the documented fields", {
     N         = 50
   )
   expect_s3_class(r, "grass_surface_position")
+  # v0.7.1 sweep convention: band_probabilities / modal_band /
+  # modal_band_label / confidence are retired; the object now carries the
+  # pooled percentile, its basis, the consistency band, and the sweep.
   expected <- c("observed_value", "metric", "design", "q_hat", "se_q_hat",
-                "percentile", "band_probabilities", "modal_band",
-                "modal_band_label", "confidence", "sampling_method", "notes")
+                "percentile", "percentile_basis", "band", "sweep",
+                "sampling_method", "reference_used", "notes")
   expect_true(all(expected %in% names(r)))
+  # The retired fields must be gone.
+  retired <- c("band_probabilities", "modal_band", "modal_band_label",
+               "confidence")
+  expect_false(any(retired %in% names(r)))
   expect_equal(r$observed_value, 0.62)
   expect_equal(r$metric, "pabak")
   expect_equal(r$design, list(pi_hat = 0.42, k = 5L, N = 50L))
@@ -40,46 +47,46 @@ test_that("all four agreement-family metrics invert to q_hat in [0.5, 1]", {
   }
 })
 
-test_that("band probabilities sum to 1 and the modal label matches", {
+test_that("the sweep is a valid p(q) profile and the band is well-formed", {
   r <- position_on_surface(0.62, "pabak", pi_hat = 0.5, k = 5, N = 200)
-  expect_equal(sum(r$band_probabilities), 1, tolerance = 1e-8)
-  expect_equal(names(r$band_probabilities),
-               c("Poor", "Moderate", "Strong", "Excellent"))
-  expect_equal(r$modal_band_label,
-               names(r$band_probabilities)[r$modal_band])
+  expect_s3_class(r$sweep, "data.frame")
+  expect_true(all(c("q", "p") %in% names(r$sweep)))
+  expect_true(all(r$sweep$q >= 0.5 & r$sweep$q <= 1))
+  expect_true(all(r$sweep$p >= 0 & r$sweep$p <= 1))
+  # Band is a list with the documented endpoints / flags.
+  expect_true(all(c("lo", "hi", "level", "open_low", "open_high") %in%
+                  names(r$band)))
+  expect_true(is.logical(r$band$open_low) && is.logical(r$band$open_high))
 })
 
-test_that("confidence qualifier thresholds on p_star are respected", {
-  # Large N drives se_q_hat down -> decisive
-  big <- position_on_surface(0.64, "pabak", pi_hat = 0.5, k = 15, N = 1000)
-  expect_equal(big$confidence, "decisive")
-  # Small N widens q_hat sampling distribution -> weak
-  small <- position_on_surface(0.64, "pabak", pi_hat = 0.5, k = 3, N = 30)
-  expect_true(small$confidence %in% c("weak", "moderate"))
-  p_star <- max(small$band_probabilities)
-  expect_lt(p_star, 0.90)
-})
-
-test_that("percentile lies in [0, 1] and is approximately 0.5 at the surface mean", {
-  # At obs_value == E[metric](q_hat) the delta-method percentile should
-  # sit near 0.5 by symmetry of the normal approximation.
+test_that("pooled percentile lies in [0, 1] with a documented basis", {
   r <- position_on_surface(0.49, "pabak", pi_hat = 0.5, k = 5, N = 200)
   expect_gte(r$percentile, 0)
   expect_lte(r$percentile, 1)
-  expect_equal(r$percentile, 0.5, tolerance = 0.1)
+  expect_true(r$percentile_basis %in%
+              c("pooled-achievable-range",
+                "pooled-achievable-range-delta-approx",
+                "user-supplied-cohort"))
 })
 
-test_that("high q_hat lands in Excellent band with a decisive qualifier at large N", {
-  r <- position_on_surface(0.92, "pabak", pi_hat = 0.5, k = 15, N = 1000)
-  expect_equal(r$modal_band_label, "Excellent")
-  expect_equal(r$confidence, "decisive")
+test_that("higher PABAK ranks higher on the pooled percentile (monotone)", {
+  # The pooled percentile is monotone in obs_value by construction.
+  lo <- position_on_surface(0.20, "pabak", pi_hat = 0.5, k = 15, N = 1000)
+  hi <- position_on_surface(0.92, "pabak", pi_hat = 0.5, k = 15, N = 1000)
+  expect_lt(lo$percentile, hi$percentile)
+  # High q_hat sits high in the achievable range; its band is on quality.
+  expect_gt(hi$q_hat, 0.90)
+  expect_true(is.finite(hi$band$lo) || isTRUE(hi$band$open_low) ||
+              is.na(hi$band$lo))
 })
 
-test_that("low PABAK at balanced prevalence lands in a low-quality band", {
+test_that("low PABAK at balanced prevalence implies a low q_hat", {
   # PABAK = 0.02 implies q_hat = 0.5 * (1 + sqrt(0.02)) ~ 0.57
   r <- position_on_surface(0.02, "pabak", pi_hat = 0.5, k = 5, N = 200)
-  expect_true(r$modal_band_label %in% c("Poor", "Moderate"))
   expect_lt(r$q_hat, 0.625)
+  # And a low pooled percentile relative to a high-PABAK observation.
+  r_hi <- position_on_surface(0.80, "pabak", pi_hat = 0.5, k = 5, N = 200)
+  expect_lt(r$percentile, r_hi$percentile)
 })
 
 test_that("obs_value outside achievable range is clamped and flagged in notes", {
@@ -89,41 +96,41 @@ test_that("obs_value outside achievable range is clamped and flagged in notes", 
   expect_equal(r$q_hat, 1.0, tolerance = 1e-3)
 })
 
-test_that("delta-method percentile agrees with empirical percentile from a large normal sample", {
-  # Build a fake per_rep matrix consistent with the delta-method normal
-  # approximation and check the two routes land at similar percentiles.
-  # Pick an obs_value deliberately off the surface mean so qnorm is
-  # well-defined. This test pins the caller-supplied per_rep path; the
-  # bundled empirical q_hat surface is a separate code path covered by the
-  # T3-specific tests below.
+test_that("caller-supplied per_rep yields a plain cohort percentile", {
+  # The legacy per_rep hook is honored for reproducibility audits: it
+  # gives a plain cohort percentile (mean(reps <= obs_value)) with basis
+  # "user-supplied-cohort" and no sweep/band derived.
   set.seed(7L)
-  r_delta <- position_on_surface(0.55, "pabak", pi_hat = 0.5,
-                                 k = 5, N = 500, method = "delta")
-  mu_m <- (2 * r_delta$q_hat - 1)^2
-  # Use a sd informed by the delta-method implied se_q_hat and dE/dq.
-  # For PABAK: dE/dq = 2*(2q-1)*2 = 4*(2q-1). sd_metric = se_q_hat * |dE/dq|.
-  dEdq <- 4 * (2 * r_delta$q_hat - 1)
-  implied_sd <- r_delta$se_q_hat * abs(dEdq)
-  expect_true(is.finite(implied_sd) && implied_sd > 0)
-  fake_reps <- stats::rnorm(10000, mean = mu_m, sd = implied_sd)
+  fake_reps <- stats::rnorm(10000, mean = 0.55, sd = 0.05)
   r_emp <- position_on_surface(
     0.55, "pabak", pi_hat = 0.5, k = 5, N = 500,
     method = "empirical",
     surface_data = list(per_rep = fake_reps)
   )
   expect_equal(r_emp$sampling_method, "empirical")
-  # Percentile from the caller-supplied per_rep should agree with the
-  # delta-method pnorm percentile under matching mean / sd.
-  expect_equal(r_emp$percentile, r_delta$percentile, tolerance = 0.05)
+  expect_equal(r_emp$percentile_basis, "user-supplied-cohort")
+  expect_equal(r_emp$percentile, mean(fake_reps <= 0.55), tolerance = 1e-10)
+  expect_null(r_emp$sweep)
+  expect_null(r_emp$band)
 })
 
-test_that("custom bands and band_labels are honored", {
-  r <- position_on_surface(0.62, "pabak", pi_hat = 0.5, k = 5, N = 200,
-                           bands = c(0.5, 0.7, 0.85, 0.95, 1.0),
-                           band_labels = c("A", "B", "C", "D"))
-  expect_equal(names(r$band_probabilities), c("A", "B", "C", "D"))
-  expect_equal(sum(r$band_probabilities), 1, tolerance = 1e-8)
-  expect_true(r$modal_band_label %in% c("A", "B", "C", "D"))
+test_that("deprecated bands / band_labels warn on non-default and are silent on default", {
+  # Non-default bands / band_labels draw a deprecation warning and are
+  # ignored (v0.7.1 sweep redesign retired the stipulated q-band partition).
+  expect_warning(
+    position_on_surface(0.62, "pabak", pi_hat = 0.5, k = 5, N = 200,
+                        bands = c(0.5, 0.7, 0.85, 0.95, 1.0)),
+    "deprecated"
+  )
+  expect_warning(
+    position_on_surface(0.62, "pabak", pi_hat = 0.5, k = 5, N = 200,
+                        band_labels = c("A", "B", "C", "D")),
+    "deprecated"
+  )
+  # Defaults are silent.
+  expect_no_warning(
+    position_on_surface(0.62, "pabak", pi_hat = 0.5, k = 5, N = 200)
+  )
 })
 
 test_that("input validation rejects bad inputs with informative stops", {
@@ -139,15 +146,6 @@ test_that("input validation rejects bad inputs with informative stops", {
                "k")
   expect_error(position_on_surface(0.5, "pabak", 0.5, 5, 0),
                "N")
-  expect_error(position_on_surface(0.5, "pabak", 0.5, 5, 100,
-                                   bands = c(0.5, 0.4, 0.75, 0.875, 1.0)),
-               "increasing")
-  expect_error(position_on_surface(0.5, "pabak", 0.5, 5, 100,
-                                   bands = c(0.4, 0.6, 0.75, 0.875, 1.0)),
-               "0\\.5")
-  expect_error(position_on_surface(0.5, "pabak", 0.5, 5, 100,
-                                   band_labels = c("a", "b", "c")),
-               "band_labels")
 })
 
 test_that("empirical method for ICC uses bundled reference curves", {
@@ -170,28 +168,31 @@ test_that("empirical method for ICC uses bundled reference curves", {
 
 # ---- T3 empirical-band sysdata backfill tests ------------------------------
 
-test_that("empirical method returns sensible bands for PABAK=0.62 at k=5,N=200,pi=0.5", {
+test_that("empirical method returns a sensible sweep/band for PABAK=0.62 at k=5,N=200,pi=0.5", {
   r <- position_on_surface(obs_value = 0.62, metric = "pabak",
                            pi_hat = 0.5, k = 5, N = 200,
                            method = "empirical")
   expect_equal(r$sampling_method, "empirical")
-  expect_equal(sum(r$band_probabilities), 1, tolerance = 1e-6)
-  expect_true(all(r$band_probabilities >= 0))
-  # q_hat for PABAK=0.62 is 0.5*(1+sqrt(0.62)) ~ 0.894, so modal band at
-  # k=5,N=200 should be Excellent or Strong (tight sampling distribution,
-  # but q_hat is right at the 0.875 boundary so either is plausible).
-  expect_true(r$modal_band_label %in% c("Strong", "Excellent"))
+  expect_s3_class(r$sweep, "data.frame")
+  expect_true(all(r$sweep$p >= 0 & r$sweep$p <= 1))
+  expect_gte(r$percentile, 0)
+  expect_lte(r$percentile, 1)
+  # q_hat for PABAK=0.62 is 0.5*(1+sqrt(0.62)) ~ 0.894; the consistency
+  # band on quality should surround it (when finite / not open).
   expect_true(r$q_hat > 0.85 && r$q_hat < 0.94)
+  if (is.finite(r$band$lo) && is.finite(r$band$hi) &&
+      !isTRUE(r$band$open_low) && !isTRUE(r$band$open_high)) {
+    expect_gte(r$q_hat, r$band$lo - 1e-6)
+    expect_lte(r$q_hat, r$band$hi + 1e-6)
+  }
 })
 
-test_that("empirical and delta methods agree within +/- 0.15 on modal band probability", {
+test_that("empirical and delta methods give comparable pooled percentiles", {
   r_e <- position_on_surface(0.62, "pabak", 0.5, 5, 200, method = "empirical")
   r_d <- position_on_surface(0.62, "pabak", 0.5, 5, 200, method = "delta")
-  # Both land in the same broad region of the surface.
-  expect_true(abs(max(r_e$band_probabilities) -
-                  max(r_d$band_probabilities)) <= 0.15)
-  # Modal band adjacent or equal.
-  expect_true(abs(r_e$modal_band - r_d$modal_band) <= 1)
+  # Both pooled percentiles are finite and land in the same broad region.
+  expect_true(is.finite(r_e$percentile) && is.finite(r_d$percentile))
+  expect_lt(abs(r_e$percentile - r_d$percentile), 0.25)
 })
 
 test_that("nearest-neighbor clamping for out-of-grid design is flagged in notes", {
@@ -322,12 +323,14 @@ test_that("as.data.frame() flattens a surface_position into a one-row frame", {
   df <- as.data.frame(r)
   expect_s3_class(df, "data.frame")
   expect_equal(nrow(df), 1L)
+  # v0.7.1 one-row frame: pooled percentile + consistency-band endpoints,
+  # not the retired band-probability / modal-band / confidence columns.
   expect_true(all(c("metric", "observed_value", "pi_hat", "k", "N",
-                    "q_hat", "se_q_hat", "percentile", "modal_band",
-                    "modal_band_label", "confidence", "sampling_method",
-                    "p_band_1", "p_band_2", "p_band_3", "p_band_4") %in%
-                  names(df)))
-  expect_equal(sum(df[, paste0("p_band_", 1:4)]), 1, tolerance = 1e-8)
+                    "q_hat", "se_q_hat", "percentile", "percentile_basis",
+                    "band_lo", "band_hi", "band_open_low", "band_open_high",
+                    "band_level", "sampling_method") %in% names(df)))
+  expect_false(any(c("modal_band", "modal_band_label", "confidence",
+                     "p_band_1") %in% names(df)))
 })
 
 # ---- v0.2.0 ratings-primary path ------------------------------------------

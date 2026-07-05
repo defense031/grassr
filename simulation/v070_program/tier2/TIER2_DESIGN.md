@@ -50,6 +50,34 @@ qualifier calibration (decisive/moderate/weak vs realized percentile
 dispersion), CI coverage vs nominal, MC-SE on every published threshold
 (extends App D.7 to the full table).
 
+### Arms A/B/C under v0.7.1 (2026-07-05, delta-B)
+The stored per-rep files carry raw coefficients but not each rep's
+realized pi-hat, which the AC1/Fleiss quality inversions need, so the
+"arithmetic recompute" is replaced by a RE-RUN of the three arms
+through the v0.7.1 pipeline (468 cells x 1,000 reps ~ 0.5M panels,
+sub-hour) chained behind the stage 6/7 delta-B regeneration.
+Deliverables restate in new units: pooled-percentile drift bounds and
+delta-B flag rates. Per-draw q-hats stored this time.
+
+### Arm D redefinition (2026-07-05 — thresholds table retired)
+The Stage-4 threshold table no longer ships; the flag is delta-hat's
+percentile on the matched (k, N, q-hat) null ECDF (ratified
+2026-07-04). Arm D's deliverables restate as:
+(i)   qualifier calibration — bootstrap p* bands vs realized surface-
+      percentile dispersion (unchanged in concept);
+(ii)  bootstrap CI coverage of the surface percentile vs nominal;
+(iii) realized flag size — false caution/divergent rates of the
+      >=95th / >=99th percentile convention on null panels drawn
+      through the production pipeline at the sampled cells, vs the
+      nominal 5% / 1%;
+(iv)  MC-SE table for every published quantity: surface quantiles
+      (from per-cell rep counts) and null-ECDF percentile positions
+      (convergence program already bounds these at <= 0.22pp; Arm D
+      folds them into one published table).
+Frame unchanged: ~600 stratified cells, 500 panels per cell,
+bootstrap_B = 200 as shipped, lme4 parked. Runs on the 0.7.0 package
+(tarball build of 2026-07-05).
+
 ## Arm E — build pipeline consolidation (code, no sims)
 One end-to-end `data-raw/build_sysdata.R` that regenerates every sysdata
 object from per-scenario sources + rounding in one call; retires the

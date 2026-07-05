@@ -91,6 +91,6 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
 }
 \seealso{
 \code{\link[=plot.grass_card]{plot.grass_card()}} for the card-driven surface view that
-adds card-specific annotations (band, qualifier, primary-coefficient
+adds card-specific annotations (consistency band, primary-coefficient
 pin); \code{\link[=position_on_surface]{position_on_surface()}} for the underlying inversion machinery.
 }

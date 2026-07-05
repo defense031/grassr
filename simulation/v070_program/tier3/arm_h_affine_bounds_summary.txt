@@ -1,0 +1,9 @@
+Arm H analytic dependence bounds (W = 2, k = 2 surface, balanced F)
+PABAK_rho = rho + (1 - rho) * PABAK_0; pooled-percentile convention
+
+  rho med_pct_inflation p95_pct_inflation med_q_inflation_pp p95_q_inflation_pp
+ 0.10              4.41              17.8               1.78               11.0
+ 0.25              9.31              37.9               4.29               19.7
+ 0.50             18.37              61.3               8.16               29.8
+
+Full grid: 429 rows (N x q x rho) in arm_h_affine_bounds.rds

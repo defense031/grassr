@@ -203,10 +203,17 @@ function render(){
     }
     s+=`<text x="${L-10}" y="${y0-4}" text-anchor="end" font-size="12.5" fill="var(--ink)" font-weight="600" class="mono">q ${c.q.toFixed(2)}</text>`;
     const p=pctOn(c,d);
-    s+=`<text x="${W-R+6}" y="${y0-2}" font-size="12.5" fill="var(--green)" font-weight="600" class="mono">${ord(p)} pct</text>`;
+    const pv=(typeof p==="string")?99.6:p;
+    const pcol=(i===mi_)?(pv>=99?"var(--rust)":(pv>=95?"var(--amber)":"var(--green)")):"var(--muted)";
+    s+=`<text x="${W-R+6}" y="${y0-2}" font-size="12.5" fill="${pcol}" font-weight="${i===mi_?700:500}" class="mono">${ord(p)} pct</text>`;
   });
-  s+=`<line x1="${x(Math.min(d,xmax))}" x2="${x(Math.min(d,xmax))}" y1="${T-4}" y2="${H-B}" stroke="var(--green)" stroke-width="2"/>`;
-  s+=`<text x="${x(Math.min(d,xmax))}" y="${T-8}" text-anchor="middle" font-size="12" fill="var(--green)" font-weight="600">your panel</text>`;
+  // the line wears the verdict: judged on the MATCHED null only
+  const mp=pctOn(cells[mi_],d);
+  const mpv=(typeof mp==="string")?99.6:mp;
+  const vcol=mpv>=99?"var(--rust)":(mpv>=95?"var(--amber)":"var(--green)");
+  const vword=mpv>=99?"divergent":(mpv>=95?"caution":"aligned");
+  s+=`<line x1="${x(Math.min(d,xmax))}" x2="${x(Math.min(d,xmax))}" y1="${T-4}" y2="${H-B}" stroke="${vcol}" stroke-width="2.5"/>`;
+  s+=`<text x="${x(Math.min(d,xmax))}" y="${T-8}" text-anchor="middle" font-size="12" fill="${vcol}" font-weight="600">your panel: ${vword}</text>`;
   $("ridge").innerHTML=s;
 
   // comparison readings on the MATCHED cell

@@ -46,11 +46,19 @@ and does not re-enter; ICC is never in `delta_hat`. The flag convention
 (percentile on the matched (k, N, q_hat) null, >= 95th caution,
 >= 99th divergent) is unchanged in form.
 
-* The delta-null ECDF and the power-table numbers are being regenerated
-  under the Option-B implied-quality definition (stage 6 + stage 7
-  regeneration). Until that lands, the bundled `delta_null_ecdf` and the
-  reported power figures reflect the 0.7.0 percentile-spread definition;
-  treat the calibrated flag cuts as provisional on this line.
+* The delta null was REGENERATED under the Option-B implied-quality
+  definition (2026-07-06): 440 (k, N, q) ridges, ~22M production-pipeline
+  draws, at least 46,002 per ridge. The shipped `delta_null_ecdf`
+  carries the 385 k >= 3 ridges on a fine 1% + 99.5% probability grid.
+  At k = 2 the two-coefficient family implies identical quality by
+  construction (the null is a point mass at zero on all draws), so
+  `delta_hat` reports `not_applicable` there and asymmetry assessment
+  routes to the pairwise/bounds path. Tie runs (point masses) use the
+  mid-p convention. Divergent-flag power at the same asymmetry roughly
+  doubles relative to the retired percentile-spread definition (e.g.
+  TPR 0.82 at mean-norm A = 0.20 pooled over designs, vs 0.38 at the
+  modal design previously); realized null flag rates are slightly
+  conservative (caution 3.7% vs nominal 5%, divergent 0.6% vs 1%).
 
 ## Bug fixes
 

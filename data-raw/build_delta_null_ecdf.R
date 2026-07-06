@@ -51,7 +51,7 @@ dimnames(vals) <- list(NULL, as.character(FINE))
 delta_null_ecdf <- list(
   probs = FINE, values = vals, index = idx,
   flag_conventions = c(caution = 0.95, divergent = 0.99),
-  source = "v0.7.0 stage-6 production-faithful null program (check_asymmetry pipeline)",
+  source = "v0.7.1 stage-6B Option-B null regeneration (implied-quality spread through the production check_asymmetry pipeline; k >= 3 ridges)",
   built_on = as.character(Sys.Date()))
 
 e <- new.env()

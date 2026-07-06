@@ -588,11 +588,18 @@ check_asymmetry <- function(ratings,
     }
   }
 
-  # ---- Matched-null resolution + flag (v0.7.0 convention) ----------------
+  # ---- Matched-null resolution + flag ------------------------------------
+  # k = 2: delta_hat is structurally uninformative (the two-coefficient
+  # family implies identical quality by construction; the Option-B null
+  # is a point mass at zero on all 2.75M draws). No lookup, no flag —
+  # report not_applicable and route asymmetry assessment to the k = 2
+  # identifiable-bounds / pairwise path. This restores the paper's
+  # original k = 2 position (v0.7.1; see design/v0.7.1_position_redesign.md).
+  k2_degenerate <- ncol(Y) == 2L
   qh <- vapply(positions[names(positions) %in% .DELTA_AGREEMENT_COEFS],
                function(p) p$q_hat, numeric(1L))
   q_hat_panel <- stats::median(qh[is.finite(qh)])
-  null_cell <- if (is.finite(q_hat_panel))
+  null_cell <- if (!k2_degenerate && is.finite(q_hat_panel))
     lookup_delta_null(k = ncol(Y), N = nrow(Y), q_hat = q_hat_panel)
   else NULL
 
@@ -617,6 +624,12 @@ check_asymmetry <- function(ratings,
       if (null_cell$snapped) "; design snapped to nearest calibrated cell" else "",
       if (null_cell$unstable_tail)
         "; this cell's extreme tail is flagged as not stably invertible (percentile reading unaffected)" else "")
+  } else if (k2_degenerate) {
+    thresholds_note <- paste0(
+      "delta_hat is not applicable at k = 2: the two-coefficient agreement ",
+      "family (PABAK, AC1) implies identical panel quality by construction, ",
+      "so cross-coefficient discordance cannot be observed. Use the k = 2 ",
+      "identifiable bounds and pairwise path for asymmetry assessment.")
   } else {
     thresholds_note <- "delta_null_ecdf unavailable; flag not calibrated."
   }
@@ -625,12 +638,15 @@ check_asymmetry <- function(ratings,
     if (delta_hat < legacy_thresholds[1L]) "aligned"
     else if (delta_hat < legacy_thresholds[2L]) "caution"
     else "divergent"
+  } else if (k2_degenerate) {
+    "not_applicable"
   } else {
     delta_flag_from_percentile(delta_percentile,
       if (!is.null(null_cell)) null_cell$conventions
       else c(caution = 0.95, divergent = 0.99))
   }
   thresholds_source <- if (!is.null(legacy_thresholds)) "user_supplied_legacy"
+                       else if (k2_degenerate) "not_applicable_k2"
                        else if (!is.null(null_cell)) "matched_null_ecdf"
                        else "not_calibrated"
   report_cuts <- if (!is.null(legacy_thresholds))

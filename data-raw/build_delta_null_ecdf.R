@@ -24,6 +24,11 @@ if (!file.exists(src))
   stop("null cells not found at ", src,
        " — run the stage-6B extraction first (or set NULL_CELLS).")
 cells <- readRDS(src)
+# k = 2 ridges are excluded from the shipped object: the two-coefficient
+# family implies identical quality by construction, so the k = 2 null is
+# a point mass at zero (verified on 2.75M Option-B draws) and delta_hat
+# is reported not_applicable there (lookup_delta_null guards k < 3).
+cells <- Filter(function(c) c$k >= 3, cells)
 FINE <- sort(unique(c(seq(0.01, 0.99, by = 0.01), 0.995)))
 # Tail-stability tolerance in the OBJECT'S OWN UNITS: quality-pp nulls are
 # ~3 orders of magnitude smaller than the retired percentile-pp nulls, so

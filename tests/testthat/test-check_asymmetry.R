@@ -31,6 +31,8 @@
 #     documented field names
 # ---------------------------------------------------------------------------
 test_that("symmetric panel returns aligned kappa-family + 5-row panel at k=5", {
+  skip_if_not_installed("lme4")  # panel carries the ICC row only when
+                                 # glmer is available (Suggests)
   Y <- .simulate_panel(N = 500, k = 5, pi = 0.30, se = 0.85, sp = 0.85, seed = 1)
   out <- check_asymmetry(Y)
 
@@ -81,6 +83,7 @@ test_that("symmetric panel returns aligned kappa-family + 5-row panel at k=5", {
 # Structural (unit-agnostic) assertions about the op_strong panel object:
 # these do NOT depend on the delta-null calibration units.
 test_that("op_strong heterogeneous panel has the documented panel structure", {
+  skip_if_not_installed("lme4")  # ICC row requires glmer (Suggests)
   out <- check_asymmetry(.op_strong_panel_Y(seed = 6L))
   expect_s3_class(out, "grass_asymmetry_panel")
   expect_equal(nrow(out$panel), 4L)
@@ -100,20 +103,26 @@ test_that("op_strong heterogeneous panel has the documented panel structure", {
 # quality pp; the null awaits the stage-6 delta-B regeneration). Skip the
 # outcome assertions until the regenerated null lands.
 test_that("op_strong heterogeneous panel flags divergent on non-ICC spread", {
-  skip("delta null awaiting stage6 delta-B regeneration")
+  # Re-pinned 2026-07-06 against the stage-6B delta-B null (Option B):
+  # delta_hat = 0.247 quality pp at the matched (5, 1000, 0.85) ridge ->
+  # 99.5th percentile, decisively divergent (the old convention cleared
+  # its cut by only 0.15 pp).
   out <- check_asymmetry(.op_strong_panel_Y(seed = 6L))
   expect_equal(out$flag, "divergent")
-  expect_gte(out$delta_hat, 11.75)
+  expect_gte(out$delta_percentile, 99)
+  expect_gt(out$delta_hat, 0.1)   # quality pp; aligned panels sit ~0.01
 
   pp <- out$panel
-  nonicc <- pp$percentile_pp[pp$coefficient != "icc"]
-  expect_gte(diff(range(nonicc)), 11.75)
+  qs <- pp$implied_q[pp$coefficient != "icc"]
+  expect_gt(diff(range(qs)) * 100, 0.1)  # non-ICC implied-quality spread
 
-  pabak <- pp$percentile_pp[pp$coefficient == "pabak"]
-  fk    <- pp$percentile_pp[pp$coefficient == "fleiss_kappa"]
-  ac1   <- pp$percentile_pp[pp$coefficient == "mean_ac1"]
+  pabak <- pp$implied_q[pp$coefficient == "pabak"]
+  fk    <- pp$implied_q[pp$coefficient == "fleiss_kappa"]
+  ac1   <- pp$implied_q[pp$coefficient == "mean_ac1"]
   cluster_mean <- mean(c(pabak, fk))
-  expect_gte(abs(ac1 - cluster_mean), 10)
+  # AC1 separates from the PABAK/Fleiss cluster (the split-bias signature),
+  # in quality pp: observed separation ~0.25 pp vs within-cluster ~0.
+  expect_gte(abs(ac1 - cluster_mean) * 100, 0.1)
 })
 
 # ---------------------------------------------------------------------------

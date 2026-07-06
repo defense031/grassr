@@ -44,6 +44,8 @@
     thr <- delta_list$thresholds
     sprintf("  thresholds  = (%.2f, %.2f) [user-supplied, legacy pp cuts]",
             thr[["caution"]], thr[["divergent"]])
+  } else if (identical(delta_list$thresholds_source, "not_applicable_k2")) {
+    "  matched null = n/a at k = 2 (coefficients cannot disagree; see pairwise/bounds path)"
   } else {
     "  matched null = unavailable (flag not calibrated)"
   }

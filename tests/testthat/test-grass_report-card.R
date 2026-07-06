@@ -81,30 +81,25 @@ test_that("grass_report returns a grass_card with all top-level fields", {
 # Paper §4 divergent worked-example reproduction (load-bearing integration
 # test). Uses the op_strong asym-grid profile at q=0.85, pi_target=0.50,
 # N=1000, seed=6 — see .simulate_op_strong_panel() at top of file.
-# Heterogeneous per-rater bias produces non-ICC surface-percentile spread
-# > 11.75 pp; the divergent flag is genuine (not driven by ICC clamping).
+# Heterogeneous per-rater bias produces genuine cross-coefficient
+# discordance; the divergent flag is real (not an ICC-clamp artifact).
 
 test_that("grass_report reproduces the paper §4 divergent worked example", {
-  # The divergent FLAG here is pinned against the bundled delta null, which
-  # is still in the retired percentile-spread units; under v0.7.1 Option B
-  # delta_hat is a quality-pp spread and this panel now flags `aligned`
-  # until the stage-6 delta-B null regeneration lands. Skip the
-  # flag-dependent worked example (per-rater / pairwise / band-suppression
-  # all hang off the divergent branch).
-  skip("delta null awaiting stage6 delta-B regeneration")
+  skip_if_not_installed("lme4")  # the fixture pins the 4-row panel (ICC row)
   Y <- .simulate_op_strong_panel(seed = 6L)
   card <- grass_report(Y, bootstrap_B = 200)
 
-  # Divergent flag fires above the 11.75-pp threshold.
+  # Re-pinned 2026-07-06 against the stage-6B delta-B null: divergent at
+  # the >= 99th percentile of the matched null (delta ~0.25 quality pp).
   expect_equal(card$delta$flag, "divergent")
-  expect_true(card$delta$delta_hat >= 11.75)
+  expect_gte(card$delta$delta_percentile, 99)
 
-  # The divergent flag must come from real cross-coefficient
-  # surface-percentile disagreement, not from an ICC-clamp artifact.
-  # Non-ICC spread should also exceed the threshold.
+  # The divergent flag must come from real cross-coefficient disagreement,
+  # not an ICC-clamp artifact: the non-ICC pooled percentiles also spread
+  # (observed ~2 pp at re-pin; aligned panels sit well under 0.5 pp).
   nonicc <- card$panel$surface_percentile[card$panel$coefficient != "icc"]
-  expect_true(diff(range(nonicc, na.rm = TRUE)) >= 11.75,
-              info = sprintf("non-ICC range = %.2f pp; expected >= 11.75",
+  expect_true(diff(range(nonicc, na.rm = TRUE)) >= 1,
+              info = sprintf("non-ICC pooled-pct range = %.2f pp; expected >= 1",
                              diff(range(nonicc, na.rm = TRUE))))
 
   # Four-coefficient panel (PABAK, AC1, Fleiss kappa, ICC; alpha removed
@@ -156,7 +151,11 @@ test_that("grass_report handles the §4 k=2 symmetric counter-example", {
 
   card <- grass_report(Y, bootstrap_B = 50)
 
-  expect_equal(card$delta$flag, "aligned")
+  # v0.7.1 delta-B: at k = 2 the two-coefficient family implies identical
+  # quality by construction, so delta_hat is structurally uninformative
+  # and the flag reports not_applicable (never aligned/caution/divergent).
+  expect_equal(card$delta$flag, "not_applicable")
+  expect_equal(card$delta$thresholds_source, "not_applicable_k2")
   # v0.7.1: the primary `band` is a rendered consistency-band string on
   # quality (not the retired Strong/Excellent adjective), and is only
   # "suppressed" under the divergent flag.
@@ -190,7 +189,10 @@ test_that("print.grass_card renders the aligned card header, gloss and delta", {
 
   out_align <- capture.output(print(card_align))
   txt_align <- paste(out_align, collapse = "\n")
-  expect_match(txt_align, "aligned", fixed = TRUE)
+  # k = 2 card: delta is not_applicable (v0.7.1) with the n/a matched-null
+  # line routing to the pairwise/bounds path.
+  expect_match(txt_align, "not_applicable", fixed = TRUE)
+  expect_match(txt_align, "n/a at k = 2", fixed = TRUE)
   # v0.7.1: the aligned card carries a plain-language "read:" gloss line.
   expect_match(txt_align, "read:", fixed = TRUE)
   # The primary coefficient (PABAK) and its consistency band on quality show.
@@ -201,9 +203,7 @@ test_that("print.grass_card renders the aligned card header, gloss and delta", {
 })
 
 test_that("print.grass_card renders the divergent card (all coefficients + suppressed)", {
-  # The divergent print path is exercised only when the flag fires
-  # divergent, which is pinned to the bundled delta null (retired units).
-  skip("delta null awaiting stage6 delta-B regeneration")
+  # Re-pinned 2026-07-06: op_strong fires divergent on the delta-B null.
   Y_div <- .simulate_op_strong_panel(seed = 6L)
   card_div <- grass_report(Y_div, bootstrap_B = 50)
 
@@ -254,10 +254,7 @@ test_that("as.data.frame.grass_card has an is_primary column", {
 })
 
 test_that("as.data.frame.grass_card returns a list(panel, per_rater) on divergent cards", {
-  # The divergent as.data.frame shape (list with a `panel` element) only
-  # materialises when per_rater is populated, i.e. under the divergent flag
-  # pinned to the bundled delta null (retired units).
-  skip("delta null awaiting stage6 delta-B regeneration")
+  # Re-pinned 2026-07-06: op_strong fires divergent on the delta-B null.
   Y <- .simulate_op_strong_panel(seed = 6L)
   card_div <- grass_report(Y, bootstrap_B = 50)
   df_div <- as.data.frame(card_div)
@@ -283,9 +280,7 @@ test_that("grass_report with verbose = TRUE emits a progress message", {
 # do not. This is the load-bearing wiring for the divergent recovery path.
 
 test_that("grass_report auto-populates card$pairwise on divergent panels", {
-  # card$pairwise is populated only on the divergent branch, whose flag is
-  # pinned to the bundled delta null (retired units).
-  skip("delta null awaiting stage6 delta-B regeneration")
+  # Re-pinned 2026-07-06: op_strong fires divergent on the delta-B null.
   Y <- .simulate_op_strong_panel(seed = 6L)
   card <- grass_report(Y, bootstrap_B = 50)
 

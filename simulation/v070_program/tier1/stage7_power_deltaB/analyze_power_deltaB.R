@@ -23,6 +23,10 @@ if (!file.exists(NULLF))
   stop("Option-B null not found: ", NULLF, " -- run extract_nulls_deltaB.R first.")
 
 nulls <- readRDS(NULLF)
+# k = 2 is not calibrated (the two-coefficient family implies identical
+# quality by construction; delta_hat reports not_applicable there) -- drop
+# the degenerate all-zero ridges so no TPR row is computed at k = 2.
+nulls <- Filter(function(c) c$k >= 3, nulls)
 FINE  <- sort(unique(c(seq(0.01, 0.99, by = 0.01), 0.995)))
 nl <- new.env()
 for (c in nulls) assign(paste(c$k, c$N, c$q), c$fine, nl)

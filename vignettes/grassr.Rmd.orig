@@ -68,31 +68,27 @@ What the functions accept, completely:
 - binary outcomes only. Ordinal scales and continuous measurements
   are outside this package's calibration.
 
-Two common clinical designs do not fit this matrix directly, and
-the difference matters because the whole calibration assumes every
-row is a new subject.
+The calibration assumes every row is a new subject. Two common
+clinical designs break that assumption.
 
 - **Repetitions within a session.** A patient performs the task
   three times and the raters score every repetition. Do not stack
-  the repetitions as rows. Stacked repetitions tell the package you
-  have three times as many subjects as you do, and because
-  repetitions of one patient are correlated, the matrix carries less
-  information than its row count claims. The reported band would
-  come out narrower than the design earned. Build one matrix per
-  repetition and compare the cards, or fix one repetition per
-  patient by protocol before building the matrix.
-- **The same patients across sessions over time.** Each session is a
-  valid panel on its own, because within a session the rows are
-  distinct patients. Score one card per session; the sequence of
-  cards is the stability record, read on a common design-conditioned
-  scale. What the package does not do is pool the sessions into one
-  number or split the disagreement into patient, session, and rater
-  components. That variance-components question is real, and it is
-  outside this package's calibration.
+  the repetitions as rows: repetitions of one patient are
+  correlated, the stacked matrix overstates the number of subjects,
+  and the band comes out narrower than the design earns. Build one
+  matrix per repetition and compare the cards, or fix one
+  repetition per patient by protocol.
+- **The same patients across sessions over time.** Within a session
+  the rows are distinct patients, so each session is a valid panel.
+  Score one card per session; the sequence of cards is the
+  stability record. grassr does not pool sessions into one number
+  and does not split disagreement into patient, session, and rater
+  components. Those are variance-component analyses, outside this
+  package's calibration.
 
-The package cannot detect either design from the matrix itself,
-since a 0/1 matrix does not say which rows share a patient. This
-part of the contract is enforced by you, not by an error message.
+A 0/1 matrix does not say which rows share a patient, so grassr
+cannot detect either design. You enforce this part of the
+contract, not an error message.
 
 In practice you load your scores from a file. Here we simulate the
 panel instead, so the truth is known and every claim below can be

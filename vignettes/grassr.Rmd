@@ -44,6 +44,9 @@ What the functions accept, completely:
 
 - a `matrix` or `data.frame`, subjects in rows, raters in columns,
   at least 2 raters and one row per subject;
+- rows are independent subjects. Every row must be a different
+  subject, never a repetition of one (repeated-measures designs are
+  addressed just below);
 - cells as numeric 0/1, `logical`, or a two-level `factor`
   (character columns are rejected; convert to factor first);
 - column names are optional and become rater labels on the card;
@@ -52,6 +55,32 @@ What the functions accept, completely:
   in your Methods;
 - binary outcomes only. Ordinal scales and continuous measurements
   are outside this package's calibration.
+
+Two common clinical designs do not fit this matrix directly, and
+the difference matters because the whole calibration assumes every
+row is a new subject.
+
+- **Repetitions within a session.** A patient performs the task
+  three times and the raters score every repetition. Do not stack
+  the repetitions as rows. Stacked repetitions tell the package you
+  have three times as many subjects as you do, and because
+  repetitions of one patient are correlated, the matrix carries less
+  information than its row count claims. The reported band would
+  come out narrower than the design earned. Build one matrix per
+  repetition and compare the cards, or fix one repetition per
+  patient by protocol before building the matrix.
+- **The same patients across sessions over time.** Each session is a
+  valid panel on its own, because within a session the rows are
+  distinct patients. Score one card per session; the sequence of
+  cards is the stability record, read on a common design-conditioned
+  scale. What the package does not do is pool the sessions into one
+  number or split the disagreement into patient, session, and rater
+  components. That variance-components question is real, and it is
+  outside this package's calibration.
+
+The package cannot detect either design from the matrix itself,
+since a 0/1 matrix does not say which rows share a patient. This
+part of the contract is enforced by you, not by an error message.
 
 In practice you load your scores from a file. Here we simulate the
 panel instead, so the truth is known and every claim below can be
@@ -591,7 +620,7 @@ summary(card1)
 #>     - flag from delta_hat's percentile on the matched null (k=5, N=1000, q=0.85; 50,000 draws); design snapped to nearest calibrated cell.
 #> 
 #>   grass version : 0.7.2
-#>   timestamp     : 2026-07-07 00:07:12
+#>   timestamp     : 2026-07-07 09:20:06
 ```
 
 `summary()` is the audit view: the full panel with percentiles and

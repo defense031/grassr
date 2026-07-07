@@ -34,7 +34,11 @@
 #' @param ratings User input: an `N x k` binary matrix, an `N x k` data.frame
 #'   whose columns are 0/1 / logical / 2-level factor, or a list of two
 #'   equal-length 0/1 vectors (`k = 2` paired form). See
-#'   `?normalize_ratings` for accepted shapes.
+#'   `?normalize_ratings` for accepted shapes. Rows must be independent
+#'   subjects, one row each: the calibration assumes every row is a new
+#'   subject, and stacking repeated measurements of one subject as rows
+#'   overstates the effective sample size (analyze one card per occasion
+#'   instead; `vignette("grassr")`, section "The data").
 #' @param axis One of `"inter"` (default) or `"intra"`. Selects the surface
 #'   family. The intra-axis path uses `occasion` to identify viewings.
 #' @param metric One of `"auto"` (default; calls `pick_primary_coefficient()`

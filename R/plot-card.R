@@ -108,8 +108,8 @@ check_patchwork <- function() {
 #' The plot is a heatmap of the closed-form expectation
 #' `E[metric](M_1, q)` over the surface, where `M_1` is the marginal
 #' positive rate and `q in [0.5, 1]` is the diagonal rater operating
-#' quality. Dotted contours overlay the four-band partition
-#' (`bands` argument). When `pi_hat` is supplied alone, a dashed vertical
+#' quality. Dotted contours mark evenly spaced reference gridlines on
+#' `q` (`bands` argument). When `pi_hat` is supplied alone, a dashed vertical
 #' line marks the design's marginal. When both `pi_hat` and `observed`
 #' are supplied, a filled marker pins the implied `(M_1, hat q)` point on
 #' the surface; `hat q` is recovered by closed-form inversion of `observed`
@@ -139,8 +139,10 @@ check_patchwork <- function() {
 #'   the surface represents.
 #' @param axis One of `"inter"` (default) or `"intra"`. Used for the
 #'   subtitle only.
-#' @param bands Numeric length-5 vector giving band boundaries on `q`.
-#'   Default `c(0.5, 0.625, 0.75, 0.875, 1.0)`.
+#' @param bands Numeric length-5 increasing vector giving the `q`
+#'   values of the dotted reference gridlines.
+#'   Default `c(0.5, 0.625, 0.75, 0.875, 1.0)`. Cosmetic only; nothing
+#'   is labeled or classified by these lines.
 #' @param ... Reserved for future extension.
 #'
 #' @return A `ggplot` object.
@@ -345,7 +347,7 @@ plot_surface <- function(metric,
                       as.integer(k), as.integer(N),
                       as.numeric(pi_hat), as.character(axis))
 
-  bands <- x$inputs$bands %||% c(0.5, 0.625, 0.75, 0.875, 1.0)
+  bands <- c(0.5, 0.625, 0.75, 0.875, 1.0)  # q reference gridlines
 
   p <- ggplot2::ggplot(grid, ggplot2::aes(x = M1, y = q, fill = value)) +
     ggplot2::geom_raster(interpolate = TRUE) +

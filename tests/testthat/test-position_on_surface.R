@@ -114,20 +114,13 @@ test_that("caller-supplied per_rep yields a plain cohort percentile", {
   expect_null(r_emp$band)
 })
 
-test_that("deprecated bands / band_labels warn on non-default and are silent on default", {
-  # Non-default bands / band_labels draw a deprecation warning and are
-  # ignored (v0.7.1 sweep redesign retired the stipulated q-band partition).
-  expect_warning(
-    position_on_surface(0.62, "pabak", pi_hat = 0.5, k = 5, N = 200,
-                        bands = c(0.5, 0.7, 0.85, 0.95, 1.0)),
-    "deprecated"
-  )
-  expect_warning(
-    position_on_surface(0.62, "pabak", pi_hat = 0.5, k = 5, N = 200,
-                        band_labels = c("A", "B", "C", "D")),
-    "deprecated"
-  )
-  # Defaults are silent.
+test_that("the retired q-band arguments are gone from the API", {
+  # v0.7.1 (pre-release): the stipulated q-band partition was removed
+  # outright -- never shipped to CRAN, so no deprecation shim.
+  expect_false("bands" %in% names(formals(position_on_surface)))
+  expect_false("band_labels" %in% names(formals(position_on_surface)))
+  expect_false("bands" %in% names(formals(grass_report)))
+  expect_false("delta_thresholds" %in% names(formals(check_asymmetry)))
   expect_no_warning(
     position_on_surface(0.62, "pabak", pi_hat = 0.5, k = 5, N = 200)
   )
@@ -397,4 +390,34 @@ test_that("non-binary ratings input fails with an informative error", {
                         metric = "pabak"),
     regexp = NULL
   )
+})
+
+# Regression: the consistency band's degenerate branches must point the
+# right way (they shipped inverted through 0.7.1 pre-release: an observation
+# below the achievable range reported a band open ABOVE the grid, so a
+# worst-possible panel printed as consistent with near-perfect quality).
+test_that("off-range observations open the consistency band on the correct side", {
+  # Far below anything any calibrated quality produces.
+  lo_obs <- position_on_surface(obs_value = -0.30, metric = "pabak",
+                                pi_hat = 0.4, k = 4, N = 80)
+  expect_true(lo_obs$band$open_low)
+  expect_false(lo_obs$band$open_high)
+  expect_true(is.na(lo_obs$band$lo))
+  expect_lte(lo_obs$band$hi, 0.60)   # capped at the grid's low edge
+  expect_lte(lo_obs$percentile, 0.05)
+
+  # Band direction must agree with the pooled percentile at both extremes:
+  # a bottom-percentile observation may not carry a top-of-grid band.
+  expect_false(isTRUE(lo_obs$band$lo >= 0.9))
+})
+
+test_that("consistency band endpoints are monotone in the observed value", {
+  obs <- c(0.05, 0.25, 0.45, 0.65, 0.85)
+  bands <- lapply(obs, function(v)
+    position_on_surface(obs_value = v, metric = "pabak",
+                        pi_hat = 0.4, k = 5, N = 200)$band)
+  his <- vapply(bands, function(b) ifelse(is.na(b$hi), 1, b$hi), numeric(1))
+  los <- vapply(bands, function(b) ifelse(is.na(b$lo), 0, b$lo), numeric(1))
+  expect_true(all(diff(his) >= -1e-8))
+  expect_true(all(diff(los) >= -1e-8))
 })

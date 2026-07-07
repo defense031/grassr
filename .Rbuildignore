@@ -24,3 +24,5 @@
 ^inst/examples/playground\.R$
 ^inst/examples/first_tour\.R$
 ^inst/examples/plot_r_paradox\.png$
+^CONTRIBUTING\.md$
+^synthetic_cases_v071\.out$

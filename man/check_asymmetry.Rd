@@ -4,13 +4,7 @@
 \alias{check_asymmetry}
 \title{Cross-coefficient panel asymmetry diagnostic}
 \usage{
-check_asymmetry(
-  ratings,
-  axis = c("inter", "intra"),
-  occasion = NULL,
-  delta_thresholds = NULL,
-  ...
-)
+check_asymmetry(ratings, axis = c("inter", "intra"), occasion = NULL, ...)
 }
 \arguments{
 \item{ratings}{User input: an \verb{N x k} binary matrix, an \code{N} x \code{k}
@@ -23,13 +17,6 @@ family.}
 
 \item{occasion}{Reserved for \code{axis = "intra"} (a vector / factor
 identifying viewing occasion); ignored when \code{axis = "inter"}.}
-
-\item{delta_thresholds}{Deprecated (grassr 0.7.0). The per-(k, N)
-size-alpha threshold table is retired; the flag is now \code{delta_hat}'s
-percentile on the matched null distribution. Supplying a length-2
-\code{c(caution, divergent)} pair (in pp) is still honored for a single
-call with the legacy pp-cut semantics, but raises a deprecation
-warning. Default \code{NULL} (use the matched-null percentile convention).}
 
 \item{...}{Forwarded to \code{\link[=position_on_surface]{position_on_surface()}} (e.g. \code{reference_type}).}
 }
@@ -45,10 +32,9 @@ design)
 (\code{k}, \code{N}, \code{q}, \code{q_hat_panel}, \code{n_draws}, \code{snapped},
 \code{unstable_tail}), or \code{NULL} if uncalibrated
 \item \code{thresholds}: named numeric vector of the implied (caution, divergent)
-pp cuts (95th/99th of the matched null), or the legacy user-supplied
-cuts
+pp cuts (95th/99th of the matched null)
 \item \code{thresholds_source}: one of \code{"matched_null_ecdf"},
-\code{"user_supplied_legacy"}, \code{"not_calibrated"}
+\code{"not_applicable_k2"}, \code{"not_calibrated"}
 \item \code{panel}: data.frame with \code{coefficient}, \code{observed}, \code{implied_q},
 \code{percentile_pp} (pooled percentile), \code{clamped}, \code{in_delta_hat}
 \item \code{notes}: character vector of unique caveats from the underlying

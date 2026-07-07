@@ -31,17 +31,15 @@ grass_report(ratings = Y)
 ```
 GRASS Report Card
 
-  sample      = 5 raters, N = 200, pi_hat = 0.35, tau2_hat = 0.083
-  PABAK  = 0.41  ->  95th pct; consistent with panel quality [0.82, 0.90]
-  delta       = 1.2 pp (aligned)
-
-  Notes:
-    - Fitted-ICC F_key picked via glmer: mu_hat=-0.877, tau2_hat=2.801
-        -> F_key tau2=4.0000, mu=-0.847.
-    - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-0.847_tau2=4.0000,
-        k=5, N=200 (family=logit_normal, M1=0.374).
-    - obs_value 0.4642 above achievable maximum (0.3381); q_hat clamped.
-    - Delta-method SE undefined: dE/dq near zero at q_hat.
+  sample      = 5 raters, N = 200, pi_hat = 0.35
+  PABAK        = 0.41  ->  62nd percentile | quality 0.78-0.85  <- primary
+  AC1          = 0.46  ->  62nd percentile | quality 0.77-0.85
+  Fleiss kappa = 0.36  ->  62nd percentile | quality 0.77-0.85
+  ICC          = 0.46  ->  61st percentile | quality 0.76-0.85  [distribution-sensitive]
+  read: this panel agreed more tightly than 62% of what panels at this
+        design can produce; the data are consistent with panel quality 0.78-0.85.
+  delta       = 0.01 pp implied-quality spread (aligned)
+  matched null = (k=5, N=200, q=0.85): delta_hat at the 19.1 percentile [design snapped]
 
   See `summary(...)` for full panel and CI details.
   See `plot(...)` for a surface-position visualization.
@@ -67,7 +65,7 @@ The full walkthrough — the easy case, the killer case, layered access
 via `summary()` / `as.data.frame()` / `plot()`, granular building blocks
 (`position_on_surface()`, `check_asymmetry()`, `latent_class_fit()`),
 and the two-rater branch — is in
-[`vignette("reporting-card")`](vignettes/reporting-card.Rmd).
+[`vignette("grassr")`](vignettes/grassr.Rmd).
 
 ## Install (local dev)
 
@@ -78,16 +76,16 @@ remotes::install_github("defense031/grassr")
 devtools::load_all()
 
 # the command above installs the repository default branch (development
-# head); the CRAN submission line is the 0.6.x series.
+# head); the CRAN submission line is the 0.7.x series.
 ```
 
-## What you get in v0.5.x
+## What you get in v0.7.x
 
 - **Headline API.** `grass_report(ratings = Y)` — single-call
   workflow returning a four-field Report Card object (`grass_card`)
-  with `print` / `summary` / `as.data.frame` / `plot` methods. Six
+  with `print` / `summary` / `as.data.frame` / `plot` methods. Seven
   `plot()` view types: `surface` (default), `panel`, `thermometer`,
-  `intervals`, `per_rater`, `diagnostic`.
+  `intervals`, `per_rater`, `pairwise`, `diagnostic`.
 - **Surface-position primitive.** `position_on_surface(ratings = Y,
   metric = ...)` places one observed coefficient on its
   context-conditioned reference surface and returns the pooled

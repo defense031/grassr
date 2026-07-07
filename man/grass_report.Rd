@@ -9,9 +9,6 @@ grass_report(
   axis = c("inter", "intra"),
   metric = "auto",
   occasion = NULL,
-  bands = c(0.5, 0.625, 0.75, 0.875, 1),
-  band_labels = c("Poor", "Moderate", "Strong", "Excellent"),
-  delta_thresholds = NULL,
   bootstrap_B = 1000L,
   bootstrap_delta_B = 0L,
   verbose = FALSE,
@@ -36,20 +33,6 @@ the binary fully-crossed case. Use \code{\link[=obs_krippendorff_alpha]{obs_krip
 \code{\link[=position_on_surface]{position_on_surface()}} to compute it manually.)}
 
 \item{occasion}{Reserved for \code{axis = "intra"}; ignored when \code{axis = "inter"}.}
-
-\item{bands}{Deprecated (grassr 0.7.1) and ignored. The stipulated
-four-band partition of \code{q} (Poor/Moderate/Strong/Excellent) is
-retired; the card carries a consistency band on quality and a pooled
-percentile instead. Retained in the signature so 0.6.x call sites do
-not error.}
-
-\item{band_labels}{Deprecated (grassr 0.7.1) and ignored. See \code{bands}.}
-
-\item{delta_thresholds}{Deprecated (grassr 0.7.0). The per-(k, N)
-size-alpha threshold table is retired; the flag is now \code{delta_hat}'s
-percentile on the matched null. A supplied length-2 pair is honored
-for one call with the legacy pp-cut semantics and a deprecation
-warning. Default \code{NULL}.}
 
 \item{bootstrap_B}{Integer; bootstrap replicates for the divergent-branch
 latent-class CIs. Default \code{1000L}. Set lower for fast tests.}

@@ -15,8 +15,7 @@ articles:
 - title: Vignettes
   navbar: ~
   contents:
-  - reporting-card
-  - methods-companion
+  - grassr
 
 reference:
 - title: Report Card workflow

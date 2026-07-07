@@ -40,7 +40,7 @@ them as cutoffs.
 
 \code{grass_reference()} is deprecated in grass 0.2.0. The percentile machinery
 in \code{\link[=position_on_surface]{position_on_surface()}} and the new \code{\link[=grass_report]{grass_report()}} supersede the
-fixed reference-curve lookup. See \code{vignette("reporting-card")} for the
+fixed reference-curve lookup. See \code{vignette("grassr")} for the
 v0.2.0 surface-position workflow.
 }
 

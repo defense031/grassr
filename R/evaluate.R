@@ -45,17 +45,6 @@
 #'   the binary fully-crossed case. Use [obs_krippendorff_alpha()] or
 #'   [position_on_surface()] to compute it manually.)
 #' @param occasion Reserved for `axis = "intra"`; ignored when `axis = "inter"`.
-#' @param bands Deprecated (grassr 0.7.1) and ignored. The stipulated
-#'   four-band partition of `q` (Poor/Moderate/Strong/Excellent) is
-#'   retired; the card carries a consistency band on quality and a pooled
-#'   percentile instead. Retained in the signature so 0.6.x call sites do
-#'   not error.
-#' @param band_labels Deprecated (grassr 0.7.1) and ignored. See `bands`.
-#' @param delta_thresholds Deprecated (grassr 0.7.0). The per-(k, N)
-#'   size-alpha threshold table is retired; the flag is now `delta_hat`'s
-#'   percentile on the matched null. A supplied length-2 pair is honored
-#'   for one call with the legacy pp-cut semantics and a deprecation
-#'   warning. Default `NULL`.
 #' @param bootstrap_B Integer; bootstrap replicates for the divergent-branch
 #'   latent-class CIs. Default `1000L`. Set lower for fast tests.
 #' @param bootstrap_delta_B Integer; subject-resampling replicates for the
@@ -109,10 +98,6 @@ grass_report <- function(ratings,
                          axis = c("inter", "intra"),
                          metric = "auto",
                          occasion = NULL,
-                         bands = c(0.5, 0.625, 0.75, 0.875, 1.0),
-                         band_labels = c("Poor", "Moderate",
-                                         "Strong", "Excellent"),
-                         delta_thresholds = NULL,
                          bootstrap_B = 1000L,
                          bootstrap_delta_B = 0L,
                          verbose = FALSE,
@@ -133,10 +118,8 @@ grass_report <- function(ratings,
          k, ".", call. = FALSE)
   }
 
-  # v0.7.0: threshold resolution retired. check_asymmetry() resolves the
-  # matched (k, N, q_hat) null and flags by percentile convention; a
-  # user-supplied `delta_thresholds` pair passes through with legacy
-  # semantics (deprecation warning raised there).
+  # check_asymmetry() resolves the matched (k, N, q_hat) null and flags
+  # by the percentile convention.
   if (N < 10L) {
     warning("N = ", N, " is below 10; inference unreliable. ",
             "Reference percentiles and bootstrap CIs will be very noisy.",
@@ -244,8 +227,7 @@ grass_report <- function(ratings,
   asym <- check_asymmetry(
     ratings          = Y,
     axis             = axis,
-    occasion         = occasion,
-    delta_thresholds = delta_thresholds
+    occasion         = occasion
   )
   delta_hat_pp <- asym$delta_hat
   flag         <- asym$flag
@@ -275,8 +257,7 @@ grass_report <- function(ratings,
         suppressWarnings(check_asymmetry(
           ratings          = Y_b,
           axis             = axis,
-          occasion         = occasion,
-          delta_thresholds = delta_thresholds
+          occasion         = occasion
         )),
         error = function(e) list(delta_hat = NA_real_))
       delta_boot[b] <- asym_b$delta_hat
@@ -322,10 +303,15 @@ grass_report <- function(ratings,
               "(B = ", bootstrap_B, ").")
     }
     fit_method <- if (k == 2L) "hui_walter" else "dawid_skene_em"
+    # Fixed seed: the bootstrap CIs on the card are deterministic, so the
+    # same rating matrix always prints the same card (paper = vignette =
+    # any user's rerun). latent_class_fit() restores the caller's RNG
+    # state afterwards.
     lc <- latent_class_fit(
       ratings = Y,
       B       = bootstrap_B,
-      method  = fit_method
+      method  = fit_method,
+      seed    = 20260401L
     )
     per_rater <- lc$per_rater
 
@@ -486,11 +472,7 @@ grass_report <- function(ratings,
     timestamp = Sys.time(),
     inputs = list(
       ratings_dim      = c(N = as.integer(N), k = as.integer(k)),
-      axis             = axis,
-      delta_thresholds = if (is.null(delta_thresholds)) NULL
-                         else as.numeric(delta_thresholds),
-      bands            = as.numeric(bands),
-      band_labels      = as.character(band_labels)
+      axis             = axis
     ),
     notes = unique(notes)
   )

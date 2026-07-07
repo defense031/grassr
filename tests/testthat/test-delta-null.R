@@ -54,14 +54,11 @@ test_that("flag conventions map percentiles correctly", {
   expect_equal(f(NA_real_), "not_calibrated")
 })
 
-test_that("check_asymmetry emits matched-null fields and honors legacy arg", {
+test_that("check_asymmetry emits matched-null fields", {
   set.seed(11)
   Y <- matrix(rbinom(500 * 5, 1, 0.5), 500, 5)
   a <- check_asymmetry(Y)
   expect_true(is.finite(a$delta_percentile))
   expect_equal(a$thresholds_source, "matched_null_ecdf")
   expect_named(a$thresholds, c("caution", "divergent"))
-  expect_warning(b <- check_asymmetry(Y, delta_thresholds = c(9.25, 11.75)),
-                 "deprecated")
-  expect_equal(b$thresholds_source, "user_supplied_legacy")
 })

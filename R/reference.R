@@ -14,7 +14,7 @@
 #' @section Deprecated:
 #' `grass_reference()` is deprecated in grass 0.2.0. The percentile machinery
 #' in [position_on_surface()] and the new [grass_report()] supersede the
-#' fixed reference-curve lookup. See `vignette("reporting-card")` for the
+#' fixed reference-curve lookup. See `vignette("grassr")` for the
 #' v0.2.0 surface-position workflow.
 #'
 #' @param prevalence Numeric in `[0, 1]`. Values outside `[0.01, 0.99]` are
@@ -43,7 +43,7 @@ grass_reference <- function(prevalence,
       "`grass_reference()` is deprecated in grass 0.2.0. ",
       "The new headline API is `grass_report(ratings = Y)`; ",
       "for percentile lookups use `position_on_surface(ratings = Y, metric = ...)`. ",
-      "See `vignette('reporting-card')` and `?grass_report`."
+      "See `vignette('grassr')` and `?grass_report`."
     )
   )
   call <- match.call()

@@ -25,8 +25,7 @@
 #' the consistency band; it also carries the surface parameterization and
 #' delta-method SE. The stipulated four-band adjective
 #' (Poor/Moderate/Strong/Excellent) and the modal-band confidence
-#' qualifier (decisive/moderate/weak) are retired; the `bands` /
-#' `band_labels` arguments are deprecated (warned, ignored).
+#' qualifier (decisive/moderate/weak) are retired.
 #'
 #' @section The three read-outs of the sweep:
 #' At the matched design `(F/pi_hat, k, N)` the observed coefficient is
@@ -114,10 +113,6 @@
 #' @param method One of `"empirical"` (default; uses the bundled sim-derived
 #'   empirical q_hat sampling distribution) or `"delta"` (closed-form normal
 #'   approximation from delta-method SE).
-#' @param bands Deprecated (grassr 0.7.1). The stipulated four-band
-#'   partition of `q` is retired; non-default values draw a warning and
-#'   are ignored.
-#' @param band_labels Deprecated (grassr 0.7.1). See `bands`.
 #' @param reference_type For `metric = "icc"` only. One of `"fitted"`
 #'   (default; GLMM-gap-corrected reference matching what practitioners
 #'   compute via `glmer`) or `"oracle"` (closed-form
@@ -217,9 +212,6 @@ position_on_surface <- function(obs_value = NULL,
                                 k = NULL,
                                 N = NULL,
                                 method = c("empirical", "delta"),
-                                bands = c(0.5, 0.625, 0.75, 0.875, 1.0),
-                                band_labels = c("Poor", "Moderate",
-                                                "Strong", "Excellent"),
                                 surface_data = NULL,
                                 ratings = NULL,
                                 reference_type = c("fitted", "oracle"),
@@ -293,22 +285,6 @@ position_on_surface <- function(obs_value = NULL,
   }
   k <- as.integer(k)
   N <- as.integer(N)
-
-  # v0.7.1: the stipulated four-band partition of q and the modal-band
-  # qualifier are retired (they reproduced the labeled-band convention the
-  # framework replaces). The arguments remain in the signature so 0.6.x
-  # call sites keep working; non-default values draw a deprecation warning
-  # and are ignored.
-  default_bands  <- c(0.5, 0.625, 0.75, 0.875, 1.0)
-  default_labels <- c("Poor", "Moderate", "Strong", "Excellent")
-  if (!isTRUE(all.equal(bands, default_bands)) ||
-      !identical(band_labels, default_labels)) {
-    warning("`bands` / `band_labels` are deprecated as of grassr 0.7.1 and ",
-            "ignored: the stipulated q-band partition and modal-band ",
-            "qualifier are retired. The report now carries a consistency ",
-            "band on q (test inversion) and a pooled percentile.",
-            call. = FALSE)
-  }
 
   # `method = "empirical"` is serviced by the bundled empirical q_hat
   # surface when `surface_data` is NULL. The ICC branch still requires a
@@ -1161,8 +1137,8 @@ pooled_percentile_from_sweep <- function(q, p) {
 # flagged rather than silently truncated.
 consistency_band_from_sweep <- function(q, p, level = 0.95) {
   alpha <- 1 - level
-  lo_p <- 1 - alpha / 2   # p above this: observation below quality q
-  hi_p <- alpha / 2       # p below this: observation above quality q
+  lo_p <- 1 - alpha / 2   # p above this: observation too HIGH for quality q
+  hi_p <- alpha / 2       # p below this: observation too LOW for quality q
   ok <- is.finite(p)
   q <- q[ok]; p <- p[ok]
   n <- length(q)
@@ -1182,20 +1158,24 @@ consistency_band_from_sweep <- function(q, p, level = 0.95) {
 
   if (length(cons) == 0L) {
     if (all(p > lo_p)) {
-      # Observation below even the lowest calibrated quality.
-      return(list(lo = NA_real_, hi = q[1L], level = level,
-                  open_low = TRUE, open_high = FALSE,
-                  note = sprintf(
-                    "Observed value below the sampling range of the lowest calibrated quality (q = %.2f); consistency band open below the calibrated grid.",
-                    q[1L])))
-    }
-    if (all(p < hi_p)) {
-      # Observation above even the highest calibrated quality.
+      # P_q ~ 1 at every calibrated q: the observation ranks above the
+      # sampling range of even the highest calibrated quality, so the
+      # band is open above the grid.
       return(list(lo = q[n], hi = NA_real_, level = level,
                   open_low = FALSE, open_high = TRUE,
                   note = sprintf(
                     "Observed value above the sampling range of the highest calibrated quality (q = %.2f); consistency band open above the calibrated grid.",
                     q[n])))
+    }
+    if (all(p < hi_p)) {
+      # P_q ~ 0 at every calibrated q: the observation ranks below the
+      # sampling range of even the lowest calibrated quality, so the
+      # band is open below the grid.
+      return(list(lo = NA_real_, hi = q[1L], level = level,
+                  open_low = TRUE, open_high = FALSE,
+                  note = sprintf(
+                    "Observed value below the sampling range of the lowest calibrated quality (q = %.2f); consistency band open below the calibrated grid.",
+                    q[1L])))
     }
     # p jumps across the whole consistent range between two grid points
     # (very tight sampling distributions relative to grid spacing):

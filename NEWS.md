@@ -1,9 +1,47 @@
+# grassr 0.7.2
+
+The open-calibration release. The calibration's remaining bounds are
+compute limits rather than method limits, and the package now includes
+the machinery for anyone to remove them.
+
+## Contribute compute from the installed package
+
+Three new functions:
+
+* `grass_calibration_manifest()` -- the 2,166 open calibration blocks
+  (null tail top-ups, a prevalence-stratified null, intermediate rater
+  counts), each a seeded bite-sized cell.
+* `grass_contribute()` -- benchmarks the machine, answers "what would
+  five hours buy?" (`dry_run = TRUE`), runs selected blocks from their
+  declared seeds, and writes a submission bundle with checksums and
+  session information. Runs are bit-reproducible at a pinned package
+  version. No network access; writes only to the caller's directory.
+* `grass_verify_contribution()` -- checks a bundle by checksum,
+  completeness, and seed replay, for contributors before submission and
+  maintainers at intake.
+
+Submissions land as pull requests on the repository's
+`calibration-contrib` branch; see CONTRIBUTING.md (new). Every block's
+seed (20300000 + block_id) is disjoint from the shipped programs'
+seeds, so contributed draws can never replay shipped draws.
+
+The vignette gains a closing section, "Extending the calibration",
+that walks the contributor path from the bundled manifest to the pull
+request.
+
 # grassr 0.7.1
 
 The card-redesign release. The headline reading changes from a
 nearest-cell surface percentile with a four-band adjective to a pooled
 percentile plus a consistency band on panel quality, and `delta_hat`
 becomes an implied-quality spread. Supersedes the 0.7.0 tarball.
+
+## Single vignette
+
+The `reporting-card` and `methods-companion` vignettes are merged into
+one: `vignette("grassr")` carries the whole story, from why fixed
+labels mislead through two synthetic worked panels, the full API, and
+the calibration machinery behind the flag.
 
 ## Pooled percentile + consistency band (sweep redesign)
 
@@ -29,8 +67,26 @@ reports three read-outs of one object:
 The stipulated four-band partition (Poor / Moderate / Strong /
 Excellent) and the modal-band bootstrap qualifier (decisive / moderate /
 weak), with their 0.60 / 0.90 cuts, are retired. The `bands` and
-`band_labels` arguments to `position_on_surface()` and `grass_report()`
-are deprecated (non-default values warn and are ignored).
+`band_labels` arguments are removed from `position_on_surface()` and
+`grass_report()` outright, along with the legacy `delta_thresholds`
+override on `check_asymmetry()` / `grass_report()` and the never-wired
+`grass_spec_*()` constructor family (and the internal spec-dispatch and
+retired `classify()` machinery behind it). None of this ever shipped in
+a CRAN release, so it is gone without deprecation shims.
+
+## Correctness and determinism
+
+* Fixed an inversion in the consistency band's two degenerate branches:
+  an observation below the achievable range of every calibrated quality
+  reported a band open *above* the grid (a worst-possible panel printed
+  as consistent with near-perfect quality). Off-range observations now
+  open the band on the correct side, with regression tests in both
+  directions and a monotonicity test on the band endpoints.
+* The divergent-branch latent-class bootstrap is now seeded inside
+  `grass_report()`, so the per-rater confidence intervals on a card are
+  deterministic: the same rating matrix always prints the same card.
+  `latent_class_fit()` restores the caller's RNG state after a seeded
+  call.
 
 ## delta-hat is now an implied-quality spread (Option B)
 

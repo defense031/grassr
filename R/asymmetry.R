@@ -353,12 +353,6 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #'   family.
 #' @param occasion Reserved for `axis = "intra"` (a vector / factor
 #'   identifying viewing occasion); ignored when `axis = "inter"`.
-#' @param delta_thresholds Deprecated (grassr 0.7.0). The per-(k, N)
-#'   size-alpha threshold table is retired; the flag is now `delta_hat`'s
-#'   percentile on the matched null distribution. Supplying a length-2
-#'   `c(caution, divergent)` pair (in pp) is still honored for a single
-#'   call with the legacy pp-cut semantics, but raises a deprecation
-#'   warning. Default `NULL` (use the matched-null percentile convention).
 #' @param ... Forwarded to [position_on_surface()] (e.g. `reference_type`).
 #'
 #' @return An S3 object of class `grass_asymmetry_panel` with fields:
@@ -371,10 +365,9 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #'   (`k`, `N`, `q`, `q_hat_panel`, `n_draws`, `snapped`,
 #'   `unstable_tail`), or `NULL` if uncalibrated
 #' - `thresholds`: named numeric vector of the implied (caution, divergent)
-#'   pp cuts (95th/99th of the matched null), or the legacy user-supplied
-#'   cuts
+#'   pp cuts (95th/99th of the matched null)
 #' - `thresholds_source`: one of `"matched_null_ecdf"`,
-#'   `"user_supplied_legacy"`, `"not_calibrated"`
+#'   `"not_applicable_k2"`, `"not_calibrated"`
 #' - `panel`: data.frame with `coefficient`, `observed`, `implied_q`,
 #'   `percentile_pp` (pooled percentile), `clamped`, `in_delta_hat`
 #' - `notes`: character vector of unique caveats from the underlying
@@ -398,7 +391,6 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 check_asymmetry <- function(ratings,
                             axis = c("inter", "intra"),
                             occasion = NULL,
-                            delta_thresholds = NULL,
                             ...) {
   # ---- Soft-deprecation dispatch for OLD `check_asymmetry(se, sp, ...)` ---
   # Detection: the OLD signature was `check_asymmetry(se, sp, ...)` where
@@ -471,28 +463,10 @@ check_asymmetry <- function(ratings,
   Y <- normalize_ratings(ratings)
   panel_obs <- compute_panel(Y, axis = axis, occasion = occasion)
 
-  # v0.7.0: the per-(k, N) threshold table is retired. The flag comes from
-  # delta_hat's percentile on the matched (k, N, q_hat) null ECDF
-  # (>= 95th caution, >= 99th divergent), resolved after the panel's
-  # q_hat is known. A user-supplied `delta_thresholds` pair is honored
-  # with the legacy pp-cut semantics, with a deprecation warning.
-  legacy_thresholds <- NULL
-  thresholds_note   <- ""
-  if (!is.null(delta_thresholds)) {
-    if (length(delta_thresholds) != 2L ||
-        !is.numeric(delta_thresholds) ||
-        !all(is.finite(delta_thresholds)) ||
-        delta_thresholds[1L] <= 0 ||
-        delta_thresholds[2L] <= delta_thresholds[1L]) {
-      stop("`delta_thresholds` must be a length-2 numeric vector with ",
-           "0 < caution < divergent (in pp).", call. = FALSE)
-    }
-    warning("`delta_thresholds` is deprecated as of grassr 0.7.0: the flag ",
-            "is now delta_hat's percentile on the matched null ",
-            "distribution. The supplied pp cuts are honored for this call.",
-            call. = FALSE)
-    legacy_thresholds <- delta_thresholds
-  }
+  # The flag comes from delta_hat's percentile on the matched (k, N, q_hat)
+  # null ECDF (>= 95th caution, >= 99th divergent), resolved after the
+  # panel's q_hat is known.
+  thresholds_note <- ""
 
   # The panel-name -> surface-metric mapping. compute_panel() returns
   # `ac1` (panel-friendly short name) but position_on_surface() expects
@@ -634,24 +608,17 @@ check_asymmetry <- function(ratings,
     thresholds_note <- "delta_null_ecdf unavailable; flag not calibrated."
   }
 
-  flag <- if (!is.null(legacy_thresholds)) {
-    if (delta_hat < legacy_thresholds[1L]) "aligned"
-    else if (delta_hat < legacy_thresholds[2L]) "caution"
-    else "divergent"
-  } else if (k2_degenerate) {
+  flag <- if (k2_degenerate) {
     "not_applicable"
   } else {
     delta_flag_from_percentile(delta_percentile,
       if (!is.null(null_cell)) null_cell$conventions
       else c(caution = 0.95, divergent = 0.99))
   }
-  thresholds_source <- if (!is.null(legacy_thresholds)) "user_supplied_legacy"
-                       else if (k2_degenerate) "not_applicable_k2"
+  thresholds_source <- if (k2_degenerate) "not_applicable_k2"
                        else if (!is.null(null_cell)) "matched_null_ecdf"
                        else "not_calibrated"
-  report_cuts <- if (!is.null(legacy_thresholds))
-    setNames(as.numeric(legacy_thresholds), c("caution", "divergent"))
-  else implied_cuts
+  report_cuts <- implied_cuts
 
   combined_notes <- unique(c(
     unlist(lapply(positions, `[[`, "notes")),

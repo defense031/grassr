@@ -11,8 +11,6 @@ position_on_surface(
   k = NULL,
   N = NULL,
   method = c("empirical", "delta"),
-  bands = c(0.5, 0.625, 0.75, 0.875, 1),
-  band_labels = c("Poor", "Moderate", "Strong", "Excellent"),
   surface_data = NULL,
   ratings = NULL,
   reference_type = c("fitted", "oracle"),
@@ -41,12 +39,6 @@ supplied (auto-derived as \code{nrow(Y)}).}
 \item{method}{One of \code{"empirical"} (default; uses the bundled sim-derived
 empirical q_hat sampling distribution) or \code{"delta"} (closed-form normal
 approximation from delta-method SE).}
-
-\item{bands}{Deprecated (grassr 0.7.1). The stipulated four-band
-partition of \code{q} is retired; non-default values draw a warning and
-are ignored.}
-
-\item{band_labels}{Deprecated (grassr 0.7.1). See \code{bands}.}
 
 \item{surface_data}{Optional. A list with one or more of the following
 components, used when \code{method = "empirical"}:
@@ -131,8 +123,7 @@ consistency band on panel quality. \code{q_hat} is promoted to the card via
 the consistency band; it also carries the surface parameterization and
 delta-method SE. The stipulated four-band adjective
 (Poor/Moderate/Strong/Excellent) and the modal-band confidence
-qualifier (decisive/moderate/weak) are retired; the \code{bands} /
-\code{band_labels} arguments are deprecated (warned, ignored).
+qualifier (decisive/moderate/weak) are retired.
 }
 \section{The three read-outs of the sweep}{
 

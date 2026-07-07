@@ -312,6 +312,14 @@ latent_class_fit <- function(ratings,
   }
   B <- as.integer(B)
 
+  # A supplied seed must not clobber the caller's RNG state: save and
+  # restore .Random.seed around the seeded bootstrap draws below.
+  if (!is.null(seed) && exists(".Random.seed", envir = globalenv())) {
+    old_seed <- get(".Random.seed", envir = globalenv())
+    on.exit(assign(".Random.seed", old_seed, envir = globalenv()),
+            add = TRUE)
+  }
+
   # Method dispatch.
   if (is.null(method)) {
     method <- if (k == 2L) "hui_walter" else "dawid_skene_em"

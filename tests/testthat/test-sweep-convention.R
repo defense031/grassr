@@ -74,14 +74,11 @@ test_that("pooled percentile is in [0, 1] with a documented basis", {
 })
 
 # ---------------------------------------------------------------------------
-# (d) Deprecation: non-default bands warn "deprecated"; defaults are silent.
+# (d) The retired q-band arguments are gone from the signature entirely
+# (removed pre-CRAN; no deprecation shim).
 # ---------------------------------------------------------------------------
-test_that("non-default bands warn deprecated; defaults are silent", {
-  expect_warning(
-    position_on_surface(0.62, "pabak", pi_hat = 0.5, k = 5, N = 200,
-                        bands = c(0.5, 0.6, 0.7, 0.8, 1.0)),
-    "deprecated"
-  )
+test_that("the retired q-band arguments are gone from the signature", {
+  expect_false("bands" %in% names(formals(position_on_surface)))
   expect_no_warning(
     position_on_surface(0.62, "pabak", pi_hat = 0.5, k = 5, N = 200)
   )

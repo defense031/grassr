@@ -8,7 +8,7 @@
 #' `grass_compute()` is deprecated in grass 0.2.0. The new headline API is
 #' `grass_report(ratings = Y)` returning a `grass_card` object. The full
 #' coefficient panel is available via `summary()` or `as.data.frame()`. See
-#' `vignette("reporting-card")` and [grass_report()].
+#' `vignette("grassr")` and [grass_report()].
 #'
 #' @param data Input data. Form depends on `format`:
 #'   * `"matrix"` -- a 2x2 integer count matrix with `R1` rows, `R2` columns.
@@ -46,7 +46,7 @@ grass_compute <- function(data, format = c("wide", "matrix", "long", "paired"),
     paste0(
       "`grass_compute()` is deprecated in grass 0.2.0. ",
       "The new headline API is `grass_report(ratings = Y)`. ",
-      "See `vignette('reporting-card')` and `?grass_report`."
+      "See `vignette('grassr')` and `?grass_report`."
     )
   )
   format <- match.arg(format)

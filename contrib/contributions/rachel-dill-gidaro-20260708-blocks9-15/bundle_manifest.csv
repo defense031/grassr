@@ -1,0 +1,2 @@
+"block_id","program","k","N","q","prev","draws","seed","wall_secs","file","md5","demo","package_version","r_version"
+9,"tail_topup",5,200,0.97,NA,50000,20300009,8600.229,"block_0009.rds","b803d0d99b112d44700eddda7cc0efe2",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"

@@ -36,14 +36,24 @@ are never stored or submitted.
 ## Intake (maintainers)
 
 1. `grass_verify_contribution(dir)` on the submitted bundle: checksums,
-   completeness, leading-draw seed replay.
-2. Re-execute a random sample of the claimed blocks from their manifest
-   seeds at the bundle's recorded package version. Blocks reproduce bit
-   for bit; a block that does not reproduce is returned with the diff,
-   not merged.
+   completeness, and a leading-draw seed replay. The replay re-runs only
+   the first few hundred draws from the block's seed at the recorded
+   package version. That is enough to prove the bundle came from the real
+   pipeline: a contributor cannot reproduce those draws without having run
+   it. It costs seconds, never the block's full runtime.
+2. Sanity-check the submitted draws against expectation: finite rate,
+   `delta_hat` quantiles, implied qualities centered on the cell's `q`, a
+   balanced prevalence sweep, and consistency with neighboring cells. A
+   block that fails is returned with the diff, not merged. Do not
+   re-execute whole blocks at intake. Re-running a block reproduces the
+   contributor's compute and defeats the point of distributed calibration.
+   A full re-run is only ever a rare, random spot-audit of one small
+   block; routine trust comes from the seed replay above plus the
+   cross-verification of duplicate runs over time.
 3. Merged blocks are marked `claimed` in `contrib/calibration_manifest.csv`
    on this branch (the authoritative live manifest; the package bundles
-   a snapshot).
+   a snapshot). Edit the one status cell by hand so the diff is a single
+   line; a `write.csv` round-trip reformats the whole file.
 4. At the next release, verified draws enter the bundled reference via
    `data-raw/`, and the contribution is credited in NEWS.md.
 

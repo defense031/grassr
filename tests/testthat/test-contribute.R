@@ -77,3 +77,61 @@ test_that("verification passes a clean bundle and catches tampering", {
                  "did not fully verify")
   expect_false(v2$checksum_ok[v2$block_id == 30L])
 })
+
+test_that("replay tolerates last-bit BLAS drift but not fabricated draws", {
+  a <- matrix(c(0.0037574410853693507, 0.97486828240252910,
+                0.97483070799167537, 0.97486828240252910), 1L, 4L)
+  expect_true(replay_matches(a, a, 1e-8))
+
+  # Rachel's block 10, PR #4: one ULP in the AC1 mean, scaled by 100 into
+  # `delta` because delta is carried in quality percentage points.
+  drift <- a
+  drift[1L, 1L] <- 0.0037574410853551399
+  drift[1L, 3L] <- 0.97483070799167548
+  expect_true(max(abs(drift - a)) < 1e-13)
+  expect_false(identical(drift, a))
+  expect_true(replay_matches(drift, a, 1e-8))
+
+  # A block that did not come from the pipeline cannot land within tol.
+  fake <- a
+  fake[1L, 1L] <- a[1L, 1L] + 1e-6
+  expect_false(replay_matches(fake, a, 1e-8))
+
+  # Non-finite draws must agree position for position, not just in count.
+  na1 <- matrix(c(NA_real_, 1, 2, 3), 1L, 4L)
+  na2 <- matrix(c(1, NA_real_, 2, 3), 1L, 4L)
+  expect_false(replay_matches(na1, na2, 1e-8))
+  expect_true(replay_matches(na1, na1, 1e-8))
+
+  all_na <- matrix(NA_real_, 1L, 4L)
+  expect_true(replay_matches(all_na, all_na, 1e-8))
+  expect_false(replay_matches(a, a[, 1:3, drop = FALSE], 1e-8))
+})
+
+test_that("grass_verify_contribution accepts drift and rejects fabrication", {
+  d <- file.path(tempdir(), "contrib_tol_test")
+  on.exit(unlink(d, recursive = TRUE), add = TRUE)
+  suppressMessages(grass_contribute(dir = d, blocks = 30L, draws = 25L))
+  f <- file.path(d, "block_0030.rds")
+  mf <- file.path(d, "bundle_manifest.csv")
+
+  perturb <- function(by) {
+    x <- readRDS(f)
+    x$draws$delta[1L] <- x$draws$delta[1L] + by
+    saveRDS(x, f)
+    b <- utils::read.csv(mf, stringsAsFactors = FALSE)
+    b$md5 <- unname(tools::md5sum(f))
+    utils::write.csv(b, mf, row.names = FALSE)
+  }
+
+  perturb(1e-14)
+  v <- suppressMessages(grass_verify_contribution(d, draws = 10L))
+  expect_true(v$checksum_ok)
+  expect_true(v$replay_ok)
+
+  perturb(1e-3)
+  expect_warning(v2 <- grass_verify_contribution(d, draws = 10L),
+                 "did not fully verify")
+  expect_true(v2$checksum_ok)
+  expect_false(v2$replay_ok)
+})

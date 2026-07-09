@@ -225,22 +225,44 @@ grass_contribute <- function(dir, hours = 1, program = NULL, blocks = NULL,
   invisible(m)
 }
 
+# Does a replayed draw matrix match the submitted one?
+#
+# Non-finite entries must agree position for position; finite entries must
+# agree to `tol`. Exact equality is not portable: a different BLAS or R build
+# reorders the summation inside the AC1 mean, which moves a last bit on
+# roughly one draw in a few thousand.
+replay_matches <- function(got, replay, tol) {
+  if (!identical(dim(got), dim(replay))) return(FALSE)
+  fin <- is.finite(got)
+  if (!identical(fin, is.finite(replay))) return(FALSE)
+  if (!any(fin)) return(TRUE)
+  max(abs(got[fin] - replay[fin])) < tol
+}
+
 #' Verify a contribution bundle
 #'
 #' Checks a bundle written by \code{\link{grass_contribute}}: file checksums
 #' against the bundle manifest, package-version match, completeness of each
-#' block, and bit-reproducibility of the first draws of every block from its
+#' block, and reproducibility of the first draws of every block from its
 #' manifest seed. Contributors can run it before submitting; maintainers run
 #' it (and a full re-execution of sampled blocks) at intake.
+#'
+#' The replay is compared to `tol`, not bit-for-bit. Floating-point summation
+#' is not associative, so a draw's implied qualities can land a last bit apart
+#' under a different BLAS or R build, and `delta` carries that bit scaled by
+#' 100. Genuine replays agree to about 1e-14; a fabricated block cannot agree
+#' to `tol` without having run the pipeline.
 #'
 #' @param dir The bundle directory.
 #' @param draws Number of leading draws per block to replay from the seed.
 #'   The draw order is sequential from one seeding, so a leading replay is
 #'   exact regardless of how the original run was chunked.
+#' @param tol Absolute tolerance for the replayed draws. Non-finite draws must
+#'   still match position for position.
 #' @return Invisibly, a data frame with one row per block and logical
 #'   columns \code{checksum_ok}, \code{complete}, \code{replay_ok}.
 #' @export
-grass_verify_contribution <- function(dir, draws = 200L) {
+grass_verify_contribution <- function(dir, draws = 200L, tol = 1e-8) {
   mf <- file.path(dir, "bundle_manifest.csv")
   if (!file.exists(mf)) stop("no bundle_manifest.csv in `dir`")
   bundle <- utils::read.csv(mf, stringsAsFactors = FALSE)
@@ -281,7 +303,7 @@ grass_verify_contribution <- function(dir, draws = 200L) {
                              c("delta", "q_pabak", "q_mean_ac1",
                                "q_fleiss_kappa")])
     dimnames(got) <- NULL
-    out$replay_ok[i] <- identical(got, replay)
+    out$replay_ok[i] <- replay_matches(got, replay, tol)
   }
   ok <- all(out$checksum_ok %in% TRUE) && all(out$complete %in% TRUE) &&
     all(out$replay_ok[!is.na(out$replay_ok)] %in% TRUE)

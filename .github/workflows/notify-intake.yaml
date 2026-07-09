@@ -21,16 +21,19 @@ permissions:
 
 jobs:
   notify:
-    # Drafts are not ready for intake, and the maintainer does not need to be
-    # notified of his own contributions.
+    # Drafts are not ready for intake.
     #
     # `edited` fires on title and body changes too, which are not intake events.
     # Only a base-branch change is: a PR retargeted onto calibration-contrib was
     # opened somewhere else, so the `opened` ping never reached the maintainer.
     # github.event.changes.base is present only when the base actually moved.
+    #
+    # The "don't ping me about my own work" skip is NOT here, because the PR's
+    # opener is not always its author: the maintainer opens PRs carrying a
+    # trusted collaborator's compute (PR #6). It lives in the script below,
+    # keyed on who authored the commits.
     if: >-
       github.event.pull_request.draft == false &&
-      github.event.pull_request.user.login != github.repository_owner &&
       (github.event.action != 'edited' || github.event.changes.base != null)
     runs-on: ubuntu-latest
     steps:
@@ -54,16 +57,49 @@ jobs:
               return;
             }
 
-            const author = context.payload.pull_request.user.login;
             const owner = context.repo.owner;
             const prNum = context.payload.pull_request.number;
+
+            // Credit — and the skip — follow commit authorship, not who opened
+            // the PR. The maintainer opens PRs carrying a collaborator's
+            // compute; that is still a contribution needing intake, and the
+            // opener-keyed skip silently suppressed the ping on PR #6.
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
+              owner,
+              repo: context.repo.repo,
+              pull_number: prNum,
+            });
+
+            const logins = [...new Set(
+              commits.map((c) => c.author && c.author.login).filter(Boolean)
+            )];
+            const names = [...new Set(
+              commits.map((c) => c.commit.author && c.commit.author.name).filter(Boolean)
+            )];
+            const opener = context.payload.pull_request.user.login;
+
+            // Skip only when GitHub positively resolved every commit to the
+            // maintainer's account. An unresolved commit (no linked email --
+            // which is every contributor's, in practice) must never skip: a
+            // missed ping is a bundle that sits unverified, whereas a spurious
+            // ping costs one email. Fail toward notifying.
+            if (logins.length > 0 && logins.every((l) => l === owner)) {
+              core.info(`All ${commits.length} commit(s) authored by ${owner}; skipping.`);
+              return;
+            }
+
+            // Mention when we can, name when we cannot. See thank-contributors
+            // for the same fallback chain.
+            const credited = logins.length
+              ? logins.map((l) => `@${l}`).join(', ')
+              : (opener !== owner ? `@${opener}` : (names.join(', ') || `@${opener}`));
             const blockWord = blocks === 1 ? 'block' : 'blocks';
 
             const body = [
-              `@${owner} — #${prNum} from @${author} is awaiting calibration ` +
+              `@${owner} — #${prNum} from ${credited} is awaiting calibration ` +
                 `intake (${blocks} ${blockWord}).`,
               ``,
-              `Thanks for contributing, @${author}. A maintainer will verify the ` +
+              `Thanks for contributing, ${credited}. A maintainer will verify the ` +
                 `bundle and merge it.`,
             ].join('\n');
 

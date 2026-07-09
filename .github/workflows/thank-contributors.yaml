@@ -74,15 +74,49 @@ jobs:
             const done = new Set([...claimed, ...prIds]).size;
             const outstanding = total - done;
 
-            const author = context.payload.pull_request.user.login;
             const prTitle = context.payload.pull_request.title;
             const prNum = context.payload.pull_request.number;
+
+            // Credit the people who authored the commits, not whoever opened
+            // the PR. The maintainer opens PRs carrying a trusted
+            // collaborator's compute, and thanking himself for it is wrong
+            // (PR #6 did exactly that; PR #1 was Sebastian's work too).
+            //
+            // Commit -> GitHub account resolution is unreliable: it needs the
+            // commit's author email registered on the account, and no
+            // contributor's is. So fall back in order:
+            //   1. commit author logins, when GitHub resolved them (@-mention),
+            //   2. the PR opener, when the opener is not the maintainer
+            //      (covers a contributor opening their own PR),
+            //   3. the raw git author name (correct credit, no notification --
+            //      the right outcome for a contributor with no GitHub account).
+            const commits = await github.paginate(github.rest.pulls.listCommits, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNum,
+            });
+            const logins = [...new Set(
+              commits.map((c) => c.author && c.author.login).filter(Boolean)
+            )];
+            const names = [...new Set(
+              commits.map((c) => c.commit.author && c.commit.author.name).filter(Boolean)
+            )];
+            const opener = context.payload.pull_request.user.login;
+
+            let author;
+            if (logins.length) {
+              author = logins.map((l) => `@${l}`).join(', ');
+            } else if (opener !== context.repo.owner) {
+              author = `@${opener}`;
+            } else {
+              author = names.join(', ') || `@${opener}`;
+            }
             const n = prIds.size;
             const blockWord = n === 1 ? 'block' : 'blocks';
             const passVerb = n === 1 ? 'is' : 'are';
 
             const body = [
-              `Hi @${author}, thank you for contributing! 🌱`,
+              `Hi ${author}, thank you for contributing! 🌱`,
               ``,
               `Your pull request (**${prTitle}**, #${prNum}) has been verified and ` +
                 `merged into the grassr calibration repository. ` +

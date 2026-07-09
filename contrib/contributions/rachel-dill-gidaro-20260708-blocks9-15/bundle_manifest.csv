@@ -1,0 +1,8 @@
+"block_id","program","k","N","q","prev","draws","seed","wall_secs","file","md5","demo","package_version","r_version"
+9,"tail_topup",5,200,0.97,NA,50000,20300009,8600.229,"block_0009.rds","b803d0d99b112d44700eddda7cc0efe2",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"
+10,"tail_topup",6,200,0.97,NA,50000,20300010,9535.925,"block_0010.rds","ed224554ffaa9f7120c740e3df8ea44d",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"
+12,"tail_topup",8,200,0.97,NA,50000,20300012,11001.516,"block_0012.rds","b6b7cb6a56c1c03dded345fc208288fb",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"
+13,"tail_topup",8,300,0.75,NA,50000,20300013,5672.439,"block_0013.rds","9318e54c9576a6786c8d4954bf9f7504",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"
+14,"tail_topup",8,300,0.85,NA,50000,20300014,7515.267,"block_0014.rds","d118ff7d4e4edf0d711c13da1fe8e6b2",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"
+11,"tail_topup",6,1000,0.65,NA,50000,20300011,12666.34,"block_0011.rds","5a10c7b1b27d15eea099a4b7f0c80065",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"
+15,"tail_topup",8,500,0.75,NA,50000,20300015,8053.667,"block_0015.rds","15f49f747827b71a3489b987e34a3e6a",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"

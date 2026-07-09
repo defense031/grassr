@@ -1,0 +1,94 @@
+name: Guard calibration PRs against main
+
+# A calibration bundle belongs on the calibration-contrib staging branch, never
+# on main. GitHub defaults a fork PR's base to the upstream default branch, so
+# a contributor who does nothing wrong still lands on main by default.
+#
+# Such a PR is quietly dangerous. Its diff is main..staging, so it carries the
+# whole staging surface — every raw block, the 2,166-row manifest, CONTRIBUTING
+# — and it can report MERGEABLE, because the workflow copies on both branches
+# are byte-identical and git auto-resolves the add/add. Meanwhile notify-intake
+# is filtered to `branches: [calibration-contrib]` and stays silent, so nothing
+# pings the maintainer. Nothing warns anyone. (PR #5, 2026-07-09.)
+#
+# This job fails the check and tells the contributor how to retarget. Failing is
+# the point: it is the only signal that survives a mis-targeted PR.
+#
+# pull_request_target is required for a write-scoped token on fork PRs. Safe
+# here: the contributor's code is never checked out or executed. Only the PR's
+# file list is read and a comment posted, both via the API.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if the PR carries calibration blocks
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const blocks = files.filter(
+              (f) => f.status !== 'removed' && /block_\d+\.rds$/.test(f.filename)
+            ).length;
+
+            if (blocks === 0) {
+              core.info('No calibration blocks in this PR against main; nothing to guard.');
+              return;
+            }
+
+            const marker = '<!-- contrib-base-guard -->';
+            const prNum = context.payload.pull_request.number;
+
+            // Post once. synchronize fires on every push to the branch.
+            const existing = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNum,
+            });
+
+            if (!existing.some((c) => c.body.includes(marker))) {
+              const head = context.payload.pull_request.head.ref;
+              const body = [
+                marker,
+                `This pull request targets \`main\`, but calibration bundles are ` +
+                  `merged into the \`calibration-contrib\` staging branch. Blocks ` +
+                  `reach \`main\` later, compiled into the reference surfaces at a ` +
+                  `release.`,
+                ``,
+                `Nothing is wrong with your compute — GitHub just defaults a fork's ` +
+                  `base branch to \`main\`. Retarget this PR with **Edit** next to ` +
+                  `the title, then change the base branch to \`calibration-contrib\`. ` +
+                  `Your commits and authorship carry over; there is no need to ` +
+                  `reopen or push again.`,
+                ``,
+                `Once retargeted this check disappears, since \`R-CMD-check\` only ` +
+                  `runs against \`main\`.`,
+                ``,
+                `<sub>Branch: \`${head}\` · ${blocks} block file(s) detected.</sub>`,
+              ].join('\n');
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNum,
+                body,
+              });
+            }
+
+            core.setFailed(
+              `${blocks} calibration block file(s) in a PR against main. ` +
+              `Retarget onto calibration-contrib.`
+            );

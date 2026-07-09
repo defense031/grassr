@@ -12,7 +12,7 @@ name: Notify maintainer of pending intake
 
 on:
   pull_request_target:
-    types: [opened, reopened, ready_for_review]
+    types: [opened, reopened, ready_for_review, edited]
     branches: [calibration-contrib]
 
 permissions:
@@ -23,9 +23,15 @@ jobs:
   notify:
     # Drafts are not ready for intake, and the maintainer does not need to be
     # notified of his own contributions.
+    #
+    # `edited` fires on title and body changes too, which are not intake events.
+    # Only a base-branch change is: a PR retargeted onto calibration-contrib was
+    # opened somewhere else, so the `opened` ping never reached the maintainer.
+    # github.event.changes.base is present only when the base actually moved.
     if: >-
       github.event.pull_request.draft == false &&
-      github.event.pull_request.user.login != github.repository_owner
+      github.event.pull_request.user.login != github.repository_owner &&
+      (github.event.action != 'edited' || github.event.changes.base != null)
     runs-on: ubuntu-latest
     steps:
       - name: Compose and post intake ping

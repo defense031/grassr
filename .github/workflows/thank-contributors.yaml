@@ -1,0 +1,105 @@
+name: Thank calibration contributors
+
+# When a calibration-block PR is merged into the staging branch, post a
+# thank-you comment that @-mentions the contributor. The mention triggers
+# GitHub's built-in notification email — no external mail service required.
+#
+# pull_request_target (not pull_request) is required so the workflow gets a
+# write-scoped token on PRs opened from forks. It is safe here because the
+# workflow never checks out or executes the contributor's code: it only reads
+# the manifest from the base branch and posts a comment via the API.
+
+on:
+  pull_request_target:
+    types: [closed]
+    branches: [calibration-contrib]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  thank:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out base branch (post-merge manifest)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Compose and post thank-you
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // 1. Block IDs added by this PR (block_NNNN.rds filenames).
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const prIds = new Set();
+            for (const f of files) {
+              const m = f.filename.match(/block_(\d+)\.rds$/);
+              if (m && f.status !== 'removed') prIds.add(parseInt(m[1], 10));
+            }
+
+            // A PR with no calibration blocks (docs, etc.) gets no thank-you.
+            if (prIds.size === 0) {
+              core.info('No calibration blocks in this PR; skipping.');
+              return;
+            }
+
+            // 2. Manifest on the base branch: total rows + already-claimed IDs.
+            //    (No commas inside quoted fields, so a plain split is safe here.)
+            const rows = fs
+              .readFileSync('contrib/calibration_manifest.csv', 'utf8')
+              .trim()
+              .split('\n');
+            const header = rows[0].split(',').map((s) => s.replace(/"/g, ''));
+            const idIdx = header.indexOf('block_id');
+            const stIdx = header.indexOf('status');
+            const claimed = new Set();
+            let total = 0;
+            for (let i = 1; i < rows.length; i++) {
+              const cols = rows[i].split(',').map((s) => s.replace(/"/g, ''));
+              total++;
+              if (cols[stIdx] === 'claimed') claimed.add(parseInt(cols[idIdx], 10));
+            }
+
+            // 3. done = union of already-claimed and this PR's blocks. Robust to
+            //    whether the maintainer's open->claimed flip has landed yet.
+            const done = new Set([...claimed, ...prIds]).size;
+            const outstanding = total - done;
+
+            const author = context.payload.pull_request.user.login;
+            const prTitle = context.payload.pull_request.title;
+            const prNum = context.payload.pull_request.number;
+            const n = prIds.size;
+            const blockWord = n === 1 ? 'block' : 'blocks';
+            const passVerb = n === 1 ? 'is' : 'are';
+
+            const body = [
+              `Hi @${author}, thank you for contributing! 🌱`,
+              ``,
+              `Your pull request (**${prTitle}**, #${prNum}) has been verified and ` +
+                `merged into the grassr calibration repository. ` +
+                `${n === 1 ? 'Your block' : `All ${n} ${blockWord}`} passed the full ` +
+                `intake check — checksum, seed-replay, and statistical sanity — and ` +
+                `${passVerb} now part of the staging surface.`,
+              ``,
+              `**${done} of ${total}** calibration blocks are now complete; ` +
+                `**${outstanding}** remain open. You can claim another anytime with ` +
+                '`grass_contribute()`.',
+              ``,
+              `Thanks for lending compute to the project.`,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNum,
+              body,
+            });

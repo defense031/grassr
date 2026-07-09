@@ -1,0 +1,69 @@
+name: Notify maintainer of pending intake
+
+# When a calibration-block PR is opened against the staging branch, post a
+# comment that @-mentions the maintainer. The mention triggers GitHub's
+# built-in notification email — no external mail service required. This is
+# the open-PR counterpart to thank-contributors.yaml, which fires on merge.
+#
+# pull_request_target (not pull_request) is required so the workflow gets a
+# write-scoped token on PRs opened from forks. It is safe here because the
+# workflow never checks out or executes the contributor's code: it reads the
+# PR's file list and posts a comment, both via the API.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review]
+    branches: [calibration-contrib]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  notify:
+    # Drafts are not ready for intake, and the maintainer does not need to be
+    # notified of his own contributions.
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login != github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compose and post intake ping
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Only calibration bundles get a ping. A docs or workflow PR
+            // against this branch is not an intake.
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const blocks = files.filter(
+              (f) => f.status !== 'removed' && /block_\d+\.rds$/.test(f.filename)
+            ).length;
+
+            if (blocks === 0) {
+              core.info('No calibration blocks in this PR; skipping.');
+              return;
+            }
+
+            const author = context.payload.pull_request.user.login;
+            const owner = context.repo.owner;
+            const prNum = context.payload.pull_request.number;
+            const blockWord = blocks === 1 ? 'block' : 'blocks';
+
+            const body = [
+              `@${owner} — #${prNum} from @${author} is awaiting calibration ` +
+                `intake (${blocks} ${blockWord}).`,
+              ``,
+              `Thanks for contributing, @${author}. A maintainer will verify the ` +
+                `bundle and merge it.`,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner,
+              repo: context.repo.repo,
+              issue_number: prNum,
+              body,
+            });

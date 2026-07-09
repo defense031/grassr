@@ -4,7 +4,13 @@
 \alias{check_asymmetry}
 \title{Cross-coefficient panel asymmetry diagnostic}
 \usage{
-check_asymmetry(ratings, axis = c("inter", "intra"), occasion = NULL, ...)
+check_asymmetry(
+  ratings,
+  axis = c("inter", "intra"),
+  occasion = NULL,
+  fit_icc = TRUE,
+  ...
+)
 }
 \arguments{
 \item{ratings}{User input: an \verb{N x k} binary matrix, an \code{N} x \code{k}
@@ -17,6 +23,12 @@ family.}
 
 \item{occasion}{Reserved for \code{axis = "intra"} (a vector / factor
 identifying viewing occasion); ignored when \code{axis = "inter"}.}
+
+\item{fit_icc}{If \code{FALSE}, skip the \code{lme4::glmer} fit behind \code{icc} and drop
+ICC from the panel. \code{icc} never enters \code{delta_hat}, and the fit draws no
+random numbers, so a caller that reports only \code{delta_hat} and the implied
+qualities gets identical results at a fraction of the cost. The Monte
+Carlo null loop sets this; interactive users should not.}
 
 \item{...}{Forwarded to \code{\link[=position_on_surface]{position_on_surface()}} (e.g. \code{reference_type}).}
 }

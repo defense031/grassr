@@ -60,9 +60,18 @@ gen_null_panel <- function(N, k, prev, q) {
 }
 
 # One null draw -> c(delta_hat, implied q for PABAK / mean AC1 / Fleiss).
+#
+# fit_icc = FALSE: the panel's ICC is fitted by lme4::glmer, costs roughly 16x
+# the rest of the panel at these cell sizes, and is discarded three lines down
+# -- ICC is excluded from delta_hat by construction. The fit consumes no random
+# numbers, so dropping it leaves the draw stream bit-identical; a contributor
+# running without lme4 installed replays bit-for-bit against a maintainer who
+# has it (verified across 40 blocks, PR #6). Skipping it also keeps the null
+# loop clear of lme4's Matrix ABI, which has twice killed R outright on
+# Windows R-devel with no output.
 one_null_draw <- function(N, k, prev, q) {
   res <- tryCatch(suppressWarnings(suppressMessages(
-    check_asymmetry(gen_null_panel(N, k, prev, q)))),
+    check_asymmetry(gen_null_panel(N, k, prev, q), fit_icc = FALSE))),
     error = function(e) NULL)
   if (is.null(res)) return(c(NA_real_, NA_real_, NA_real_, NA_real_))
   p <- res$panel

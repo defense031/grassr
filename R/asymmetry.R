@@ -353,6 +353,11 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #'   family.
 #' @param occasion Reserved for `axis = "intra"` (a vector / factor
 #'   identifying viewing occasion); ignored when `axis = "inter"`.
+#' @param fit_icc If `FALSE`, skip the `lme4::glmer` fit behind `icc` and drop
+#'   ICC from the panel. `icc` never enters `delta_hat`, and the fit draws no
+#'   random numbers, so a caller that reports only `delta_hat` and the implied
+#'   qualities gets identical results at a fraction of the cost. The Monte
+#'   Carlo null loop sets this; interactive users should not.
 #' @param ... Forwarded to [position_on_surface()] (e.g. `reference_type`).
 #'
 #' @return An S3 object of class `grass_asymmetry_panel` with fields:
@@ -391,6 +396,7 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 check_asymmetry <- function(ratings,
                             axis = c("inter", "intra"),
                             occasion = NULL,
+                            fit_icc = TRUE,
                             ...) {
   # ---- Soft-deprecation dispatch for OLD `check_asymmetry(se, sp, ...)` ---
   # Detection: the OLD signature was `check_asymmetry(se, sp, ...)` where
@@ -461,7 +467,8 @@ check_asymmetry <- function(ratings,
   # ---- Normal path: ratings-input panel diagnostic -----------------------
   axis <- match.arg(axis)
   Y <- normalize_ratings(ratings)
-  panel_obs <- compute_panel(Y, axis = axis, occasion = occasion)
+  panel_obs <- compute_panel(Y, axis = axis, occasion = occasion,
+                             fit_icc = fit_icc)
 
   # The flag comes from delta_hat's percentile on the matched (k, N, q_hat)
   # null ECDF (>= 95th caution, >= 99th divergent), resolved after the

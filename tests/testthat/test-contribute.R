@@ -135,3 +135,42 @@ test_that("grass_verify_contribution accepts drift and rejects fabrication", {
   expect_true(v2$checksum_ok)
   expect_false(v2$replay_ok)
 })
+
+test_that("skipping the discarded ICC fit leaves the draw stream untouched", {
+  skip_if_not_installed("lme4")
+
+  # one_null_draw() reports delta_hat and the three implied qualities, and
+  # never ICC. The glmer fit behind ICC therefore only costs time -- provided
+  # it draws no random numbers. If it ever did, a contributor without lme4
+  # would produce a different stream than a maintainer with it, and every
+  # seed-replay across the open calibration program would break. Pin it.
+  draw <- function(N, k, prev, q, fit) {
+    res <- suppressWarnings(suppressMessages(
+      check_asymmetry(gen_null_panel(N, k, prev, q), fit_icc = fit)))
+    p <- res$panel
+    q_of <- function(nm) {
+      i <- which(p$coefficient == nm)
+      if (length(i) == 1L) p$implied_q[i] else NA_real_
+    }
+    c(as.numeric(res$delta_hat), q_of("pabak"), q_of("mean_ac1"),
+      q_of("fleiss_kappa"))
+  }
+
+  for (cell in list(c(40, 5, 0.20, 0.85), c(30, 3, 0.50, 0.75))) {
+    N <- cell[1]; k <- cell[2]; prev <- cell[3]; q <- cell[4]
+    set.seed(4242)
+    with_icc <- t(vapply(1:5, function(i) draw(N, k, prev, q, TRUE), numeric(4)))
+    set.seed(4242)
+    no_icc <- t(vapply(1:5, function(i) draw(N, k, prev, q, FALSE), numeric(4)))
+    expect_identical(no_icc, with_icc)
+  }
+
+  # The panel still carries ICC when asked, and drops it when not.
+  set.seed(7)
+  Y <- gen_null_panel(60L, 4L, 0.4, 0.9)
+  full <- suppressWarnings(suppressMessages(check_asymmetry(Y)))
+  lean <- suppressWarnings(suppressMessages(check_asymmetry(Y, fit_icc = FALSE)))
+  expect_true("icc" %in% full$panel$coefficient)
+  expect_false("icc" %in% lean$panel$coefficient)
+  expect_identical(as.numeric(lean$delta_hat), as.numeric(full$delta_hat))
+})

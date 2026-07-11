@@ -283,7 +283,6 @@
 #' diagnostic tests. *Biometrics*, 36(1), 167--171.
 #'
 #' @examples
-#' \dontrun{
 #' set.seed(1)
 #' N <- 500; k <- 5
 #' Se <- 0.90; Sp <- 0.85; pi <- 0.30
@@ -293,7 +292,6 @@
 #'   Y[, j] <- rbinom(N, 1, ifelse(C == 1, Se, 1 - Sp))
 #' fit <- latent_class_fit(Y, B = 200, seed = 1)
 #' print(fit)
-#' }
 #'
 #' @export
 latent_class_fit <- function(ratings,

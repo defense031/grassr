@@ -610,7 +610,11 @@ you send it. Submission is a pull request against the
 `calibration-contrib` branch of the source repository
 (https://github.com/defense031/grassr). The maintainers verify a
 submission by re-executing its seeds, which reproduce bit for bit at
-the same package version, and merged cells ship in the next release.
+the same package version, and merged cells fold into the bundled
+calibration in a future data release.
+The pipeline is already live. Outside contributors had run and
+verified 165 of the 2,166 blocks when this release was built. The
+repository manifest tracks which blocks remain open.
 Duplicate runs of a block are not wasted, they cross-verify. For a
 large budget, claim a block range through a repository issue first;
 the full protocol is in the CONTRIBUTING file. The bundled

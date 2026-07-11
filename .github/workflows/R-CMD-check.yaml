@@ -16,12 +16,11 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          # windows devel pins lme4 below 2.0: the runner's lme4 2.0-1
-          # binary is ABI-incompatible with Matrix 1.7-5 there and kills
-          # the R process inside the full suite (not our code; CRAN's
-          # check path never loads lme4). Drop the pin once upstream
-          # binaries realign.
-          - {os: windows-latest, r: 'devel', pin: 'lme4@1.1-38'}
+          # 2026-07-09..11 windows-devel suite kills were an R-devel
+          # snapshot defect (r90215-era ucrt builds; lme4/Matrix version
+          # independent, verified by a 4-config install matrix). Fixed
+          # upstream by r90234. Stock config; no pins.
+          - {os: windows-latest, r: 'devel'}
           - {os: windows-latest, r: 'release'}
           - {os: macos-latest,   r: 'release'}
           - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
@@ -39,9 +38,7 @@ jobs:
           use-public-rspm: true
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: |
-            any::rcmdcheck
-            ${{ matrix.config.pin }}
+          extra-packages: any::rcmdcheck
           needs: check
       - uses: r-lib/actions/check-r-package@v2
         with:

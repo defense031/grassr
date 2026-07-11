@@ -69,11 +69,7 @@ for the prevalence-adjusted bias-adjusted kappa, expanded in the text.
 * GitHub Actions: windows-latest R-devel and R-release, macos-latest
   R-release, ubuntu-latest R-devel and R-release — R CMD check
   --as-cran, Status: OK on all five
-  (https://github.com/defense031/grassr/actions). On the windows
-  R-devel runner, lme4 (Suggests) is pinned below 2.0 to work around
-  an upstream lme4 2.0-1 / Matrix 1.7-5 binary incompatibility on that
-  image; the incompatibility is unrelated to this package and CRAN's
-  check path does not load lme4.
+  (https://github.com/defense031/grassr/actions).
 
 ## R CMD check results
 

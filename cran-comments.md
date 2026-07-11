@@ -69,7 +69,13 @@ for the prevalence-adjusted bias-adjusted kappa, expanded in the text.
 * GitHub Actions: windows-latest R-devel and R-release, macos-latest
   R-release, ubuntu-latest R-devel and R-release — R CMD check
   --as-cran, Status: OK on all five
-  (https://github.com/defense031/grassr/actions).
+  (https://github.com/defense031/grassr/actions). The windows R-devel
+  job currently runs without lme4 (Suggests): R-devel ucrt snapshots
+  since ~2026-07-08 fail nondeterministically inside lme4's compiled
+  fitting path (any lme4 version, binary or source; verified
+  unrelated to this package by a 13-run install matrix). The package
+  degrades gracefully without lme4 by design, and lme4-dependent
+  paths are exercised on the other four platforms.
 
 ## R CMD check results
 

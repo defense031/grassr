@@ -1,0 +1,4 @@
+"block_id","program","k","N","q","prev","draws","seed","wall_secs","file","md5","demo","package_version","r_version"
+56,"prev_strata",3,20,0.75,0.95,50000,20300056,2157.317,"block_0056.rds","9cc20998f5a4d034d117c02e67c8da45",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"
+55,"prev_strata",3,20,0.75,0.8,50000,20300055,2241.429,"block_0055.rds","447f60b2233a885492d58843c7a3236f",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"
+57,"prev_strata",3,20,0.85,0.05,50000,20300057,2314.061,"block_0057.rds","c7419ead463837cd42475b8e41bada87",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"

@@ -70,12 +70,14 @@ for the prevalence-adjusted bias-adjusted kappa, expanded in the text.
   R-release, ubuntu-latest R-devel and R-release — R CMD check
   --as-cran, Status: OK on all five
   (https://github.com/defense031/grassr/actions). The windows R-devel
-  job currently runs without lme4 (Suggests): R-devel ucrt snapshots
-  since ~2026-07-08 fail nondeterministically inside lme4's compiled
-  fitting path (any lme4 version, binary or source; verified
-  unrelated to this package by a 13-run install matrix). The package
+  job currently runs without lme4 (Suggests) because of a confirmed
+  upstream lme4 bug (https://github.com/lme4/lme4/issues/990: two
+  heap-use-after-free defects exposed by Rcpp 1.1.2, causing
+  GC-timing-dependent intermittent glmer failures; fixed in the lme4
+  development version and expected on CRAN shortly). The package
   degrades gracefully without lme4 by design, and lme4-dependent
-  paths are exercised on the other four platforms.
+  paths are exercised on the other four platforms. We restore lme4 on
+  that job as soon as the fixed lme4 reaches CRAN.
 
 ## R CMD check results
 

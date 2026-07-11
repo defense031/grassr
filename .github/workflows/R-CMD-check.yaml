@@ -16,18 +16,19 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          # windows-devel runs WITHOUT lme4 (Suggests) since 2026-07-11:
-          # R-devel ucrt builds from ~r90215 on fail nondeterministically
-          # in lme4's compiled fitting path (~50% of runs; intermittent
-          # "Downdated VtV" errors on a session's first glmer fit and
-          # silent R process deaths mid-suite). Established by a 13-run
-          # diag matrix (branch diag/windows-lme4): independent of lme4
-          # version (2.0-1 and 1.1-38), binary vs source build, Matrix
-          # rebuild, and OMP_NUM_THREADS=1. Upstream R-devel regression,
-          # not ours. lme4 tests skip via their skip_if_not_installed
-          # guards; lme4 paths stay covered on the other four platforms.
-          # RESTORE (drop drop_lme4 + force_suggests) once an R-devel
-          # snapshot runs the diag matrix clean.
+          # windows-devel runs WITHOUT lme4 (Suggests) since 2026-07-11.
+          # Root cause CONFIRMED upstream (lme4/lme4#990, dup of #987):
+          # two heap-use-after-free bugs in lme4 (merPredD construction;
+          # ALTREP x Rcpp data-pointer accessors), exposed by Rcpp 1.1.2
+          # and GC-timing dependent — hence the ~50%-of-runs intermittent
+          # "Downdated VtV" errors and silent R process deaths our 13-run
+          # diag matrix measured, worst under R CMD check memory pressure.
+          # Fixed in lme4 devel. lme4 tests skip via their
+          # skip_if_not_installed guards; lme4 paths stay covered on the
+          # other four platforms. RESTORE (drop drop_lme4 +
+          # force_suggests) when the fixed lme4 (> 2.0-1) reaches CRAN;
+          # interim alternative if coverage is needed sooner: pin
+          # Rcpp@1.1.1.1 on this job instead.
           - {os: windows-latest, r: 'devel',
              drop_lme4: true, force_suggests: 'false'}
           - {os: windows-latest, r: 'release'}

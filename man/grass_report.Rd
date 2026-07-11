@@ -114,14 +114,13 @@ at \code{k >= 3}; Hui-Walter bounds at \code{k = 2}) and attach the per-rater
 }
 }
 \examples{
-\donttest{
-# k >= 3 computes ICC via a glmer fit, which needs lme4 (Suggests);
-# wrapped so the example degrades gracefully when lme4 is absent.
+# k >= 3 computes ICC via a glmer fit when lme4 (Suggests) is
+# available; without lme4 the card degrades gracefully to the
+# agreement family.
 set.seed(1)
 Y <- matrix(rbinom(1000, 1, 0.3), nrow = 200, ncol = 5)
 card <- grass_report(ratings = Y)
 card                       # print
 summary(card)              # full panel + per-rater
 as.data.frame(card)        # tidy long-format
-}
 }

@@ -15,11 +15,13 @@ This resubmits grassr after the CRAN review of the 0.6.2 tarball
 * **Acronyms explained.** PABAK is expanded in the Description text
   (prevalence-adjusted bias-adjusted kappa), as is AC1 (first-order
   agreement coefficient).
-* **\dontrun removed.** The latent_class_fit() example runs in well
-  under 5 seconds and is now unwrapped, so it executes during checks.
-  No \dontrun remains anywhere in the package. The four remaining
-  \donttest examples involve bootstrap resampling or seeded simulation
-  blocks; all pass R CMD check --as-cran with --run-donttest.
+* **\dontrun removed and examples unwrapped.** The latent_class_fit()
+  example runs in well under 5 seconds and is now unwrapped. The four
+  \donttest wrappers elsewhere in the package dated from when those
+  code paths were slower; each example now completes in under a
+  second, so all are unwrapped as well. No \dontrun and no \donttest
+  remain anywhere in the package; every example executes
+  unconditionally during checks.
 
 ## Version change since the reviewed tarball
 
@@ -49,7 +51,7 @@ superseded one. The changes are documented in NEWS.md:
   grass_contribute, grass_verify_contribution) let users run open,
   seeded calibration blocks locally and build a submission bundle for
   the project repository. No network access; writes only to a
-  user-supplied directory; examples are \donttest and run in seconds.
+  user-supplied directory; examples run in under a second.
 
 The CRAN test posture is unchanged from 0.6.2: a fast deterministic
 smoke subset runs on CRAN (~2 s), and the full suite runs on every

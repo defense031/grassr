@@ -163,11 +163,9 @@ benchmark_draw_cost <- function(bench_draws = 8L) {
 #' @return Invisibly, a data frame with one row per selected block and its
 #'   estimated (and, after a real run, actual) wall time.
 #' @examples
-#' \donttest{
 #' # What would five hours on this machine buy?
 #' plan <- grass_contribute(dir = tempdir(), hours = 5, dry_run = TRUE)
 #' head(plan)
-#' }
 #' @export
 grass_contribute <- function(dir, hours = 1, program = NULL, blocks = NULL,
                              dry_run = FALSE, draws = NULL) {

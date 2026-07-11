@@ -56,9 +56,7 @@ they cross-verify. For a large budget, claim a specific block range
 through a repository issue and pass it as \code{blocks}.
 }
 \examples{
-\donttest{
 # What would five hours on this machine buy?
 plan <- grass_contribute(dir = tempdir(), hours = 5, dry_run = TRUE)
 head(plan)
-}
 }

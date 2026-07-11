@@ -387,12 +387,10 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #' @export
 #'
 #' @examples
-#' \donttest{
 #' set.seed(1)
 #' # Build a 5x200 symmetric panel -- should print as 'aligned'.
 #' Y <- matrix(rbinom(5 * 200, 1, 0.30), nrow = 200, ncol = 5)
 #' check_asymmetry(Y)
-#' }
 check_asymmetry <- function(ratings,
                             axis = c("inter", "intra"),
                             occasion = NULL,

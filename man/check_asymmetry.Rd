@@ -145,12 +145,10 @@ routes the call to \code{\link[=check_rater_asymmetry]{check_rater_asymmetry()}}
 }
 
 \examples{
-\donttest{
 set.seed(1)
 # Build a 5x200 symmetric panel -- should print as 'aligned'.
 Y <- matrix(rbinom(5 * 200, 1, 0.30), nrow = 200, ncol = 5)
 check_asymmetry(Y)
-}
 }
 \seealso{
 \code{\link[=check_rater_asymmetry]{check_rater_asymmetry()}} for the per-rater Se/Sp companion;

@@ -151,7 +151,6 @@ check_patchwork <- function() {
 #'   pin); [position_on_surface()] for the underlying inversion machinery.
 #' @export
 #' @examples
-#' \donttest{
 #' if (requireNamespace("ggplot2", quietly = TRUE)) {
 #'   # Bare surface -- what does PABAK's reference look like?
 #'   plot_surface("pabak")
@@ -162,7 +161,6 @@ check_patchwork <- function() {
 #'   # Pin a hypothetical observation on the surface.
 #'   plot_surface("mean_ac1", pi_hat = 0.30, observed = 0.62,
 #'                k = 5, N = 200)
-#' }
 #' }
 plot_surface <- function(metric,
                          pi_hat = NULL,

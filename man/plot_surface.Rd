@@ -77,7 +77,6 @@ those are accessed via \code{\link[=position_on_surface]{position_on_surface()}}
 and (if available) a fitted card via \code{plot.grass_card(type = "surface")}.
 }
 \examples{
-\donttest{
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   # Bare surface -- what does PABAK's reference look like?
   plot_surface("pabak")
@@ -88,7 +87,6 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
   # Pin a hypothetical observation on the surface.
   plot_surface("mean_ac1", pi_hat = 0.30, observed = 0.62,
                k = 5, N = 200)
-}
 }
 }
 \seealso{

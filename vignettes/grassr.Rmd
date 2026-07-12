@@ -3,7 +3,7 @@ title: "grassr: rater reliability on binary outcomes, from rating matrix to Repo
 author:
   - Austin Semmel
   - Rachel Gidaro
-date: "2026-07-11"
+date: "2026-07-12"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{grassr: rater reliability on binary outcomes, from rating matrix to Report Card}
@@ -615,8 +615,8 @@ summary(card1)
 #>     - delta_hat is the implied-quality spread over the agreement family (PABAK, mean AC1, Fleiss kappa). ICC is reported on the panel but does not enter delta_hat (v0.5.0 scope: ICC's reference depends on the full subject-prevalence distribution F and does not share the (q, pi_+) sufficient statistic the agreement family does).
 #>     - flag from delta_hat's percentile on the matched null (k=5, N=1000, q=0.85; 50,000 draws); design snapped to nearest calibrated cell.
 #> 
-#>   grass version : 0.7.3
-#>   timestamp     : 2026-07-11 10:16:45
+#>   grass version : 0.7.4
+#>   timestamp     : 2026-07-12 08:27:47
 ```
 
 `summary()` is the audit view: the full panel with percentiles and
@@ -899,35 +899,37 @@ plan[, c("block_id", "program", "k", "N", "q", "prev", "draws")]
 #> 3       161 prev_strata  3  100 0.85 0.95 50000
 #> 4       197 prev_strata  3  200 0.65 0.05 50000
 #> 5       232 prev_strata  3  300 0.85 0.05 50000
-#> 6       253 prev_strata  3  500 0.75 0.20 50000
-#> 7       327 prev_strata  5   20 0.75 0.05 50000
-#> 8       335 prev_strata  5   20 0.85 0.80 50000
-#> 9       337 prev_strata  5   20 0.92 0.05 50000
-#> 10      342 prev_strata  5   20 0.97 0.05 50000
-#> 11      440 prev_strata  5  100 0.92 0.80 50000
-#> 12      464 prev_strata  5  150 0.92 0.50 50000
-#> 13      489 prev_strata  5  200 0.92 0.50 50000
-#> 14      550 prev_strata  5 1000 0.65 0.80 50000
-#> 15      583 prev_strata  6   15 0.85 0.20 50000
-#> 16      777 prev_strata  6  300 0.75 0.05 50000
-#> 17      904 prev_strata  8   30 0.75 0.50 50000
-#> 18     1030 prev_strata  8  200 0.75 0.80 50000
-#> 19     1068 prev_strata  8  300 0.97 0.20 50000
-#> 20     1122 prev_strata 10   15 0.65 0.05 50000
-#> 21     1151 prev_strata 10   20 0.65 0.95 50000
-#> 22     1174 prev_strata 10   30 0.65 0.50 50000
-#> 23     1215 prev_strata 10   50 0.92 0.80 50000
-#> 24     1216 prev_strata 10   50 0.92 0.95 50000
-#> 25     1427 prev_strata 15   20 0.75 0.05 50000
-#> 26     1483 prev_strata 15   50 0.85 0.20 50000
-#> 27     1500 prev_strata 15   75 0.65 0.80 50000
-#> 28     1634 prev_strata 15  500 0.85 0.50 50000
-#> 29     1706 prev_strata 25   20 0.75 0.95 50000
-#> 30     1765 prev_strata 25   50 0.92 0.80 50000
-#> 31     1869 prev_strata 25  200 0.97 0.50 50000
-#> 32     1872 prev_strata 25  300 0.65 0.05 50000
-#> 33     1928 prev_strata 25 1000 0.75 0.20 50000
-#> 34     2062   lattice_k 12   20 0.65   NA 50000
+#> 6       244 prev_strata  3  300 0.97 0.50 50000
+#> 7       253 prev_strata  3  500 0.75 0.20 50000
+#> 8       327 prev_strata  5   20 0.75 0.05 50000
+#> 9       335 prev_strata  5   20 0.85 0.80 50000
+#> 10      337 prev_strata  5   20 0.92 0.05 50000
+#> 11      342 prev_strata  5   20 0.97 0.05 50000
+#> 12      440 prev_strata  5  100 0.92 0.80 50000
+#> 13      464 prev_strata  5  150 0.92 0.50 50000
+#> 14      489 prev_strata  5  200 0.92 0.50 50000
+#> 15      550 prev_strata  5 1000 0.65 0.80 50000
+#> 16      583 prev_strata  6   15 0.85 0.20 50000
+#> 17      777 prev_strata  6  300 0.75 0.05 50000
+#> 18      904 prev_strata  8   30 0.75 0.50 50000
+#> 19     1024 prev_strata  8  200 0.65 0.50 50000
+#> 20     1030 prev_strata  8  200 0.75 0.80 50000
+#> 21     1068 prev_strata  8  300 0.97 0.20 50000
+#> 22     1122 prev_strata 10   15 0.65 0.05 50000
+#> 23     1151 prev_strata 10   20 0.65 0.95 50000
+#> 24     1174 prev_strata 10   30 0.65 0.50 50000
+#> 25     1215 prev_strata 10   50 0.92 0.80 50000
+#> 26     1216 prev_strata 10   50 0.92 0.95 50000
+#> 27     1427 prev_strata 15   20 0.75 0.05 50000
+#> 28     1483 prev_strata 15   50 0.85 0.20 50000
+#> 29     1500 prev_strata 15   75 0.65 0.80 50000
+#> 30     1634 prev_strata 15  500 0.85 0.50 50000
+#> 31     1706 prev_strata 25   20 0.75 0.95 50000
+#> 32     1765 prev_strata 25   50 0.92 0.80 50000
+#> 33     1869 prev_strata 25  200 0.97 0.50 50000
+#> 34     1872 prev_strata 25  300 0.65 0.05 50000
+#> 35     1928 prev_strata 25 1000 0.75 0.20 50000
+#> 36     2062   lattice_k 12   20 0.65   NA 50000
 ```
 
 The same call without `dry_run = TRUE` runs the selected blocks from

@@ -1,9 +1,16 @@
-# cran-comments.md — grassr 0.7.3
+# cran-comments.md — grassr 0.7.4
 
 ## Resubmission
 
 This resubmits grassr after the CRAN review of the 0.6.2 tarball
-(Konstanze Lauseker, 2026-07-11). All three requests are addressed:
+(Konstanze Lauseker, 2026-07-11) and the incoming pretest of 0.7.3
+(2026-07-12). All requests are addressed:
+
+* **checkRd "Lost braces" fixed.** The 0.7.3 pretest flagged
+  grass_roadmap.Rd line 46 (a stray LaTeX-style thousands separator,
+  "1{,}000"); now plain "1,000". This was the only new issue in that
+  pretest; the remaining NOTE was the new-submission/surname check
+  answered below.
 
 * **References in the Description field.** The methods' sources are
   cited in the requested format: Byrt, Bishop, and Carlin (1993)
@@ -25,7 +32,7 @@ This resubmits grassr after the CRAN review of the 0.6.2 tarball
 
 ## Version change since the reviewed tarball
 
-The reviewed tarball was 0.6.2; this submission is 0.7.3. While 0.6.2
+The reviewed tarball was 0.6.2; this submission is 0.7.4. While 0.6.2
 waited in the review queue we completed a planned revision of the
 package's two headline statistics and the calibration data behind
 them, so the resubmission carries the current package rather than a

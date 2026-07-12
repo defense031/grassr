@@ -1,4 +1,4 @@
-# grassr 0.7.3
+# grassr 0.7.4
 
 CRAN resubmission fixes. No computational changes; cards are identical
 to 0.7.2 output apart from the version stamp.
@@ -7,9 +7,13 @@ to 0.7.2 output apart from the version stamp.
   bias-adjusted kappa; AC1: first-order agreement coefficient) and
   cites the method sources with DOIs (Byrt, Bishop, and Carlin 1993;
   Gwet 2008; Fleiss 1971; Dawid and Skene 1979; Hui and Walter 1980).
-* The `latent_class_fit()` example is unwrapped and runs during
-  checks. It completes in under a second; the `\dontrun{}` wrapper
-  was unnecessary.
+* All examples are unwrapped and run during checks. The
+  `latent_class_fit()` example had an unnecessary `\dontrun{}`
+  wrapper; the four `\donttest{}` wrappers elsewhere dated from when
+  those code paths were slower. Every example now completes in under
+  a second.
+* Fixed a checkRd "Lost braces" NOTE in `?grass_roadmap` (a stray
+  LaTeX-style thousands separator).
 * The vignette's "Extending the calibration" section records the live
   state of the open calibration program: 165 of the 2,166 blocks had
   been run and verified by outside contributors when this release was

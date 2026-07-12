@@ -43,7 +43,7 @@ panel today will work on a continuous panel once FIELD ships.
 GRASS \tab Binary categorical agreement (Cohen's kappa, PABAK, AC1,
 Fleiss kappa, observed ICC for binary). Surface positioning
 calibrated over \verb{k in \{2,3,5,8,15,25\}} and the eleven \code{N} values
-from 15 to 1{,}000. \tab \strong{implemented} -- see
+from 15 to 1,000. \tab \strong{implemented} -- see
 \code{\link[=grass_report]{grass_report()}} \cr
 FIELD \tab Continuous variance-component reliability (Shrout-Fleiss
 ICC family, Lin's CCC, Bland-Altman bounds, generalisability-theory

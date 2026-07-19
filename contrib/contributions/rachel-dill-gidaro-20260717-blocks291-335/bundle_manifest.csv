@@ -33,3 +33,4 @@
 322,"prev_strata",5,20,0.65,0.05,50000,20300322,2102.104,"block_0322.rds","0dcd4cd00c3e0d40cf2b8ae36ba5e8dd",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"
 323,"prev_strata",5,20,0.65,0.2,50000,20300323,2163.815,"block_0323.rds","2e0a8f9ed00d05a6bc7da12212014698",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"
 324,"prev_strata",5,20,0.65,0.5,50000,20300324,2175.039,"block_0324.rds","2a712a41557cca87cb1d552c6f76eec5",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"
+326,"prev_strata",5,20,0.65,0.95,50000,20300326,2118.246,"block_0326.rds","7ead99c861ffa82efef41cd18fe8cbbd",FALSE,"0.7.2","R version 4.5.2 (2025-10-31)"

@@ -68,10 +68,7 @@
     surface = list(q_grid = seq(0.5, 1, length.out = 501),
                    reference_curves = list(),
                    reference_type = "closed-form"),
-    inputs = list(ratings_dim = c(N = N, k = k), axis = "inter",
-                  delta_thresholds = c(9.25, 11.75),
-                  bands = c(0.5, 0.625, 0.75, 0.875, 1.0),
-                  band_labels = c("Poor", "Moderate", "Strong", "Excellent")),
+    inputs = list(ratings_dim = c(N = N, k = k), axis = "inter"),
     notes = character(0)
   )
   class(card) <- c("grass_card", "list")

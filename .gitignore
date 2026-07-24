@@ -14,3 +14,5 @@ vignettes/*.html
 vignettes/*.R
 !vignettes/*.Rmd
 texput.log
+simulation/v070_program/tier1/stage6_production_null/null_ecdf_cells.rds
+simulation/v070_program/tier1/stage6_production_null/nulls_production.json

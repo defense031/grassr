@@ -9,9 +9,6 @@ grass_report(
   axis = c("inter", "intra"),
   metric = "auto",
   occasion = NULL,
-  bands = c(0.5, 0.625, 0.75, 0.875, 1),
-  band_labels = c("Poor", "Moderate", "Strong", "Excellent"),
-  delta_thresholds = NULL,
   bootstrap_B = 1000L,
   bootstrap_delta_B = 0L,
   verbose = FALSE,
@@ -22,7 +19,11 @@ grass_report(
 \item{ratings}{User input: an \verb{N x k} binary matrix, an \verb{N x k} data.frame
 whose columns are 0/1 / logical / 2-level factor, or a list of two
 equal-length 0/1 vectors (\code{k = 2} paired form). See
-\code{?normalize_ratings} for accepted shapes.}
+\code{?normalize_ratings} for accepted shapes. Rows must be independent
+subjects, one row each: the calibration assumes every row is a new
+subject, and stacking repeated measurements of one subject as rows
+overstates the effective sample size (analyze one card per occasion
+instead; \code{vignette("grassr")}, section "The data").}
 
 \item{axis}{One of \code{"inter"} (default) or \code{"intra"}. Selects the surface
 family. The intra-axis path uses \code{occasion} to identify viewings.}
@@ -36,15 +37,6 @@ the binary fully-crossed case. Use \code{\link[=obs_krippendorff_alpha]{obs_krip
 \code{\link[=position_on_surface]{position_on_surface()}} to compute it manually.)}
 
 \item{occasion}{Reserved for \code{axis = "intra"}; ignored when \code{axis = "inter"}.}
-
-\item{bands}{Numeric length-5 partition on \verb{q in [0.5, 1]}. Default
-\code{c(0.5, 0.625, 0.75, 0.875, 1.0)}.}
-
-\item{band_labels}{Character length-4 labels for the bands. Default
-\code{c("Poor", "Moderate", "Strong", "Excellent")}.}
-
-\item{delta_thresholds}{Length-2 numeric vector \code{c(caution, divergent)}
-in percentile points. Default \code{c(9.25, 11.75)} (paper Sec.3.2, NP-motivated size-alpha).}
 
 \item{bootstrap_B}{Integer; bootstrap replicates for the divergent-branch
 latent-class CIs. Default \code{1000L}. Set lower for fast tests.}
@@ -64,6 +56,21 @@ An object of class \code{c("grass_card", "list")} with fields
 \code{call}, \code{grass_version}, \code{timestamp}, \code{inputs}, \code{notes}. See the
 v0.2.0 paper-alignment design doc Sec.3.1 for the full structure.
 
+\strong{\code{coefficient}} carries the primary coefficient's \code{observed_value},
+its \code{surface_percentile} (the pooled percentile -- position within the
+design's achievable agreement range -- on the 0-100 scale), the
+implied panel quality \code{q_hat}, and the 95\% test-inversion
+\code{consistency_band} on quality (suppressed at the divergent flag).
+
+\strong{\code{panel}} is a data.frame with one row per coefficient carrying its
+\code{observed_value}, \code{surface_percentile}, consistency-band columns
+(\code{band_lo}, \code{band_hi}, \code{band_open_low}, \code{band_open_high}), \code{q_hat},
+\code{se_q_hat}, \code{clamped}, \code{reference_used}, and \code{in_delta_hat}.
+
+\strong{\code{delta}} carries \code{delta_hat} (implied-quality spread, in pp of
+quality), \code{delta_percentile} (its percentile on the matched null),
+\code{flag}, \code{matched_null}, \code{thresholds}, and \code{thresholds_source}.
+
 \strong{Percentile units.} \code{card$coefficient$surface_percentile} and
 \code{card$panel$surface_percentile} are reported on the 0-100 scale
 (e.g., \code{46.3} means the 46th percentile). The underlying
@@ -78,10 +85,10 @@ framework. It takes an \verb{N x k} binary rating matrix and returns a
 four-field Report Card: the sample summary \verb{(k, N, pi_hat)}, the primary
 coefficient and its surface position, the cross-coefficient asymmetry
 diagnostic \code{delta_hat} and flag, and (when \code{flag == "divergent"}) the
-per-rater latent-class fit. The full panel of coefficients, surface
-percentiles, band probabilities, and reference-surface artifacts ride
-along on the same object for \code{summary()}, \code{as.data.frame()}, and
-\code{plot()} access.
+per-rater latent-class fit. The full panel of coefficients, pooled
+percentiles, consistency bands on quality, and reference-surface
+artifacts ride along on the same object for \code{summary()},
+\code{as.data.frame()}, and \code{plot()} access.
 }
 \details{
 The body, in order:
@@ -96,9 +103,10 @@ kappa; at \code{k >= 3}, PABAK / AC1 / Fleiss kappa / ICC.
 DGP-calibrated reference surface via \code{\link[=position_on_surface]{position_on_surface()}}.
 \item Pick the primary coefficient via Table 2 (\code{metric = "auto"}) or accept
 the user's override.
-\item Compute the cross-coefficient percentile spread \code{delta_hat} (in pp)
-via \code{\link[=check_asymmetry]{check_asymmetry()}} and tier into \code{aligned} /  \code{caution} /
-\code{divergent}.
+\item Compute the cross-coefficient implied-quality spread \code{delta_hat}
+(in pp of quality) via \code{\link[=check_asymmetry]{check_asymmetry()}} and flag \code{aligned} /
+\code{caution} / \code{divergent} by \code{delta_hat}'s percentile on the matched
+(k, N, q_hat) null.
 \item If \code{flag == "divergent"}: run a \code{\link[=latent_class_fit]{latent_class_fit()}} (Dawid-Skene EM
 at \code{k >= 3}; Hui-Walter bounds at \code{k = 2}) and attach the per-rater
 \verb{(Se_j, Sp_j)} table.
@@ -106,6 +114,9 @@ at \code{k >= 3}; Hui-Walter bounds at \code{k = 2}) and attach the per-rater
 }
 }
 \examples{
+# k >= 3 computes ICC via a glmer fit when lme4 (Suggests) is
+# available; without lme4 the card degrades gracefully to the
+# agreement family.
 set.seed(1)
 Y <- matrix(rbinom(1000, 1, 0.3), nrow = 200, ncol = 5)
 card <- grass_report(ratings = Y)

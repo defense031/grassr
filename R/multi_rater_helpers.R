@@ -169,13 +169,21 @@ compute_tau2_hat <- function(Y) {
 #' panel at v0.6.0; see [obs_krippendorff_alpha()] for manual computation.
 #'
 #' @param ratings N x k binary matrix / data.frame / k=2 list.
-#' @param axis "inter" (default) or "intra". Phase 1A treats both the same;
-#'   the intra-axis cube-reshape lands in Phase 4+.
+#' @param axis "inter" (default) or "intra". Both compute the same panel:
+#'   under the reference model an intra matrix of W occasions is
+#'   distributionally identical to an inter panel at k = W (equivalence
+#'   proposition, v0.7.1), so no axis-specific reshape is needed.
 #' @param occasion Reserved for axis = "intra"; ignored in Phase 1A.
+#' @param fit_icc If `FALSE`, skip the `glmer` fit and return `icc = NA_real_`
+#'   at `k >= 3`. The fit dominates the cost of the panel (roughly 16x at
+#'   calibration cell sizes) and consumes no random numbers, so a caller that
+#'   discards `icc` can skip it without perturbing the RNG stream or any other
+#'   panel entry. Ignored at `k = 2`, where the panel carries no `icc`.
 #' @return Named list of observed metric values.
 #' @keywords internal
 #' @noRd
-compute_panel <- function(ratings, axis = "inter", occasion = NULL) {
+compute_panel <- function(ratings, axis = "inter", occasion = NULL,
+                          fit_icc = TRUE) {
   Y <- normalize_ratings(ratings)
   axis <- match.arg(axis, c("inter", "intra"))
   k <- ncol(Y)
@@ -189,11 +197,12 @@ compute_panel <- function(ratings, axis = "inter", occasion = NULL) {
       kappa          = unname(base[["kappa"]])
     )
   } else {
+    icc <- if (fit_icc) obs_icc_glmer(Y) else NA_real_
     out <- list(
       pabak          = obs_mean_pairwise_pabak(Y),
       ac1            = obs_mean_pairwise_ac1(Y),
       fleiss_kappa   = obs_fleiss_kappa(Y),
-      icc            = obs_icc_glmer(Y)
+      icc            = icc
     )
   }
   out

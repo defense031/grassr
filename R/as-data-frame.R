@@ -24,11 +24,17 @@ as.data.frame.grass_metrics <- function(x, row.names = NULL, optional = FALSE, .
 #' Coerce a grass_card to a tidy data.frame (panel; per_rater appended on
 #' divergent)
 #'
-#' Returns the panel of observed coefficients with surface position metadata
-#' as a data.frame. The primary coefficient is flagged via the `is_primary`
-#' column. When the cross-coefficient flag is `divergent` and the per-rater
-#' latent-class table is populated, returns a list `c(panel = ..., per_rater = ...)`
-#' so tidy consumers can pivot the per-rater rows separately.
+#' Returns the panel of observed coefficients with surface-position metadata
+#' as a data.frame. Each row carries the v0.7.1 panel columns
+#' (`surface_percentile`, `band_lo` / `band_hi` / `band_open_low` /
+#' `band_open_high`, `q_hat`, `se_q_hat`, `clamped`, `reference_used`,
+#' `in_delta_hat`), an `is_primary` flag, and the panel-level delta
+#' diagnostics recycled across rows (`delta_hat` implied-quality spread in
+#' pp, `delta_percentile`, `delta_flag`, and the matched-null cell
+#' `matched_null_k` / `matched_null_N` / `matched_null_q`). When the
+#' cross-coefficient flag is `divergent` and the per-rater latent-class
+#' table is populated, returns a list `c(panel = ..., per_rater = ...)` so
+#' tidy consumers can pivot the per-rater rows separately.
 #'
 #' @param x A `grass_card` object.
 #' @param row.names,optional Standard `as.data.frame` arguments.
@@ -40,6 +46,20 @@ as.data.frame.grass_metrics <- function(x, row.names = NULL, optional = FALSE, .
 as.data.frame.grass_card <- function(x, row.names = NULL, optional = FALSE, ...) {
   panel <- x$panel
   panel$is_primary <- panel$coefficient == x$coefficient$primary
+
+  # Attach the panel-level delta diagnostics, recycled across coefficient
+  # rows, so a single flat frame carries the flag and its basis alongside
+  # each coefficient (v0.7.1: delta_hat is the implied-quality spread in pp;
+  # the flag comes from delta_percentile on the matched-null cell).
+  d  <- x$delta
+  mn <- d$matched_null
+  panel$delta_hat        <- as.numeric(d$delta_hat %||% NA_real_)
+  panel$delta_percentile <- as.numeric(d$delta_percentile %||% NA_real_)
+  panel$delta_flag       <- as.character(d$flag %||% NA_character_)
+  panel$matched_null_k   <- if (!is.null(mn)) as.integer(mn$k) else NA_integer_
+  panel$matched_null_N   <- if (!is.null(mn)) as.integer(mn$N) else NA_integer_
+  panel$matched_null_q   <- if (!is.null(mn)) as.numeric(mn$q) else NA_real_
+
   if (!is.null(row.names)) rownames(panel) <- row.names
 
   if (!is.null(x$per_rater) && nrow(x$per_rater) > 0L) {

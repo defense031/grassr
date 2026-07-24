@@ -1,9 +1,9 @@
 # Standard r-lib check matrix: https://github.com/r-lib/actions/tree/v2-branch/examples
 on:
   push:
-    branches: [main]
+    branches: [main, v070-percentile-flag]
   pull_request:
-    branches: [main]
+    branches: [main, calibration-contrib]
   workflow_dispatch:
 
 name: R-CMD-check
@@ -16,7 +16,21 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - {os: windows-latest, r: 'devel'}
+          # windows-devel runs WITHOUT lme4 (Suggests) since 2026-07-11.
+          # Root cause CONFIRMED upstream (lme4/lme4#990, dup of #987):
+          # two heap-use-after-free bugs in lme4 (merPredD construction;
+          # ALTREP x Rcpp data-pointer accessors), exposed by Rcpp 1.1.2
+          # and GC-timing dependent — hence the ~50%-of-runs intermittent
+          # "Downdated VtV" errors and silent R process deaths our 13-run
+          # diag matrix measured, worst under R CMD check memory pressure.
+          # Fixed in lme4 devel. lme4 tests skip via their
+          # skip_if_not_installed guards; lme4 paths stay covered on the
+          # other four platforms. RESTORE (drop drop_lme4 +
+          # force_suggests) when the fixed lme4 (> 2.0-1) reaches CRAN;
+          # interim alternative if coverage is needed sooner: pin
+          # Rcpp@1.1.1.1 on this job instead.
+          - {os: windows-latest, r: 'devel',
+             drop_lme4: true, force_suggests: 'false'}
           - {os: windows-latest, r: 'release'}
           - {os: macos-latest,   r: 'release'}
           - {os: ubuntu-latest,  r: 'devel', http-user-agent: 'release'}
@@ -24,6 +38,7 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      _R_CHECK_FORCE_SUGGESTS_: ${{ matrix.config.force_suggests || 'true' }}
     steps:
       - uses: actions/checkout@v4
       - uses: r-lib/actions/setup-pandoc@v2
@@ -36,6 +51,11 @@ jobs:
         with:
           extra-packages: any::rcmdcheck
           needs: check
+      - name: Drop lme4 (upstream R-devel Windows instability; see matrix comment)
+        if: matrix.config.drop_lme4
+        shell: bash
+        run: |
+          Rscript -e 'for (lib in .libPaths()) if ("lme4" %in% rownames(installed.packages(lib.loc = lib))) { remove.packages("lme4", lib = lib); cat("removed lme4 from", lib, "\n") }'
       - uses: r-lib/actions/check-r-package@v2
         with:
           args: 'c("--as-cran", "--no-manual")'

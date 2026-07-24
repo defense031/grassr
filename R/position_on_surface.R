@@ -1,65 +1,76 @@
-# Target-2 surface-position reporting convention. Takes an observed
-# agreement coefficient together with the design context (pi_hat, k, N)
-# and positions it against the DGP-calibrated reference surface at that
-# design. Returns the surface percentile, four-band sampling probabilities,
-# the modal band adjective, and a confidence qualifier. See
-# paper2/review/framework_notes.md Sec.Sec.0.1-0.3 (thesis) and Sec.0.6.5 (label
-# construction) for the spec this function operationalises.
+# Target-2 surface-position reporting convention (v0.7.1 sweep redesign).
+# Takes an observed agreement coefficient together with the design context
+# (pi_hat, k, N) and positions it against the DGP-calibrated reference
+# surface at that design. Returns three read-outs of one sweep object: the
+# pooled percentile (position within the design's achievable agreement
+# range), the 95% test-inversion consistency band on panel quality, and
+# the full p(q) sweep profile. See design/v0.7.1_position_redesign.md for
+# the ratified spec this function operationalises.
 
 #' Position an observed agreement coefficient on its DGP-calibrated surface
 #'
 #' `position_on_surface()` is the Target-2 reporting primitive for the
 #' merged GRASS binary-rater-reliability paper. Given an observed coefficient
 #' value and the study design `(pi_hat, k, N)`, it inverts the coefficient
-#' to an internal `q_hat` (rater operating quality on the Se = Sp diagonal
-#' under the clustered latent-class DGP), computes where the observed value
-#' sits on its reference sampling distribution (the surface percentile), and
-#' assigns a four-band adjective plus a confidence qualifier derived from
-#' the sampling-probability mass over bands.
+#' to an implied panel quality `q_hat` (rater operating quality on the
+#' Se = Sp diagonal under the clustered latent-class DGP) and evaluates the
+#' observed value against EVERY calibrated quality level at the matched
+#' design -- a sweep -- from which it derives three read-outs: the pooled
+#' percentile, the consistency band on quality, and the p(q) sweep profile.
 #'
-#' The function implements the reporting convention locked on
-#' `2026-04-22`: the practitioner cites the observed coefficient, its
-#' surface percentile, the band adjective, and the confidence qualifier.
-#' `q_hat` survives as internal scaffolding (surface parameterization and
-#' delta-method SE carrier) rather than as the labeled output.
+#' The function implements the v0.7.1 sweep convention (ratified
+#' 2026-07-05): the practitioner cites the observed coefficient, its pooled
+#' percentile (position within the design's achievable range), and the
+#' consistency band on panel quality. `q_hat` is promoted to the card via
+#' the consistency band; it also carries the surface parameterization and
+#' delta-method SE. The stipulated four-band adjective
+#' (Poor/Moderate/Strong/Excellent) and the modal-band confidence
+#' qualifier (decisive/moderate/weak) are retired.
 #'
-#' @section Label construction (Sec.0.6.5):
-#' Four adjacent-exclusive bands partition the above-chance quality range
-#' `q in [0.5, 1.0]` on equal width: **Poor** `[0.5, 0.625)`, **Moderate**
-#' `[0.625, 0.75)`, **Strong** `[0.75, 0.875)`, **Excellent**
-#' `[0.875, 1.0]`. The geometric partition carries no a-priori weight; users
-#' may supply custom cut points through `bands` and matching `band_labels`.
+#' @section The three read-outs of the sweep:
+#' At the matched design `(F/pi_hat, k, N)` the observed coefficient is
+#' evaluated against every calibrated quality level q with no cell
+#' selection and no q snapping. Write
+#' `p(q) = P(coefficient <= obs_value | panel of quality q, this design)`.
 #'
-#' The confidence qualifier is derived from the modal band's sampling
-#' probability `p_star`:
-#' - `decisive` -- `p_star >= 0.90`
-#' - `moderate` -- `p_star in [0.60, 0.90)`
-#' - `weak` -- `p_star < 0.60`
+#' - **`percentile`** -- the pooled percentile: a trapezoid-weighted
+#'   average of `p(q)` over the calibrated quality axis (trapezoid because
+#'   the grid is non-uniform). It reads as the observed coefficient's
+#'   position within the design's full achievable agreement range and is
+#'   monotone in `obs_value` by construction. Returned in `[0, 1]`;
+#'   callers such as `grass_report()` print it on the `[0, 100]` scale.
+#'   This replaces the retired nearest-q_hat-cell percentile, whose cohort
+#'   selection by a statistic derived from the coefficient made it a
+#'   non-monotone sawtooth (panel review 2026-07-05).
+#' - **`band`** -- the 95% test-inversion consistency band on quality: the
+#'   quality levels q with `0.025 <= p(q) <= 0.975`, endpoints
+#'   interpolated where `p(q)` crosses 0.975 (lower) and 0.025 (upper).
+#'   Open-ended at the grid boundary is reported with a boundary flag.
+#' - **`sweep`** -- the full `data.frame(q, p)` profile, the object the
+#'   sweep-ridgeline graphic renders.
 #'
-#' @section Sampling-probability construction:
+#' @section Sweep construction:
 #' Two methods are implemented.
 #'
-#' **Delta method** (`method = "delta"`, default): assumes `q_hat` is
-#' approximately normal with mean `q_hat` and standard deviation `se_q_hat`
-#' obtained from the delta-method SE of the monotone metric inversion, and
-#' computes `P(q in band_j)` by `pnorm()` on the band boundaries. This is
-#' the summary-stats-only fallback; it does not require the full simulation
-#' outputs.
+#' **Empirical method** (`method = "empirical"`, default): at the matched
+#' `(F_key, k, N)` cell of the bundled `empirical_q_hat_surface`, ranks
+#' `q_hat` within each calibrated quality cell's `q_hat_rep` distribution
+#' (monotone-equivalent to ranking `obs_value` within the cell's
+#' coefficient distribution). The full per-rep data is not bundled
+#' (~300 MB); the package ships a precomputed multi-point empirical-quantile
+#' summary per cell. The whole quality axis is consulted -- there is
+#' deliberately no q selection. When the design `(pi_hat, k, N)` falls
+#' outside the simulated grid, nearest-neighbour clamping is applied and
+#' flagged in `notes`.
 #'
-#' **Empirical method** (`method = "empirical"`, default): uses the
-#' 2,000-replication sampling distribution from `multirater_sim_v3` (the
-#' symmetric-rater reference sim backing Paper 2) to form the empirical
-#' sampling distribution of `q_hat_rep` at the nearest matched scenario cell
-#' `(metric, F_key nearest to pi_hat, k nearest, N nearest, q_true nearest
-#' to q_hat)`. The full per-rep data is not bundled (~300 MB); instead the
-#' package ships a precomputed 13-point empirical-quantile summary of the
-#' per-cell q_hat_rep vector. Band probabilities P(q_hat_rep in band_j) are
-#' recovered by piecewise-linear interpolation on the empirical CDF. Callers
-#' who want to pass their own per-rep vector may supply
-#' `surface_data$per_rep` or `surface_data$q_grid_per_rep`; those paths
-#' continue to override the bundled lookup. When the design `(pi_hat, k, N)`
-#' falls outside the simulated grid, nearest-neighbour clamping is applied
-#' and flagged in `notes`.
+#' **Delta method** (`method = "delta"`): the summary-stats-only fallback
+#' (also used for ICC, whose reference curve carries the F-shape
+#' conditioning). At each swept q it approximates the sampling distribution
+#' as `Normal(E[metric](q), sd_metric(q))` and evaluates
+#' `p(q) = pnorm(obs_value; mean, sd)` on the calibrated q axis. A
+#' caller-supplied `surface_data$per_rep` single-cohort vector is still
+#' honored for reproducibility audits, yielding a plain cohort percentile
+#' with no sweep or band.
 #'
 #' @section Internal reference-surface arithmetic:
 #' Under the clustered latent-class DGP with symmetric raters (`Se = Sp = q`),
@@ -102,11 +113,6 @@
 #' @param method One of `"empirical"` (default; uses the bundled sim-derived
 #'   empirical q_hat sampling distribution) or `"delta"` (closed-form normal
 #'   approximation from delta-method SE).
-#' @param bands Numeric vector of length 5 giving band boundaries on `q`.
-#'   Must be strictly increasing, start at `0.5`, end at `1.0`. Default
-#'   `c(0.5, 0.625, 0.75, 0.875, 1.0)`.
-#' @param band_labels Character vector of length 4, one label per band.
-#'   Default `c("Poor", "Moderate", "Strong", "Excellent")`.
 #' @param reference_type For `metric = "icc"` only. One of `"fitted"`
 #'   (default; GLMM-gap-corrected reference matching what practitioners
 #'   compute via `glmer`) or `"oracle"` (closed-form
@@ -129,30 +135,39 @@
 #'   (Suggests).
 #' @param surface_data Optional. A list with one or more of the following
 #'   components, used when `method = "empirical"`:
-#'   - `per_rep`: a matrix of per-rep metric values at the closest simulated
-#'     `(q, pi_hat, k, N)` cell -- this is the empirical sampling distribution
-#'     at that design. Used for the percentile of `obs_value`.
-#'   - `q_grid_per_rep`: a matrix of dimension `n_q` x `n_rep` giving the
-#'     empirical sampling distribution of the metric at each q-grid point,
-#'     which the function uses to integrate P(q in band_j) against the
-#'     inferred posterior shape of `q_hat`.
-#'   - `q_grid`: numeric vector of q values for the rows of `q_grid_per_rep`.
+#'   - `per_rep`: a vector of per-rep metric values at the caller's own
+#'     `(q, pi_hat, k, N)` cell -- an empirical sampling distribution at
+#'     that design. Honored for reproducibility audits; yields a plain
+#'     cohort percentile with no sweep or consistency band.
+#'   - `q_grid_per_rep`, `q_grid`: legacy per-q-grid empirical inputs.
+#'     Retained for backward compatibility but no longer consumed
+#'     internally (the sweep convention consults the bundled per-cell
+#'     quantile surface); supplying them draws a note.
 #'   When `surface_data` is `NULL` and `method = "empirical"`, the function
-#'   signals an error with guidance.
+#'   uses the bundled empirical q_hat surface, falling back to the
+#'   delta-method sweep when that surface is unavailable at the design.
 #' @param ... Reserved for future extension.
 #'
 #' @return A list of class `grass_surface_position` with fields:
 #' - `observed_value` -- echo of `obs_value`
 #' - `metric` -- echo of `metric`
 #' - `design` -- `list(pi_hat, k, N)`
-#' - `q_hat` -- inverted rater quality (internal scaffold)
+#' - `q_hat` -- implied panel quality (coefficient inverted on the
+#'   reference curve); the point estimate the consistency band surrounds
 #' - `se_q_hat` -- delta-method SE of `q_hat`
-#' - `percentile` -- surface percentile of `obs_value` in `[0, 1]`
-#' - `band_probabilities` -- named numeric vector of `P(q in band_j)`
-#' - `modal_band` -- integer index `1..4` of the highest-probability band
-#' - `modal_band_label` -- character adjective at the modal band
-#' - `confidence` -- `"decisive"` / `"moderate"` / `"weak"`
+#' - `percentile` -- POOLED percentile in `[0, 1]`: the observed
+#'   coefficient's position within the design's full achievable range
+#'   (trapezoid-weighted mixture over every calibrated quality level).
+#'   Monotone in `obs_value` by construction.
+#' - `percentile_basis` -- provenance string for `percentile`
+#' - `band` -- 95% test-inversion consistency band on quality:
+#'   `list(lo, hi, level, open_low, open_high, note)`. The quality levels
+#'   whose sampling distributions are consistent with the observed value
+#'   at this design.
+#' - `sweep` -- `data.frame(q, p)`: the full profile
+#'   `p(q) = P(coefficient <= obs_value | quality q, this design)`
 #' - `sampling_method` -- which method was used
+#' - `reference_used` -- which reference produced the curve
 #' - `notes` -- character vector of caveats (e.g. nearest-neighbor gaps)
 #'
 #' @seealso [check_asymmetry()] for the companion Column A tier (rater
@@ -171,7 +186,7 @@
 #'   metric = "pabak", pi_hat = mean(Y), k = ncol(Y), N = nrow(Y)
 #' )
 #'
-#' # Delta-method positioning -- no sim data needed, summary-stats only.
+#' # Scalar path -- the three read-outs of the sweep convention.
 #' r <- position_on_surface(
 #'   obs_value = 0.62,
 #'   metric    = "pabak",
@@ -179,8 +194,9 @@
 #'   k         = 5,
 #'   N         = 50
 #' )
-#' r$modal_band_label
-#' r$confidence
+#' r$percentile   # pooled percentile of the achievable range
+#' r$band         # consistency band on panel quality
+#' head(r$sweep)  # the full p(q) profile
 #'
 #' # Fleiss kappa at imbalanced prevalence.
 #' position_on_surface(
@@ -196,9 +212,6 @@ position_on_surface <- function(obs_value = NULL,
                                 k = NULL,
                                 N = NULL,
                                 method = c("empirical", "delta"),
-                                bands = c(0.5, 0.625, 0.75, 0.875, 1.0),
-                                band_labels = c("Poor", "Moderate",
-                                                "Strong", "Excellent"),
                                 surface_data = NULL,
                                 ratings = NULL,
                                 reference_type = c("fitted", "oracle"),
@@ -272,25 +285,6 @@ position_on_surface <- function(obs_value = NULL,
   }
   k <- as.integer(k)
   N <- as.integer(N)
-
-  if (!is.numeric(bands) || length(bands) != 5L ||
-      any(!is.finite(bands))) {
-    stop("`bands` must be a length-5 numeric vector of finite values.",
-         call. = FALSE)
-  }
-  if (any(diff(bands) <= 0)) {
-    stop("`bands` must be strictly increasing.", call. = FALSE)
-  }
-  if (abs(bands[1] - 0.5) > .Machine$double.eps^0.5 ||
-      abs(bands[5] - 1.0) > .Machine$double.eps^0.5) {
-    stop("`bands` must start at 0.5 and end at 1.0 (above-chance q range).",
-         call. = FALSE)
-  }
-  if (!is.character(band_labels) || length(band_labels) != 4L ||
-      any(!nzchar(band_labels))) {
-    stop("`band_labels` must be a character vector of length 4 with ",
-         "non-empty labels.", call. = FALSE)
-  }
 
   # `method = "empirical"` is serviced by the bundled empirical q_hat
   # surface when `surface_data` is NULL. The ICC branch still requires a
@@ -430,18 +424,39 @@ position_on_surface <- function(obs_value = NULL,
     se_q_hat <- sd_metric / abs(dEdq)
   }
 
-  # ---- Surface percentile of obs_value -----------------------------------
-  # Caller-supplied per_rep always takes precedence (honours the existing
-  # hook). Otherwise under method = "empirical" we derive percentile from
-  # the bundled empirical q_hat_rep quantile summary (by mapping the band
-  # probabilities back onto the q scale; the percentile of obs_value on the
-  # metric-value surface is the same as the percentile of q_hat on the
-  # q-sampling distribution under the monotone inversion).
+  # ---- Sweep positioning (v0.7.1 convention) ------------------------------
+  # The observed coefficient is evaluated against EVERY calibrated quality
+  # level q at the matched design (F/pi_hat, k, N):
+  #   p(q) = P(coefficient <= obs_value | panel of quality q, this design)
+  # Three read-outs of one object (design/v0.7.1_position_redesign.md):
+  #   sweep      -- the p(q) profile across the calibrated q axis
+  #   band       -- 95% test-inversion consistency band on q: the quality
+  #                 levels with 0.025 <= p(q) <= 0.975
+  #   percentile -- pooled percentile: trapezoid-weighted average of p(q),
+  #                 i.e. the observed coefficient's position within the
+  #                 design's full achievable range. Monotone in obs_value
+  #                 by construction.
+  # The nearest-q_hat-cell percentile is retired: selecting the reference
+  # cohort by a statistic derived from the coefficient itself made the
+  # percentile a non-monotone sawtooth in the coefficient (panel review
+  # 2026-07-05). No q cell is selected here; the whole axis is consulted.
   sampling_method_used <- "delta"
   percentile <- NA_real_
-  bundled_lookup <- NULL   # set below if we resolve one
+  percentile_basis <- NA_character_
+  sweep <- NULL
+  band <- NULL
+
+  if (!is.null(surface_data$q_grid_per_rep) &&
+      !is.null(surface_data$q_grid)) {
+    notes <- c(notes,
+               "`surface_data$q_grid_per_rep` supplied but not consumed internally; ",
+               "using bundled sweep / delta-method fallback.")
+  }
 
   if (!is.null(surface_data$per_rep)) {
+    # Legacy caller-supplied single-cohort hook: an empirical sampling
+    # distribution at the caller's own design. Honored for reproducibility
+    # audits; yields a plain cohort percentile with no sweep or band.
     pr <- as.numeric(surface_data$per_rep)
     pr <- pr[is.finite(pr)]
     if (length(pr) < 2L) {
@@ -449,79 +464,68 @@ position_on_surface <- function(obs_value = NULL,
            call. = FALSE)
     }
     percentile <- mean(pr <= obs_value)
+    percentile_basis <- "user-supplied-cohort"
     sampling_method_used <- "empirical"
-  } else if (method == "empirical" && metric != "icc") {
-    bundled_lookup <- lookup_empirical_q_hat(metric = metric,
-                                             pi_hat = pi_hat,
-                                             k = k, N = N,
-                                             q_hat = q_hat)
-    if (!is.null(bundled_lookup)) {
-      # Percentile of q_hat on the empirical q_hat_rep CDF = percentile of
-      # obs_value on the metric CDF (monotone inversion).
-      percentile <- empirical_cdf_at(q_hat,
-                                     quantiles = bundled_lookup$quantiles,
-                                     probs     = bundled_lookup$probs)
+    notes <- c(notes,
+               "Percentile from caller-supplied per_rep cohort; sweep/band not derived.")
+  } else {
+    sweep_lookup <- NULL
+    if (method == "empirical" && metric != "icc") {
+      sweep_lookup <- lookup_empirical_q_sweep(metric = metric,
+                                               pi_hat = pi_hat,
+                                               k = k, N = N)
+      if (is.null(sweep_lookup)) {
+        notes <- c(notes,
+                   "Bundled empirical q_hat surface unavailable; falling back to delta-method sweep.")
+      }
+    }
+
+    if (!is.null(sweep_lookup)) {
+      # Empirical sweep in q_hat space: rank q_hat within each calibrated
+      # cell's q_hat_rep distribution (monotone-equivalent to ranking
+      # obs_value within the cell's coefficient distribution).
+      p_vals <- vapply(seq_along(sweep_lookup$q_true), function(j) {
+        empirical_cdf_at(q_hat,
+                         quantiles = sweep_lookup$quantiles[j, ],
+                         probs     = sweep_lookup$probs)
+      }, numeric(1L))
+      sweep <- data.frame(q = sweep_lookup$q_true, p = p_vals)
       sampling_method_used <- "empirical"
-      if (length(bundled_lookup$clamp_notes)) {
-        notes <- c(notes, bundled_lookup$clamp_notes)
+      percentile_basis <- "pooled-achievable-range"
+      if (length(sweep_lookup$clamp_notes)) {
+        notes <- c(notes, sweep_lookup$clamp_notes)
       }
     } else {
-      notes <- c(notes,
-                 "Bundled empirical q_hat surface unavailable; falling back to delta-method.")
+      # Delta-method sweep in coefficient space: at each q, approximate the
+      # sampling distribution as Normal(E[metric](q), sd_metric(q)). Serves
+      # the summary-stats-only path and the ICC branch (whose reference
+      # curve carries the F-shape conditioning).
+      q_sweep <- c(seq(0.55, 0.90, by = 0.05), 0.92, 0.94, 0.95, 0.97, 0.99)
+      p_vals <- vapply(q_sweep, function(qq) {
+        mu_q <- approx_at(ref_curve, q_grid, qq)
+        sd_q <- approx_metric_sd(metric = metric, q_hat = qq,
+                                 pi_hat = pi_hat, k = k, N = N)
+        if (!is.finite(mu_q) || !is.finite(sd_q) || sd_q <= 0) {
+          return(NA_real_)
+        }
+        stats::pnorm(obs_value, mean = mu_q, sd = sd_q)
+      }, numeric(1L))
+      keep <- is.finite(p_vals)
+      if (sum(keep) >= 3L) {
+        sweep <- data.frame(q = q_sweep[keep], p = p_vals[keep])
+        sampling_method_used <- "delta"
+        percentile_basis <- "pooled-achievable-range-delta-approx"
+      }
     }
-  }
 
-  if (!is.finite(percentile)) {
-    # Delta-method percentile: treat the observed metric value as normal
-    # around E[metric](q_hat) with SD = sd_metric.
-    mu_m <- approx_at(ref_curve, q_grid, q_hat)
-    percentile <- if (is.finite(sd_metric) && sd_metric > 0) {
-      stats::pnorm(obs_value, mean = mu_m, sd = sd_metric)
+    if (!is.null(sweep)) {
+      percentile <- pooled_percentile_from_sweep(sweep$q, sweep$p)
+      band <- consistency_band_from_sweep(sweep$q, sweep$p, level = 0.95)
+      if (!is.null(band$note)) notes <- c(notes, band$note)
     } else {
-      NA_real_
+      notes <- c(notes,
+                 "Sweep unavailable (no bundled surface and delta approximation undefined); percentile NA.")
     }
-    sampling_method_used <- "delta"
-  }
-
-  # ---- Band probabilities P(q in band_j) ---------------------------------
-  # Caller-supplied q_grid_per_rep is preserved as an external hook; we
-  # don't use it internally yet (documented in roxygen).
-  if (!is.null(surface_data$q_grid_per_rep) &&
-      !is.null(surface_data$q_grid)) {
-    notes <- c(notes,
-               "`surface_data$q_grid_per_rep` supplied but not consumed internally; ",
-               "using bundled empirical lookup / delta-method fallback for bands.")
-  }
-
-  band_probs <- NULL
-  if (!is.null(bundled_lookup)) {
-    band_probs <- band_probabilities_empirical(
-      quantiles = bundled_lookup$quantiles,
-      probs     = bundled_lookup$probs,
-      bands     = bands
-    )
-  }
-  if (is.null(band_probs) || any(!is.finite(band_probs))) {
-    band_probs <- band_probabilities_delta(q_hat = q_hat,
-                                           se_q_hat = se_q_hat,
-                                           bands = bands)
-    if (method == "empirical" && is.null(bundled_lookup)) {
-      # Already flagged above under percentile fallback.
-    }
-  }
-  names(band_probs) <- band_labels
-
-  # ---- Modal band + confidence qualifier ---------------------------------
-  modal_band <- which.max(band_probs)
-  p_star <- band_probs[[modal_band]]
-  confidence <- if (!is.finite(p_star)) {
-    NA_character_
-  } else if (p_star >= 0.90) {
-    "decisive"
-  } else if (p_star >= 0.60) {
-    "moderate"
-  } else {
-    "weak"
   }
 
   out <- list(
@@ -532,10 +536,9 @@ position_on_surface <- function(obs_value = NULL,
     q_hat              = as.numeric(q_hat),
     se_q_hat           = as.numeric(se_q_hat),
     percentile         = as.numeric(percentile),
-    band_probabilities = band_probs,
-    modal_band         = as.integer(modal_band),
-    modal_band_label   = band_labels[[modal_band]],
-    confidence         = confidence,
+    percentile_basis   = percentile_basis,
+    band               = band,
+    sweep              = sweep,
     sampling_method    = sampling_method_used,
     reference_used     = reference_used,
     notes              = notes
@@ -680,10 +683,14 @@ approx_metric_sd <- function(metric, q_hat, pi_hat, k, N) {
 # metric is unsupported. The returned list carries the 13-point empirical
 # quantile summary at that cell plus any clamping notes describing how far
 # off-grid the query was.
-lookup_empirical_q_hat <- function(metric, pi_hat, k, N, q_hat) {
+lookup_empirical_q_sweep <- function(metric, pi_hat, k, N) {
   # Fetch package-internal data. `::` does not work for non-exported
-  # datasets, so use get() with inherits = TRUE; the sysdata is loaded
-  # into the package namespace by R's normal data-loading mechanism.
+  # datasets, so use get(); the sysdata is loaded into the package
+  # namespace by R's normal data-loading mechanism.
+  #
+  # v0.7.1: returns ALL calibrated q cells at the matched (F_key, k, N)
+  # design -- the sweep convention consults the whole quality axis, so
+  # there is deliberately no q selection (and no q clamp note) here.
   surf <- tryCatch(
     get("empirical_q_hat_surface",
         envir = asNamespace("grassr"),
@@ -695,11 +702,9 @@ lookup_empirical_q_hat <- function(metric, pi_hat, k, N, q_hat) {
 
   idx <- surf$index
 
-  # Nearest k: clamp to grid {3, 5, 8, 15}.
   k_grid <- sort(unique(idx$k))
   k_near <- k_grid[which.min(abs(k_grid - as.numeric(k)))]
 
-  # Nearest N: clamp to grid {50, 200, 1000}.
   n_grid <- sort(unique(idx$N))
   n_near <- n_grid[which.min(abs(n_grid - as.numeric(N)))]
 
@@ -708,21 +713,23 @@ lookup_empirical_q_hat <- function(metric, pi_hat, k, N, q_hat) {
   sub <- idx[idx$k == k_near & idx$N == n_near, ]
   if (nrow(sub) == 0L) return(NULL)
   F_keys <- unique(sub[, c("F_key", "M1")])
-  m1_near <- F_keys$M1[which.min(abs(F_keys$M1 - as.numeric(pi_hat)))]
-  F_key_near <- F_keys$F_key[which.min(abs(F_keys$M1 - as.numeric(pi_hat)))]
+  fi <- which.min(abs(F_keys$M1 - as.numeric(pi_hat)))
+  m1_near <- F_keys$M1[fi]
+  F_key_near <- F_keys$F_key[fi]
 
-  # Nearest q_true: clamp to sim-grid {0.55, 0.60, ..., 0.95, 0.99}.
   sub2 <- sub[sub$F_key == F_key_near, ]
-  q_grid_sim <- sort(unique(sub2$q_true))
-  q_true_near <- q_grid_sim[which.min(abs(q_grid_sim - as.numeric(q_hat)))]
+  sub2 <- sub2[order(sub2$q_true), ]
+  arr_ids <- as.integer(dimnames(surf$quantiles)$scenario_id)
+  rows_in_arr <- match(as.integer(sub2$scenario_id), arr_ids)
+  keep <- !is.na(rows_in_arr)
+  sub2 <- sub2[keep, , drop = FALSE]
+  rows_in_arr <- rows_in_arr[keep]
+  if (nrow(sub2) < 2L) return(NULL)
 
-  row_idx <- which(sub2$q_true == q_true_near)[1L]
-  scn <- sub2$scenario_id[row_idx]
-  row_in_arr <- which(as.integer(dimnames(surf$quantiles)$scenario_id) ==
-                      as.integer(scn))
-  if (length(row_in_arr) == 0L) return(NULL)
-  quants <- surf$quantiles[row_in_arr, metric, ]
-  if (all(!is.finite(quants))) return(NULL)
+  qmat <- surf$quantiles[rows_in_arr, metric, , drop = FALSE]
+  qmat <- matrix(qmat, nrow = nrow(sub2))
+  finite_rows <- apply(qmat, 1L, function(v) sum(is.finite(v)) >= 2L)
+  if (sum(finite_rows) < 2L) return(NULL)
 
   clamp_notes <- character(0L)
   if (as.numeric(k) != k_near) {
@@ -740,20 +747,14 @@ lookup_empirical_q_hat <- function(metric, pi_hat, k, N, q_hat) {
                      sprintf("pi_hat=%.3f clamped to nearest sim F_key with M1=%.3f.",
                              as.numeric(pi_hat), m1_near))
   }
-  if (abs(as.numeric(q_hat) - q_true_near) > 0.05) {
-    clamp_notes <- c(clamp_notes,
-                     sprintf("q_hat=%.3f clamped to nearest sim q_true=%.3f.",
-                             as.numeric(q_hat), q_true_near))
-  }
 
   list(
-    quantiles   = as.numeric(quants),
+    q_true      = as.numeric(sub2$q_true[finite_rows]),
+    quantiles   = qmat[finite_rows, , drop = FALSE],
     probs       = as.numeric(surf$probs),
-    scenario_id = as.integer(scn),
     F_key       = F_key_near,
     k_nearest   = k_near,
     N_nearest   = n_near,
-    q_true_nearest = q_true_near,
     M1_nearest  = m1_near,
     clamp_notes = clamp_notes
   )
@@ -1108,59 +1109,113 @@ empirical_cdf_at <- function(x, quantiles, probs) {
   stats::approx(x = qx, y = pr, xout = x, rule = 2, ties = "ordered")$y
 }
 
-# ---- Internal: empirical band probabilities over q ------------------------
-# P(q in [bands[j], bands[j+1])) = CDF(bands[j+1]) - CDF(bands[j]) using the
-# empirical q_hat_rep CDF reconstructed from the 13-point quantile summary.
-# Probabilities are non-negative by construction up to numerical noise.
-band_probabilities_empirical <- function(quantiles, probs, bands) {
-  n_bands <- length(bands) - 1L
-  cdf_at_boundary <- vapply(
-    bands,
-    function(b) empirical_cdf_at(b, quantiles = quantiles, probs = probs),
-    numeric(1L)
-  )
-  # Extend tails to 0 / 1 at the boundary endpoints (0.5 and 1.0). If the
-  # empirical q_hat_rep distribution lies entirely above 0.5 (almost always
-  # true given q_true in [0.55, 0.99]), CDF at 0.5 is 0. If it lies fully
-  # below 1.0, CDF at 1.0 is 1.
-  if (is.finite(cdf_at_boundary[1L])) cdf_at_boundary[1L] <-
-    min(cdf_at_boundary[1L], probs[1L])
-  if (is.finite(cdf_at_boundary[length(cdf_at_boundary)])) {
-    cdf_at_boundary[length(cdf_at_boundary)] <-
-      max(cdf_at_boundary[length(cdf_at_boundary)], probs[length(probs)])
-  }
-  # Force CDF(0.5) -> 0 and CDF(1.0) -> 1 when the user-supplied bands span
-  # the whole [0.5, 1.0] range -- this is the default and avoids losing the
-  # mass outside the empirical quantile envelope.
-  if (abs(bands[1L] - 0.5) < 1e-9) cdf_at_boundary[1L] <- 0
-  if (abs(bands[length(bands)] - 1.0) < 1e-9) {
-    cdf_at_boundary[length(cdf_at_boundary)] <- 1
-  }
-  probs_out <- diff(cdf_at_boundary)
-  probs_out <- pmax(probs_out, 0)
-  s <- sum(probs_out)
-  if (is.finite(s) && s > 0) probs_out <- probs_out / s
-  probs_out
+# ---- Internal: pooled percentile from the q sweep --------------------------
+# Trapezoid-weighted average of p(q) over the calibrated q axis: the CDF of
+# the pooled mixture (equal density per unit q, so the non-uniform grid
+# spacing does not distort the pool) evaluated at the observed value.
+# Monotone in the observed coefficient by construction.
+pooled_percentile_from_sweep <- function(q, p) {
+  ok <- is.finite(p)
+  q <- q[ok]; p <- p[ok]
+  n <- length(q)
+  if (n == 0L) return(NA_real_)
+  if (n == 1L) return(p)
+  w <- numeric(n)
+  w[1L] <- (q[2L] - q[1L]) / 2
+  w[n]  <- (q[n] - q[n - 1L]) / 2
+  if (n > 2L) w[2:(n - 1L)] <- (q[3:n] - q[1:(n - 2L)]) / 2
+  sum(w * p) / sum(w)
 }
 
-# ---- Internal: delta-method band probabilities ----------------------------
-# P(q in [bands[j], bands[j+1])) under q_hat ~ Normal(q_hat, se_q_hat).
-# On a NaN SE we fall back to assigning all mass to the band containing
-# q_hat, flagging weak confidence through the modal-band mechanism.
-band_probabilities_delta <- function(q_hat, se_q_hat, bands) {
-  n_bands <- length(bands) - 1L
-  if (!is.finite(q_hat)) return(rep(NA_real_, n_bands))
-  if (!is.finite(se_q_hat) || se_q_hat <= 0) {
-    # Dirac mass at q_hat -> place on the containing band, with the last
-    # band capturing q_hat == 1.
-    idx <- findInterval(q_hat, bands, rightmost.closed = TRUE,
-                        all.inside = TRUE)
-    out <- numeric(n_bands)
-    out[idx] <- 1
-    return(out)
+# ---- Internal: consistency band on q via test inversion --------------------
+# Quality level q is CONSISTENT with the observed coefficient when
+# alpha/2 <= p(q) <= 1 - alpha/2 (two-sided test inversion at `level`).
+# p(q) decreases in q (a fixed observation ranks lower within higher-quality
+# cohorts); band endpoints are interpolated linearly in q at the crossings.
+# Monte-Carlo non-monotonicity is handled by taking the OUTERMOST crossings
+# (conservative wide band). Open ends at the calibrated grid boundary are
+# flagged rather than silently truncated.
+consistency_band_from_sweep <- function(q, p, level = 0.95) {
+  alpha <- 1 - level
+  lo_p <- 1 - alpha / 2   # p above this: observation too HIGH for quality q
+  hi_p <- alpha / 2       # p below this: observation too LOW for quality q
+  ok <- is.finite(p)
+  q <- q[ok]; p <- p[ok]
+  n <- length(q)
+  if (n < 2L) {
+    return(list(lo = NA_real_, hi = NA_real_, level = level,
+                open_low = NA, open_high = NA,
+                note = "Consistency band undefined: sweep too short."))
   }
-  cdf <- stats::pnorm(bands, mean = q_hat, sd = se_q_hat)
-  diff(cdf)
+  cons <- which(p >= hi_p & p <= lo_p)
+
+  interp_cross <- function(j1, j2, target) {
+    # Linear interpolation of the q at which p crosses `target` between
+    # adjacent sweep points j1 < j2.
+    if (abs(p[j2] - p[j1]) < 1e-12) return((q[j1] + q[j2]) / 2)
+    q[j1] + (target - p[j1]) * (q[j2] - q[j1]) / (p[j2] - p[j1])
+  }
+
+  if (length(cons) == 0L) {
+    if (all(p > lo_p)) {
+      # P_q ~ 1 at every calibrated q: the observation ranks above the
+      # sampling range of even the highest calibrated quality, so the
+      # band is open above the grid.
+      return(list(lo = q[n], hi = NA_real_, level = level,
+                  open_low = FALSE, open_high = TRUE,
+                  note = sprintf(
+                    "Observed value above the sampling range of the highest calibrated quality (q = %.2f); consistency band open above the calibrated grid.",
+                    q[n])))
+    }
+    if (all(p < hi_p)) {
+      # P_q ~ 0 at every calibrated q: the observation ranks below the
+      # sampling range of even the lowest calibrated quality, so the
+      # band is open below the grid.
+      return(list(lo = NA_real_, hi = q[1L], level = level,
+                  open_low = TRUE, open_high = FALSE,
+                  note = sprintf(
+                    "Observed value below the sampling range of the lowest calibrated quality (q = %.2f); consistency band open below the calibrated grid.",
+                    q[1L])))
+    }
+    # p jumps across the whole consistent range between two grid points
+    # (very tight sampling distributions relative to grid spacing):
+    # interpolate both crossings inside that gap.
+    j <- which(p[-n] > lo_p & p[-1L] < hi_p)
+    if (length(j)) {
+      j <- j[1L]
+      lo <- interp_cross(j, j + 1L, lo_p)
+      hi <- interp_cross(j, j + 1L, hi_p)
+      return(list(lo = min(lo, hi), hi = max(lo, hi), level = level,
+                  open_low = FALSE, open_high = FALSE,
+                  note = "Consistency band narrower than the calibrated q-grid spacing; endpoints interpolated within one grid gap."))
+    }
+    return(list(lo = NA_real_, hi = NA_real_, level = level,
+                open_low = NA, open_high = NA,
+                note = "Consistency band undefined: sweep profile irregular."))
+  }
+
+  j0 <- min(cons)
+  j1 <- max(cons)
+  if (j0 == 1L) {
+    lo <- q[1L]; open_low <- TRUE
+  } else {
+    lo <- interp_cross(j0 - 1L, j0, lo_p); open_low <- FALSE
+  }
+  if (j1 == n) {
+    hi <- q[n]; open_high <- TRUE
+  } else {
+    hi <- interp_cross(j1, j1 + 1L, hi_p); open_high <- FALSE
+  }
+  note <- NULL
+  if (open_low && open_high) {
+    note <- "Consistency band spans the entire calibrated quality grid: this design does not constrain panel quality."
+  } else if (open_low) {
+    note <- "Consistency band open at the low edge of the calibrated grid."
+  } else if (open_high) {
+    note <- "Consistency band open at the high edge of the calibrated grid."
+  }
+  list(lo = lo, hi = hi, level = level,
+       open_low = open_low, open_high = open_high, note = note)
 }
 
 # ---- %||% coalescing helper (local, does not export) ---------------------
@@ -1168,28 +1223,26 @@ band_probabilities_delta <- function(q_hat, se_q_hat, bands) {
 
 #' @export
 print.grass_surface_position <- function(x, digits = 3, ...) {
-  cat("grass surface-position report (Target-2 reporting convention)\n",
+  cat("grass surface-position report (sweep convention, v0.7.1)\n",
       "  metric               : ", x$metric, "\n",
       "  observed value       : ", formatC(x$observed_value, digits = digits,
                                            format = "f"), "\n",
       "  design (pi_hat,k,N)  : (",
       formatC(x$design$pi_hat, digits = digits, format = "f"), ", ",
       x$design$k, ", ", x$design$N, ")\n",
-      "  q_hat (scaffold)     : ",
+      "  implied quality q_hat: ",
       formatC(x$q_hat, digits = digits, format = "f"), " +/- ",
       formatC(x$se_q_hat, digits = digits, format = "f"), "\n",
-      "  surface percentile   : ",
-      formatC(x$percentile, digits = digits, format = "f"), "\n",
-      "  band probabilities   :\n", sep = "")
-  for (i in seq_along(x$band_probabilities)) {
-    marker <- if (i == x$modal_band) " <- modal" else ""
-    cat(sprintf("    %-10s %.*f%s\n",
-                names(x$band_probabilities)[i],
-                digits, x$band_probabilities[i], marker))
+      "  pooled percentile    : ",
+      if (is.finite(x$percentile))
+        sprintf("%.1f (of the design's achievable range)",
+                100 * x$percentile)
+      else "NA", "\n", sep = "")
+  if (!is.null(x$band)) {
+    cat("  consistency band     : ", format_consistency_band(x$band),
+        "\n", sep = "")
   }
-  cat("  label                : ", x$modal_band_label, " (",
-      x$confidence, ")\n",
-      "  sampling method      : ", x$sampling_method, "\n", sep = "")
+  cat("  sampling method      : ", x$sampling_method, "\n", sep = "")
   if (length(x$notes)) {
     cat("  notes                :\n")
     for (n in x$notes) cat("    - ", n, "\n", sep = "")
@@ -1197,19 +1250,38 @@ print.grass_surface_position <- function(x, digits = 3, ...) {
   invisible(x)
 }
 
+# ---- Internal: render a consistency band as one human-readable string -----
+format_consistency_band <- function(band, digits = 2) {
+  if (is.null(band)) return("not derived")
+  lvl <- sprintf("%d%%", round(100 * (band$level %||% 0.95)))
+  if (is.na(band$lo) && is.na(band$hi)) return(paste0(lvl, " band undefined"))
+  if (is.na(band$lo)) {
+    return(sprintf("quality <= %.*f (below calibrated grid; %s)",
+                   digits, band$hi, lvl))
+  }
+  if (is.na(band$hi)) {
+    return(sprintf("quality >= %.*f (above calibrated grid; %s)",
+                   digits, band$lo, lvl))
+  }
+  lo_mark <- if (isTRUE(band$open_low))  "<=" else ""
+  hi_mark <- if (isTRUE(band$open_high)) "+"  else ""
+  sprintf("consistent with panel quality %s%.*f-%.*f%s (%s)",
+          lo_mark, digits, band$lo, digits, band$hi, hi_mark, lvl)
+}
+
 #' Coerce a grass_surface_position to a one-row data.frame
 #'
 #' @param x A `grass_surface_position` object.
 #' @param row.names,optional,... Standard arguments; ignored except
 #'   `row.names`.
-#' @return A one-row data.frame summarising the position, label, and
-#'   confidence qualifier. Band probabilities are flattened into columns
-#'   `p_band_1` ... `p_band_4`.
+#' @return A one-row data.frame summarising the position: pooled
+#'   percentile, consistency-band endpoints (`band_lo`, `band_hi`,
+#'   `band_open_low`, `band_open_high`), implied quality, and method.
 #' @export
 as.data.frame.grass_surface_position <- function(x, row.names = NULL,
                                                  optional = FALSE, ...) {
-  bp <- x$band_probabilities
-  df <- data.frame(
+  b <- x$band
+  data.frame(
     metric             = x$metric,
     observed_value     = x$observed_value,
     pi_hat             = x$design$pi_hat,
@@ -1218,15 +1290,14 @@ as.data.frame.grass_surface_position <- function(x, row.names = NULL,
     q_hat              = x$q_hat,
     se_q_hat           = x$se_q_hat,
     percentile         = x$percentile,
-    modal_band         = x$modal_band,
-    modal_band_label   = x$modal_band_label,
-    confidence         = x$confidence,
+    percentile_basis   = x$percentile_basis %||% NA_character_,
+    band_lo            = if (!is.null(b)) b$lo else NA_real_,
+    band_hi            = if (!is.null(b)) b$hi else NA_real_,
+    band_open_low      = if (!is.null(b)) isTRUE(b$open_low) else NA,
+    band_open_high     = if (!is.null(b)) isTRUE(b$open_high) else NA,
+    band_level         = if (!is.null(b)) (b$level %||% NA_real_) else NA_real_,
     sampling_method    = x$sampling_method,
     stringsAsFactors   = FALSE,
     row.names          = row.names
   )
-  for (i in seq_along(bp)) {
-    df[[paste0("p_band_", i)]] <- unname(bp[i])
-  }
-  df
 }

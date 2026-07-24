@@ -46,7 +46,7 @@ Byrt prevalence and bias indices, and two confidence intervals for kappa
 \code{grass_compute()} is deprecated in grass 0.2.0. The new headline API is
 \code{grass_report(ratings = Y)} returning a \code{grass_card} object. The full
 coefficient panel is available via \code{summary()} or \code{as.data.frame()}. See
-\code{vignette("reporting-card")} and \code{\link[=grass_report]{grass_report()}}.
+\code{vignette("grassr")} and \code{\link[=grass_report]{grass_report()}}.
 }
 
 \examples{

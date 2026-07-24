@@ -108,8 +108,8 @@ check_patchwork <- function() {
 #' The plot is a heatmap of the closed-form expectation
 #' `E[metric](M_1, q)` over the surface, where `M_1` is the marginal
 #' positive rate and `q in [0.5, 1]` is the diagonal rater operating
-#' quality. Dotted contours overlay the four-band partition
-#' (`bands` argument). When `pi_hat` is supplied alone, a dashed vertical
+#' quality. Dotted contours mark evenly spaced reference gridlines on
+#' `q` (`bands` argument). When `pi_hat` is supplied alone, a dashed vertical
 #' line marks the design's marginal. When both `pi_hat` and `observed`
 #' are supplied, a filled marker pins the implied `(M_1, hat q)` point on
 #' the surface; `hat q` is recovered by closed-form inversion of `observed`
@@ -139,17 +139,18 @@ check_patchwork <- function() {
 #'   the surface represents.
 #' @param axis One of `"inter"` (default) or `"intra"`. Used for the
 #'   subtitle only.
-#' @param bands Numeric length-5 vector giving band boundaries on `q`.
-#'   Default `c(0.5, 0.625, 0.75, 0.875, 1.0)`.
+#' @param bands Numeric length-5 increasing vector giving the `q`
+#'   values of the dotted reference gridlines.
+#'   Default `c(0.5, 0.625, 0.75, 0.875, 1.0)`. Cosmetic only; nothing
+#'   is labeled or classified by these lines.
 #' @param ... Reserved for future extension.
 #'
 #' @return A `ggplot` object.
 #' @seealso [plot.grass_card()] for the card-driven surface view that
-#'   adds card-specific annotations (band, qualifier, primary-coefficient
+#'   adds card-specific annotations (consistency band, primary-coefficient
 #'   pin); [position_on_surface()] for the underlying inversion machinery.
 #' @export
 #' @examples
-#' \donttest{
 #' if (requireNamespace("ggplot2", quietly = TRUE)) {
 #'   # Bare surface -- what does PABAK's reference look like?
 #'   plot_surface("pabak")
@@ -160,7 +161,6 @@ check_patchwork <- function() {
 #'   # Pin a hypothetical observation on the surface.
 #'   plot_surface("mean_ac1", pi_hat = 0.30, observed = 0.62,
 #'                k = 5, N = 200)
-#' }
 #' }
 plot_surface <- function(metric,
                          pi_hat = NULL,
@@ -283,8 +283,10 @@ plot_surface <- function(metric,
   primary  <- x$coefficient$primary %||% "pabak"
   obs_val  <- x$coefficient$observed_value
   pct      <- x$coefficient$surface_percentile
+  # v0.7.1: coefficient$band is a pre-rendered consistency-band string
+  # (or "suppressed" under divergent); the retired confidence qualifier
+  # is gone.
   band     <- x$coefficient$band
-  qual     <- x$coefficient$qualifier
   k        <- x$sample$k
   N        <- x$sample$N
   pi_hat   <- x$sample$pi_hat
@@ -328,12 +330,13 @@ plot_surface <- function(metric,
   pct_lbl <- if (!is.na(pct_int)) {
     paste0(pct_int, .ord_suffix(pct_int))
   } else "--"
-  band_qual <- if (!is.null(band) && !is.na(band) &&
-                    !is.null(qual) && !is.na(qual))
-    sprintf("(%s, %s)", band, qual) else ""
-  card_summary <- sprintf("%s = %.2f -> %s percentile %s",
+  band_txt <- if (!is.null(band) && length(band) == 1L &&
+                   !is.na(band) && nzchar(band) &&
+                   !identical(band, "suppressed"))
+    paste0("  |  ", band) else ""
+  card_summary <- sprintf("%s = %.2f -> %s percentile%s",
                           .pretty_metric_name(primary),
-                          obs_val %||% NA_real_, pct_lbl, band_qual)
+                          obs_val %||% NA_real_, pct_lbl, band_txt)
   if (!is.null(fallback_note)) {
     card_summary <- paste0(card_summary, "  |  ", fallback_note)
   }
@@ -342,7 +345,7 @@ plot_surface <- function(metric,
                       as.integer(k), as.integer(N),
                       as.numeric(pi_hat), as.character(axis))
 
-  bands <- x$inputs$bands %||% c(0.5, 0.625, 0.75, 0.875, 1.0)
+  bands <- c(0.5, 0.625, 0.75, 0.875, 1.0)  # q reference gridlines
 
   p <- ggplot2::ggplot(grid, ggplot2::aes(x = M1, y = q, fill = value)) +
     ggplot2::geom_raster(interpolate = TRUE) +
@@ -431,15 +434,15 @@ plot_surface <- function(metric,
   df <- data.frame(
     coefficient = factor(panel$coefficient, levels = coef_levels),
     surface_percentile = panel$surface_percentile,
-    band = panel$band,
-    qualifier = panel$qualifier,
     stringsAsFactors = FALSE
   )
   df$y_pos <- as.integer(df$coefficient)
 
+  # Quartile gridlines only: the four-band adjectives are retired (v0.7.1;
+  # the percentile carries the categorical reading without labeled bands).
   band_breaks <- data.frame(pos = c(25, 50, 75))
 
-  ttl <- sprintf("Panel of coefficients: surface percentile (delta = %.1f pp, %s)",
+  ttl <- sprintf("Panel of coefficients: pooled percentile (delta = %.2f pp, %s)",
                  x$delta$delta_hat %||% NA_real_,
                  x$delta$flag %||% "?")
   sub <- sprintf("k = %d, N = %d, pi_hat = %.2f",
@@ -451,10 +454,6 @@ plot_surface <- function(metric,
     ggplot2::geom_vline(data = band_breaks,
                         ggplot2::aes(xintercept = pos),
                         linetype = "dotted", color = "grey50") +
-    ggplot2::annotate("text", x = c(12.5, 37.5, 62.5, 87.5),
-                      y = n_rows + 0.4,
-                      label = c("Poor", "Moderate", "Strong", "Excellent"),
-                      size = 3.0, color = "grey25", fontface = "italic") +
     ggplot2::geom_point(size = 3.5, color = "black") +
     ggplot2::scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, 25),
                                 expand = ggplot2::expansion(mult = c(0.02, 0.05))) +
@@ -463,7 +462,7 @@ plot_surface <- function(metric,
                                 limits = c(0.5, n_rows + 0.7),
                                 expand = c(0, 0)) +
     ggplot2::labs(title = ttl, subtitle = sub,
-                  x = "surface percentile (pp)",
+                  x = "pooled percentile (of the design's achievable range)",
                   y = NULL) +
     theme_grass()
   p
@@ -473,34 +472,57 @@ plot_surface <- function(metric,
 
 .plot_card_thermometer <- function(x, ...) {
   check_ggplot2()
-  thr <- x$delta$thresholds %||% c(caution = 9.25, divergent = 11.75)
-  caut <- unname(thr[1])
-  div  <- unname(thr[2])
+  # v0.7.1: the gauge's band edges are the implied cuts from the matched
+  # null (delta_hat's 95th / 99th at this design), carried on
+  # x$delta$thresholds. The retired 9.25 / 11.75 hardcoded fallback is
+  # gone: when the matched null is unavailable the cuts are NA and the
+  # banded gauge degrades to a plain pointer scale rather than inventing
+  # thresholds.
+  thr  <- x$delta$thresholds
+  caut <- if (!is.null(thr) && "caution"   %in% names(thr)) unname(thr[["caution"]])   else NA_real_
+  div  <- if (!is.null(thr) && "divergent" %in% names(thr)) unname(thr[["divergent"]]) else NA_real_
   delta_hat <- x$delta$delta_hat %||% NA_real_
   flag <- x$delta$flag %||% "?"
-
-  # Three-band rectangle stack; pointer arrow at delta_hat.
-  rng <- data.frame(
-    xmin = c(0, caut, div),
-    xmax = c(caut, div, 100),
-    fill = c("aligned", "caution", "divergent")
-  )
-  fill_pal <- c(aligned = "#A6D96A", caution = "#FEE08B", divergent = "#F46D43")
+  has_cuts <- is.finite(caut) && is.finite(div) && div > caut
 
   ttl <- expression(hat(delta) ~ "asymmetry gauge")
-  sub <- sprintf("delta_hat = %.2f pp (%s); thresholds %.2f / %.2f",
-                 delta_hat, flag, caut, div)
+  x_max <- max(c(50, ceiling(delta_hat) + 5,
+                 if (has_cuts) div + 10 else NA_real_), na.rm = TRUE)
 
   p <- ggplot2::ggplot()
-  p <- p + ggplot2::geom_rect(
-    data = rng,
-    ggplot2::aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = 1, fill = fill),
-    color = NA, alpha = 0.85
-  )
-  p <- p + ggplot2::scale_fill_manual(values = fill_pal,
-                                       breaks = c("aligned", "caution",
-                                                  "divergent"),
-                                       name = NULL)
+  if (has_cuts) {
+    # Three-band rectangle stack at the matched-null implied cuts.
+    rng <- data.frame(
+      xmin = c(0, caut, div),
+      xmax = c(caut, div, x_max),
+      fill = c("aligned", "caution", "divergent")
+    )
+    fill_pal <- c(aligned = "#A6D96A", caution = "#FEE08B",
+                  divergent = "#F46D43")
+    p <- p + ggplot2::geom_rect(
+      data = rng,
+      ggplot2::aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = 1, fill = fill),
+      color = NA, alpha = 0.85
+    ) +
+      ggplot2::scale_fill_manual(values = fill_pal,
+                                 breaks = c("aligned", "caution",
+                                            "divergent"),
+                                 name = NULL)
+    sub <- sprintf("delta_hat = %.2f pp (%s); implied cuts %.2f / %.2f",
+                   delta_hat, flag, caut, div)
+    x_breaks <- c(0, caut, div, seq(0, 100, 10))
+  } else {
+    # Degraded gauge: no calibrated cuts -> neutral bar, no band segments.
+    p <- p + ggplot2::geom_rect(
+      data = data.frame(xmin = 0, xmax = x_max),
+      ggplot2::aes(xmin = xmin, xmax = xmax, ymin = 0, ymax = 1),
+      fill = "grey85", color = NA, alpha = 0.85
+    )
+    sub <- sprintf("delta_hat = %.2f pp (%s); matched-null cuts unavailable (uncalibrated)",
+                   delta_hat, flag)
+    x_breaks <- seq(0, 100, 10)
+  }
+
   # Pointer.
   if (is.finite(delta_hat)) {
     p <- p + ggplot2::geom_segment(
@@ -515,15 +537,13 @@ plot_surface <- function(metric,
                                 fontface = "bold", size = 4)
   }
   p <- p +
-    ggplot2::scale_x_continuous(limits = c(0, max(50, ceiling(delta_hat) + 5,
-                                                   div + 10, na.rm = TRUE)),
+    ggplot2::scale_x_continuous(limits = c(0, x_max),
                                 expand = c(0, 0),
-                                breaks = c(0, caut, div,
-                                           seq(0, 100, 10))) +
+                                breaks = x_breaks) +
     ggplot2::scale_y_continuous(limits = c(-0.1, 2.1), expand = c(0, 0),
                                 breaks = NULL) +
     ggplot2::labs(title = ttl, subtitle = sub,
-                  x = expression(hat(delta) ~ "(percentile-spread, pp)"),
+                  x = expression(hat(delta) ~ "(implied-quality spread, pp)"),
                   y = NULL) +
     theme_grass() +
     ggplot2::theme(panel.grid = ggplot2::element_blank(),

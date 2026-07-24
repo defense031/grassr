@@ -1,7 +1,8 @@
 # Latent-class fit for the divergent branch of the GRASS Reporting Card.
 #
-# When the cross-coefficient panel disagrees (delta_hat >= 11.75 pp),
-# `grass_report()` falls back from a single q_hat summary to per-rater
+# When the cross-coefficient panel disagrees (the divergent flag:
+# delta_hat at or above the 99th percentile of the matched (k, N, q_hat)
+# null), `grass_report()` falls back from a single q_hat summary to per-rater
 # Sensitivity (Se) and Specificity (Sp). This file implements the
 # latent-class machinery that fallback relies on.
 #
@@ -282,7 +283,6 @@
 #' diagnostic tests. *Biometrics*, 36(1), 167--171.
 #'
 #' @examples
-#' \dontrun{
 #' set.seed(1)
 #' N <- 500; k <- 5
 #' Se <- 0.90; Sp <- 0.85; pi <- 0.30
@@ -292,7 +292,6 @@
 #'   Y[, j] <- rbinom(N, 1, ifelse(C == 1, Se, 1 - Sp))
 #' fit <- latent_class_fit(Y, B = 200, seed = 1)
 #' print(fit)
-#' }
 #'
 #' @export
 latent_class_fit <- function(ratings,
@@ -310,6 +309,14 @@ latent_class_fit <- function(ratings,
     stop("`B` must be a non-negative integer.", call. = FALSE)
   }
   B <- as.integer(B)
+
+  # A supplied seed must not clobber the caller's RNG state: save and
+  # restore .Random.seed around the seeded bootstrap draws below.
+  if (!is.null(seed) && exists(".Random.seed", envir = globalenv())) {
+    old_seed <- get(".Random.seed", envir = globalenv())
+    on.exit(assign(".Random.seed", old_seed, envir = globalenv()),
+            add = TRUE)
+  }
 
   # Method dispatch.
   if (is.null(method)) {

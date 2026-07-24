@@ -39,8 +39,10 @@ the surface represents.}
 \item{axis}{One of \code{"inter"} (default) or \code{"intra"}. Used for the
 subtitle only.}
 
-\item{bands}{Numeric length-5 vector giving band boundaries on \code{q}.
-Default \code{c(0.5, 0.625, 0.75, 0.875, 1.0)}.}
+\item{bands}{Numeric length-5 increasing vector giving the \code{q}
+values of the dotted reference gridlines.
+Default \code{c(0.5, 0.625, 0.75, 0.875, 1.0)}. Cosmetic only; nothing
+is labeled or classified by these lines.}
 
 \item{...}{Reserved for future extension.}
 }
@@ -60,8 +62,8 @@ answers without requiring a rating matrix.
 The plot is a heatmap of the closed-form expectation
 \code{E[metric](M_1, q)} over the surface, where \code{M_1} is the marginal
 positive rate and \verb{q in [0.5, 1]} is the diagonal rater operating
-quality. Dotted contours overlay the four-band partition
-(\code{bands} argument). When \code{pi_hat} is supplied alone, a dashed vertical
+quality. Dotted contours mark evenly spaced reference gridlines on
+\code{q} (\code{bands} argument). When \code{pi_hat} is supplied alone, a dashed vertical
 line marks the design's marginal. When both \code{pi_hat} and \code{observed}
 are supplied, a filled marker pins the implied \verb{(M_1, hat q)} point on
 the surface; \verb{hat q} is recovered by closed-form inversion of \code{observed}
@@ -75,7 +77,6 @@ those are accessed via \code{\link[=position_on_surface]{position_on_surface()}}
 and (if available) a fitted card via \code{plot.grass_card(type = "surface")}.
 }
 \examples{
-\donttest{
 if (requireNamespace("ggplot2", quietly = TRUE)) {
   # Bare surface -- what does PABAK's reference look like?
   plot_surface("pabak")
@@ -88,9 +89,8 @@ if (requireNamespace("ggplot2", quietly = TRUE)) {
                k = 5, N = 200)
 }
 }
-}
 \seealso{
 \code{\link[=plot.grass_card]{plot.grass_card()}} for the card-driven surface view that
-adds card-specific annotations (band, qualifier, primary-coefficient
+adds card-specific annotations (consistency band, primary-coefficient
 pin); \code{\link[=position_on_surface]{position_on_surface()}} for the underlying inversion machinery.
 }

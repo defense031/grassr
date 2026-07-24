@@ -8,31 +8,6 @@ source(test_path("fixtures", "published-tables.R"))
 
 # ---- spec-dispatch architecture ---------------------------------------
 
-test_that("grass_spec_binary constructs with valid reference_level", {
-  s <- grass_spec_binary()
-  expect_s3_class(s, "grass_spec_binary")
-  expect_s3_class(s, "grass_spec")
-  expect_equal(s$family, "binary")
-  expect_equal(s$reference_level, 0.85)
-  for (lvl in c(0.70, 0.80, 0.85, 0.90)) {
-    expect_equal(grass_spec_binary(reference_level = lvl)$reference_level, lvl)
-  }
-  expect_null(grass_spec_binary(reference_level = NULL)$reference_level)
-})
-
-test_that("grass_spec_binary rejects invalid reference_level", {
-  expect_error(grass_spec_binary(reference_level = 0.75), "must be one of")
-  expect_error(grass_spec_binary(reference_level = "high"), "must be one of")
-  expect_error(grass_spec_binary(reference_level = c(0.85, 0.90)), "must be one of")
-})
-
-test_that("stub spec constructors return placeholder specs", {
-  for (ctor in list(grass_spec_ordinal, grass_spec_multirater, grass_spec_continuous)) {
-    s <- ctor()
-    expect_s3_class(s, "grass_spec")
-  }
-})
-
 test_that("stub specs error at dispatch with a ?grass_roadmap pointer", {
   skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
 })

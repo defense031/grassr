@@ -8,7 +8,7 @@ check_asymmetry(
   ratings,
   axis = c("inter", "intra"),
   occasion = NULL,
-  delta_thresholds = NULL,
+  fit_icc = TRUE,
   ...
 )
 }
@@ -24,100 +24,116 @@ family.}
 \item{occasion}{Reserved for \code{axis = "intra"} (a vector / factor
 identifying viewing occasion); ignored when \code{axis = "inter"}.}
 
-\item{delta_thresholds}{Length-2 numeric vector \code{c(caution, divergent)}
-in percentile points. Default \code{c(9.25, 11.75)} from paper Sec.3.2 (NP
-optimum at alpha = 0.05 / 0.01).}
+\item{fit_icc}{If \code{FALSE}, skip the \code{lme4::glmer} fit behind \code{icc} and drop
+ICC from the panel. \code{icc} never enters \code{delta_hat}, and the fit draws no
+random numbers, so a caller that reports only \code{delta_hat} and the implied
+qualities gets identical results at a fraction of the cost. The Monte
+Carlo null loop sets this; interactive users should not.}
 
-\item{...}{Forwarded to \code{\link[=position_on_surface]{position_on_surface()}} (e.g. \code{bands},
-\code{band_labels}, \code{reference_type}).}
+\item{...}{Forwarded to \code{\link[=position_on_surface]{position_on_surface()}} (e.g. \code{reference_type}).}
 }
 \value{
 An S3 object of class \code{grass_asymmetry_panel} with fields:
 \itemize{
-\item \code{delta_hat}: scalar percentile-spread in pp
+\item \code{delta_hat}: scalar implied-quality spread, in pp of quality
+\item \code{delta_percentile}: \code{delta_hat}'s percentile on the matched
+(k, N, q_hat) null ECDF (\code{NA} if the null is uncalibrated at the
+design)
 \item \code{flag}: one of \code{"aligned"}, \code{"caution"}, \code{"divergent"}
-\item \code{thresholds}: named numeric vector of the (caution, divergent)
-cutoffs, in pp
-\item \code{panel}: data.frame with \code{coefficient}, \code{observed}, \code{percentile_pp}
+\item \code{matched_null}: list describing the matched null cell
+(\code{k}, \code{N}, \code{q}, \code{q_hat_panel}, \code{n_draws}, \code{snapped},
+\code{unstable_tail}), or \code{NULL} if uncalibrated
+\item \code{thresholds}: named numeric vector of the implied (caution, divergent)
+pp cuts (95th/99th of the matched null)
+\item \code{thresholds_source}: one of \code{"matched_null_ecdf"},
+\code{"not_applicable_k2"}, \code{"not_calibrated"}
+\item \code{panel}: data.frame with \code{coefficient}, \code{observed}, \code{implied_q},
+\code{percentile_pp} (pooled percentile), \code{clamped}, \code{in_delta_hat}
 \item \code{notes}: character vector of unique caveats from the underlying
 surface positioning calls (e.g. nearest-neighbor gaps, ICC
-unavailability)
+unavailability, matched-null provenance)
 }
 }
 \description{
 \code{check_asymmetry()} takes an N x k binary ratings matrix and returns a
-scalar \code{delta_hat} (in percentile points, "pp"): the max-min spread of
-surface percentiles across the four agreement coefficients (PABAK,
-AC1, Fleiss kappa, Krippendorff alpha) when each is positioned on its
-calibrated reference surface. ICC is reported on the panel rows but
-excluded from \code{delta_hat} (its reference is distribution-sensitive in
-ways the agreement family is not).
+scalar \code{delta_hat} (in quality percentage points, "pp"): the max-min
+spread of the \emph{implied panel qualities} across the three agreement
+coefficients (PABAK, mean AC1, Fleiss kappa). Each coefficient inverts
+to its own \code{q_hat} on the shared (q, pi_+) reference; if the
+calibration DGP held exactly, all three would imply the same quality,
+so the spread measures cross-coefficient model discordance in
+interpretable units of quality. (Option B, ratified 2026-07-05; the
+previous definition -- spread of surface percentiles across four
+coefficients including Krippendorff alpha -- ran through the retired
+nearest-cell percentile machinery, whose sawtooth inflated \code{delta_hat}
+with quantization noise. Alpha left the panel at 0.6.0; ICC never
+enters \code{delta_hat}, its reference being distribution-sensitive in ways
+the agreement family is not.)
 }
 \details{
 \code{delta_hat} is a \emph{split-bias} detector. It fires when raters tilt in
 different directions across (Se, Sp) -- e.g., one rater high-Se / low-Sp,
-another high-Sp / low-Se -- because the four coefficients respond to
-heterogeneous per-rater behavior differently and end up disagreeing on
-where the panel sits on the surface. The framework's other failure
-mode, \emph{shared/uniform bias} (every rater tilts the same direction,
-e.g., a panel trained on one protocol all favoring specificity over
-sensitivity), produces uniform percentile degradation across
-coefficients: small \code{delta_hat}, low minimum surface percentile.
-Shared bias is detected by the panel's minimum surface percentile,
-not by \code{delta_hat}. A divergent flag therefore identifies a specific
-kind of disagreement -- cross-coefficient inversion from heterogeneous
-rater behavior -- and routes the user to the per-rater pairwise PABAK
-matrix and pooled-reference (Se_tilde, Sp_tilde) diagnostic.
+another high-Sp / low-Se -- because the three coefficients respond to
+heterogeneous per-rater behavior differently and end up implying
+different panel qualities. The framework's other failure mode,
+\emph{shared/uniform bias} (every rater tilts the same direction, e.g., a
+panel trained on one protocol all favoring specificity over
+sensitivity), produces uniform degradation across coefficients: small
+\code{delta_hat}, low implied quality. Shared bias is detected by the
+panel's implied quality (and its consistency band), not by \code{delta_hat}.
+A divergent flag therefore identifies a specific kind of disagreement
+-- cross-coefficient inversion from heterogeneous rater behavior -- and
+routes the user to the per-rater pairwise PABAK matrix and
+pooled-reference (Se_tilde, Sp_tilde) diagnostic.
 
 Each coefficient is positioned on its reference surface via
-\code{\link[=position_on_surface]{position_on_surface()}}, yielding a percentile in \verb{[0, 100]} pp. The
-panel diagnostic is \code{delta_hat = max(percentile) - min(percentile)},
-computed over coefficients whose observed value sits within the
-achievable range of their reference surface (see \emph{Surface-envelope
-clamp} below).
+\code{\link[=position_on_surface]{position_on_surface()}}, which reports its implied \code{q_hat}. The panel
+diagnostic is \code{delta_hat = max(q_hat) - min(q_hat)} (in pp of quality),
+computed over agreement-family coefficients whose observed value sits
+within the achievable range of their reference surface (see
+\emph{Surface-envelope clamp} below).
 }
 \section{Surface-envelope clamp (v0.2.1+)}{
 
 If an observed coefficient value falls outside the achievable range of
 its reference surface at the study's design \verb{(pi_hat, k, N)}, the
-inversion to \code{q_hat} clamps to the boundary and the percentile lands
-at exactly \code{0} or \code{100}. Including such clamped percentiles in the
-max-min \code{delta_hat} would inflate the panel-spread purely because of
-the clamp, not because the panel disagrees on percentile. Since
-v0.2.1 the function therefore \emph{excludes} clamped coefficients from
-\code{delta_hat} whenever at least two unclamped coefficients remain. The
-affected coefficients are still shown in the returned \code{panel}
-data.frame with \code{clamped = TRUE} and surface percentile \code{0} or \code{100},
+inversion to \code{q_hat} clamps to the boundary. Including such clamped
+implied qualities in the max-min \code{delta_hat} would inflate the panel
+spread purely because of the clamp, not because the panel disagrees on
+quality. Since v0.2.1 the function therefore \emph{excludes} clamped
+coefficients from \code{delta_hat} whenever at least two unclamped
+agreement-family coefficients remain. The affected coefficients are
+still shown in the returned \code{panel} data.frame with \code{clamped = TRUE},
 and a note in \verb{$notes} names which coefficients were excluded. This
-matters most often for ICC at \code{N > 200} (the bundled fitted-ICC
-reference is calibrated through \code{N = 200}; beyond that the function
-falls back to the oracle reference, which over-predicts the
-practitioner's GLMM-fit ICC and therefore clamps). The behavior
-guarantees that a \code{divergent} flag always reflects genuine
-cross-coefficient surface-percentile disagreement rather than an
-envelope artifact; the trade-off is that a coefficient with no
-calibrated reference at the user's design contributes nothing to
-the diagnostic. If fewer than two unclamped coefficients remain,
-\code{delta_hat} falls back to the raw spread including clamped values
-and the note records the fallback.
+matters most often for ICC (which never enters \code{delta_hat} anyway) and
+at designs beyond the bundled reference range, where a coefficient
+clamps to the achievable boundary. If fewer than two unclamped
+agreement-family coefficients remain, \code{delta_hat} falls back to the raw
+spread including clamped values and the note records the fallback.
+}
 
-Tier thresholds default to \code{c(9.25, 11.75)} pp, the Neyman-Pearson-motivated
-size-alpha cutoffs at \code{alpha = 0.05} and \code{alpha = 0.01} from Sec.3.2 of the
-GRASS paper (see also App G operating characteristics). The construction is
-NP-optimal within the test class of threshold rules on \code{delta_hat}; it is
-not a likelihood-ratio test on the joint distribution of the panel
-coefficients (\code{delta_hat} is a paired-margin difference, not a likelihood
-ratio). The three flags are:
+\section{Flag from the matched null (v0.7.0/0.7.1)}{
+
+The per-(k, N) size-alpha threshold table is retired. The flag is
+\code{delta_hat}'s percentile on the null distribution of \code{delta_hat} at the
+matched (k, N, q_hat) cell of the bundled \code{delta_null_ecdf}, with the
+cut convention >= 95th caution, >= 99th divergent. The panel's \code{q_hat}
+is resolved first (median of the agreement-family implied qualities),
+then the matched null cell is looked up; the reported
+\code{thresholds} carry the implied pp cuts (95th/99th of that null) as
+context, and \code{thresholds_source} records how the flag was resolved. The
+three flags are:
 \itemize{
-\item \strong{\code{aligned}} (\code{delta_hat < 9.25} pp): the panel agrees on the
-surface position. Any single coefficient is a stable summary; the
-primary coefficient (Table 2) carries the headline.
-\item \strong{\code{caution}} (\verb{9.25 <= delta_hat < 11.75} pp): the panel is mildly
-inconsistent. Report the primary coefficient with a caution flag and
-the \code{delta_hat} value.
-\item \strong{\code{divergent}} (\code{delta_hat >= 11.75} pp): no single coefficient is a
-stable summary. Use \code{\link[=latent_class_fit]{latent_class_fit()}} to recover per-rater
-\verb{(Se, Sp)} and report those instead.
+\item \strong{\code{aligned}} (below the 95th percentile of the matched null): the
+panel agrees on the implied quality. Any single coefficient is a
+stable summary; the primary coefficient (Table 2) carries the
+headline.
+\item \strong{\code{caution}} (>= 95th, < 99th): the panel is mildly inconsistent.
+Report the primary coefficient with a caution flag and the
+\code{delta_hat} value.
+\item \strong{\code{divergent}} (>= 99th): no single coefficient is a stable summary.
+Use \code{\link[=latent_class_fit]{latent_class_fit()}} to recover per-rater \verb{(Se, Sp)} and report
+those instead.
 }
 
 The new \code{check_asymmetry(ratings, ...)} signature replaces the
@@ -129,17 +145,10 @@ routes the call to \code{\link[=check_rater_asymmetry]{check_rater_asymmetry()}}
 }
 
 \examples{
-\donttest{
 set.seed(1)
 # Build a 5x200 symmetric panel -- should print as 'aligned'.
 Y <- matrix(rbinom(5 * 200, 1, 0.30), nrow = 200, ncol = 5)
 check_asymmetry(Y)
-}
-}
-\references{
-Neyman, J. and Pearson, E. S. (1933). On the problem of the most
-efficient tests of statistical hypotheses. \emph{Philosophical Transactions
-of the Royal Society of London A}, 231, 289-337.
 }
 \seealso{
 \code{\link[=check_rater_asymmetry]{check_rater_asymmetry()}} for the per-rater Se/Sp companion;

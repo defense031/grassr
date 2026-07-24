@@ -56,11 +56,12 @@
 #'   \item \code{marginal_matrix} --- \eqn{k \times k} symmetric
 #'     numeric; \eqn{[i, j]} is \eqn{\hat\pi_{+, ij}}. Diagonal is
 #'     \code{NA}.
-#'   \item \code{band_matrix} --- \eqn{k \times k} character matrix;
-#'     four-band label for each pairwise percentile. Diagonal is
-#'     \code{NA}.
-#'   \item \code{qualifier_matrix} --- \eqn{k \times k} character;
-#'     decisive / moderate / weak per pairwise percentile.
+#'   \item \code{band_lo_matrix} --- \eqn{k \times k} numeric matrix;
+#'     lower endpoint of each pair's 95\% consistency band on quality
+#'     (v0.7.1 sweep convention). Diagonal is \code{NA}.
+#'   \item \code{band_hi_matrix} --- \eqn{k \times k} numeric matrix;
+#'     upper endpoint of each pair's 95\% consistency band on quality.
+#'     Diagonal is \code{NA}.
 #'   \item \code{pooled_per_rater} --- data frame with \eqn{k} rows,
 #'     one per rater, columns \code{rater}, \code{se_tilde},
 #'     \code{sp_tilde}, \code{n_pool_pos}, \code{n_pool_neg},
@@ -102,12 +103,12 @@ pairwise_agreement <- function(ratings, axis = c("inter", "intra")) {
   pabak_mat   <- matrix(NA_real_, nrow = k, ncol = k)
   pct_mat     <- matrix(NA_real_, nrow = k, ncol = k)
   marg_mat    <- matrix(NA_real_, nrow = k, ncol = k)
-  band_mat    <- matrix(NA_character_, nrow = k, ncol = k)
-  qual_mat    <- matrix(NA_character_, nrow = k, ncol = k)
+  band_lo_mat <- matrix(NA_real_, nrow = k, ncol = k)
+  band_hi_mat <- matrix(NA_real_, nrow = k, ncol = k)
   diag(pabak_mat) <- 1
   rater_names <- colnames(Y) %||% paste0("R", seq_len(k))
   dimnames(pabak_mat) <- dimnames(pct_mat) <- dimnames(marg_mat) <-
-    dimnames(band_mat) <- dimnames(qual_mat) <-
+    dimnames(band_lo_mat) <- dimnames(band_hi_mat) <-
       list(rater_names, rater_names)
 
   for (i in seq_len(k - 1L)) {
@@ -129,12 +130,15 @@ pairwise_agreement <- function(ratings, axis = c("inter", "intra")) {
       marg_mat[i, j]  <- marg_mat[j, i]  <- pi_hat_ij
 
       if (!is.null(pos)) {
+        # v0.7.1: pooled percentile within the k = 2 design's achievable
+        # range, plus the 95% consistency-band endpoints on quality. The
+        # retired modal-band label / confidence qualifier are gone.
         pct_pp <- as.numeric(pos$percentile) * 100
         pct_mat[i, j]  <- pct_mat[j, i]  <- pct_pp
-        band_mat[i, j] <- band_mat[j, i] <-
-          pos$modal_band_label %||% NA_character_
-        qual_mat[i, j] <- qual_mat[j, i] <-
-          pos$confidence %||% NA_character_
+        if (!is.null(pos$band)) {
+          band_lo_mat[i, j] <- band_lo_mat[j, i] <- pos$band$lo %||% NA_real_
+          band_hi_mat[i, j] <- band_hi_mat[j, i] <- pos$band$hi %||% NA_real_
+        }
       }
     }
   }
@@ -177,8 +181,8 @@ pairwise_agreement <- function(ratings, axis = c("inter", "intra")) {
     pabak_matrix      = pabak_mat,
     percentile_matrix = pct_mat,
     marginal_matrix   = marg_mat,
-    band_matrix       = band_mat,
-    qualifier_matrix  = qual_mat,
+    band_lo_matrix    = band_lo_mat,
+    band_hi_matrix    = band_hi_mat,
     pooled_per_rater  = pooled,
     sample = list(
       k        = as.integer(k),

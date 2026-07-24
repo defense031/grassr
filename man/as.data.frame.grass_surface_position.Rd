@@ -13,9 +13,9 @@
 \code{row.names}.}
 }
 \value{
-A one-row data.frame summarising the position, label, and
-confidence qualifier. Band probabilities are flattened into columns
-\code{p_band_1} ... \code{p_band_4}.
+A one-row data.frame summarising the position: pooled
+percentile, consistency-band endpoints (\code{band_lo}, \code{band_hi},
+\code{band_open_low}, \code{band_open_high}), implied quality, and method.
 }
 \description{
 Coerce a grass_surface_position to a one-row data.frame

@@ -31,19 +31,24 @@
 # -> "calibrated, k=k', N=N' (snapped)", default_fallback -> "modal-design
 # default", user_supplied -> "user-supplied".
 .fmt_thresholds_line <- function(delta_list) {
-  thr <- delta_list$thresholds
-  if (is.null(thr) || length(thr) != 2L) return(character(0L))
-  src <- delta_list$thresholds_source %||% "user_supplied"
-  src_str <- switch(
-    src,
-    calibrated_at_k_N             = "calibrated at this (k, N)",
-    snapped_to_nearest_calibrated = "calibrated at nearest grid cell (snapped)",
-    default_fallback              = "modal-design default (calibration table missing)",
-    user_supplied                 = "user-supplied",
-    src
-  )
-  sprintf("  thresholds  = (%.2f, %.2f) [%s]",
-          unname(thr[1]), unname(thr[2]), src_str)
+  # v0.7.0: the flag is delta_hat's percentile on the matched null; the
+  # implied pp cuts (95th/99th of that null) are shown as context.
+  mn <- delta_list$matched_null
+  pct <- delta_list$delta_percentile
+  if (!is.null(mn) && is.finite(pct %||% NA_real_)) {
+    sprintf("  matched null = (k=%d, N=%d, q=%.2f): delta_hat at the %.1f percentile%s%s",
+            mn$k, mn$N, mn$q, pct,
+            if (isTRUE(mn$snapped)) " [design snapped]" else "",
+            if (isTRUE(mn$unstable_tail)) " [tail not stably invertible]" else "")
+  } else if (identical(delta_list$thresholds_source, "user_supplied_legacy")) {
+    thr <- delta_list$thresholds
+    sprintf("  thresholds  = (%.2f, %.2f) [user-supplied, legacy pp cuts]",
+            thr[["caution"]], thr[["divergent"]])
+  } else if (identical(delta_list$thresholds_source, "not_applicable_k2")) {
+    "  matched null = n/a at k = 2 (coefficients cannot disagree; see pairwise/bounds path)"
+  } else {
+    "  matched null = unavailable (flag not calibrated)"
+  }
 }
 
 # Render the bootstrap-CI and tier-probability lines when bootstrap_delta_B
@@ -63,6 +68,27 @@
   c(sprintf("                95%% bootstrap CI: %s (B = %d)",
             ci_str, as.integer(delta_list$bootstrap_B)),
     sprintf("                tier prob:       %s", tp_str))
+}
+
+# Render a per-row consistency band as a compact "quality 0.87-0.91"
+# string from the panel_df band columns. One-sided open bands (observed
+# value beyond the calibrated grid on one side) render as inequalities.
+.fmt_band_range <- function(lo, hi, open_low, open_high) {
+  if (is.na(lo) && is.na(hi)) return("")
+  if (is.na(lo)) return(sprintf("quality <= %.2f", hi))
+  if (is.na(hi)) return(sprintf("quality >= %.2f", lo))
+  if (isTRUE(open_low) && isTRUE(open_high)) return("quality unconstrained")
+  sprintf("quality %s%.2f-%.2f%s",
+          if (isTRUE(open_low)) "<=" else "",
+          lo, hi,
+          if (isTRUE(open_high)) "+" else "")
+}
+
+# Debug-grade notes (reference-curve provenance, glmer F_key fitting) stay
+# off the headline card and print in summary() only; calibration caveats
+# (clamps, snaps, band boundaries) stay on the card.
+.is_debug_note <- function(n) {
+  grepl("F_key picked via glmer|Fitted-ICC reference|ICC reference curve from bundled|reference curve supplied|q_grid_per_rep", n)
 }
 
 # Pretty label-mapping for the panel coefficient names.
@@ -98,7 +124,9 @@ format.grass_card <- function(x, digits = 2, ...) {
   N  <- x$sample$N
   pi_hat_str <- formatC(x$sample$pi_hat, format = "f", digits = digits)
   flag <- x$delta$flag
-  delta_pp <- round(x$delta$delta_hat, digits = max(digits - 1L, 0L))
+  # Implied-quality spreads are small numbers (fractions of a quality pp
+  # on aligned panels); keep two decimals so they never print as "0".
+  delta_pp <- round(x$delta$delta_hat, digits = max(digits, 2L))
 
   lines <- character(0L)
   lines <- c(lines, "GRASS Report Card", "")
@@ -222,13 +250,11 @@ format.grass_card <- function(x, digits = 2, ...) {
       }
     }
   } else {
-    # Aligned or caution: show all panel coefficients with their
-    # surface percentiles, with the qualifier on the primary row.
-    # The percentile is the categorical score per the v0.5 manifesto;
-    # no band line.
+    # Aligned or caution: show all panel coefficients with their pooled
+    # percentiles and consistency bands. The percentile is the
+    # categorical reading; the band is the quality statement
+    # (v0.7.1 sweep convention).
     primary <- x$coefficient$primary
-    qual_str <- if (is.null(x$coefficient$qualifier) ||
-                    is.na(x$coefficient$qualifier)) "" else x$coefficient$qualifier
     pn <- x$panel
     name_w <- max(nchar(vapply(pn$coefficient, .coef_label, character(1))))
     name_w <- max(name_w, 6L)
@@ -236,11 +262,10 @@ format.grass_card <- function(x, digits = 2, ...) {
       label <- .coef_label(pn$coefficient[i])
       val_str <- formatC(pn$observed_value[i], format = "f", digits = digits)
       pct_str <- .fmt_pp(pn$surface_percentile[i])
+      band_str <- .fmt_band_range(pn$band_lo[i], pn$band_hi[i],
+                                  pn$band_open_low[i], pn$band_open_high[i])
       is_primary <- identical(pn$coefficient[i], primary)
       is_icc <- identical(pn$coefficient[i], "icc")
-      qual_suffix <- if (is_primary && nzchar(qual_str)) {
-        sprintf("  (%s)", qual_str)
-      } else ""
       ref_used <- if ("reference_used" %in% names(pn)) pn$reference_used[i] else NA_character_
       ref_marker <- if (isTRUE(ref_used == "oracle-icc-fallback")) {
         "  [oracle-fallback]"
@@ -253,20 +278,37 @@ format.grass_card <- function(x, digits = 2, ...) {
       lines <- c(lines,
                  sprintf("  %-*s = %s  ->  %s%s%s%s",
                          name_w, label, val_str, pct_str,
-                         qual_suffix, ref_marker, primary_tag))
+                         if (nzchar(band_str)) paste0(" | ", band_str) else "",
+                         ref_marker, primary_tag))
+    }
+    # Plain-language gloss for the primary coefficient: the sentence a
+    # practitioner can paste into a methods section and defend.
+    ppct <- x$coefficient$surface_percentile
+    pband <- x$coefficient$consistency_band
+    if (is.finite(ppct %||% NA_real_)) {
+      gloss <- sprintf(
+        "  read: this panel agreed more tightly than %.0f%% of what panels at this design can produce%s.",
+        ppct,
+        if (!is.null(pband) && is.finite(pband$lo %||% NA_real_) &&
+            is.finite(pband$hi %||% NA_real_))
+          sprintf("; the data are consistent with panel quality %.2f-%.2f",
+                  pband$lo, pband$hi)
+        else "")
+      lines <- c(lines, gloss)
     }
     lines <- c(lines,
-               sprintf("  delta       = %s pp (%s)",
+               sprintf("  delta       = %s pp implied-quality spread (%s)",
                        formatC(delta_pp, format = "g", digits = max(digits, 2L)),
                        flag))
     lines <- c(lines, .fmt_thresholds_line(x$delta))
     lines <- c(lines, .fmt_bootstrap_tier_lines(x$delta, digits))
   }
 
-  if (length(x$notes) > 0L) {
+  card_notes <- x$notes[!vapply(x$notes, .is_debug_note, logical(1L))]
+  if (length(card_notes) > 0L) {
     lines <- c(lines, "")
     lines <- c(lines, "  Notes:")
-    for (n in x$notes) {
+    for (n in card_notes) {
       lines <- c(lines, paste0("    - ", n))
     }
   }

@@ -31,17 +31,15 @@ grass_report(ratings = Y)
 ```
 GRASS Report Card
 
-  sample      = 5 raters, N = 200, pi_hat = 0.35, tau2_hat = 0.083
-  PABAK  = 0.41  ->  95th pct (decisive)
-  delta       = 1.2 pp (aligned)
-
-  Notes:
-    - Fitted-ICC F_key picked via glmer: mu_hat=-0.877, tau2_hat=2.801
-        -> F_key tau2=4.0000, mu=-0.847.
-    - Fitted-ICC reference (GLMM-gap corrected) at F_key=LN_mu=-0.847_tau2=4.0000,
-        k=5, N=200 (family=logit_normal, M1=0.374).
-    - obs_value 0.4642 above achievable maximum (0.3381); q_hat clamped.
-    - Delta-method SE undefined: dE/dq near zero at q_hat.
+  sample      = 5 raters, N = 200, pi_hat = 0.35
+  PABAK        = 0.41  ->  62nd percentile | quality 0.78-0.85  <- primary
+  AC1          = 0.46  ->  62nd percentile | quality 0.77-0.85
+  Fleiss kappa = 0.36  ->  62nd percentile | quality 0.77-0.85
+  ICC          = 0.46  ->  61st percentile | quality 0.76-0.85  [distribution-sensitive]
+  read: this panel agreed more tightly than 62% of what panels at this
+        design can produce; the data are consistent with panel quality 0.78-0.85.
+  delta       = 0.01 pp implied-quality spread (aligned)
+  matched null = (k=5, N=200, q=0.85): delta_hat at the 19.1 percentile [design snapped]
 
   See `summary(...)` for full panel and CI details.
   See `plot(...)` for a surface-position visualization.
@@ -67,7 +65,7 @@ The full walkthrough — the easy case, the killer case, layered access
 via `summary()` / `as.data.frame()` / `plot()`, granular building blocks
 (`position_on_surface()`, `check_asymmetry()`, `latent_class_fit()`),
 and the two-rater branch — is in
-[`vignette("reporting-card")`](vignettes/reporting-card.Rmd).
+[`vignette("grassr")`](vignettes/grassr.Rmd).
 
 ## Install (local dev)
 
@@ -77,37 +75,35 @@ remotes::install_github("defense031/grassr")
 # from the package directory:
 devtools::load_all()
 
-# or pin a specific release:
-# remotes::install_github("defense031/grassr", ref = "v0.5.1")
-
-# or install the built tarball:
-# R CMD INSTALL grass_0.5.1.tar.gz
+# the command above installs the repository default branch (development
+# head); the CRAN submission line is the 0.7.x series.
 ```
 
-## What you get in v0.5.x
+## What you get in v0.7.x
 
 - **Headline API.** `grass_report(ratings = Y)` — single-call
   workflow returning a four-field Report Card object (`grass_card`)
-  with `print` / `summary` / `as.data.frame` / `plot` methods. Six
+  with `print` / `summary` / `as.data.frame` / `plot` methods. Seven
   `plot()` view types: `surface` (default), `panel`, `thermometer`,
-  `intervals`, `per_rater`, `diagnostic`.
+  `intervals`, `per_rater`, `pairwise`, `diagnostic`.
 - **Surface-position primitive.** `position_on_surface(ratings = Y,
   metric = ...)` places one observed coefficient on its
-  context-conditioned reference surface and returns the percentile
-  and a decisive / moderate / weak confidence qualifier capturing
-  the local envelope width (modal-quartile sampling probability
-  under bootstrap perturbation of `(q_hat, pi_hat)`). The percentile
-  is the categorical score; no four-way labeled band is interposed
-  between the percentile and the reader. Closed-form references for
-  PABAK, AC1,
-  Fleiss kappa; bundled fitted-ICC reference for
-  ICC across `k in {3, 5, 8, 15, 25} x N in {30, 50, 75, 100, 200,
+  context-conditioned reference surface and returns the pooled
+  percentile (the coefficient's position within the design's achievable
+  agreement range) together with a 95% test-inversion consistency band
+  on panel quality -- the quality levels whose sampling distributions
+  are consistent with the observed value at this design. The pooled
+  percentile is the categorical score; no four-way labeled band is
+  interposed between the percentile and the reader. Closed-form
+  references for PABAK, AC1, Fleiss kappa; bundled fitted-ICC reference
+  for ICC across `k in {3, 5, 8, 15, 25} x N in {30, 50, 75, 100, 200,
   300, 500, 1000}` on a 14-point q-grid.
 - **Cross-coefficient stability signal.** `check_asymmetry(ratings = Y)`
-  returns the cross-coefficient surface-percentile spread `delta_hat`
-  computed over the three-coefficient agreement family (PABAK, AC1,
-  Fleiss kappa) plus an aligned / caution / divergent flag at
-  per-(k, N) size-alpha calibrated thresholds. ICC is reported on
+  returns the cross-coefficient implied-quality spread `delta_hat` (in
+  pp of quality) computed over the three-coefficient agreement family
+  (PABAK, AC1, Fleiss kappa) plus an aligned / caution / divergent flag
+  set by `delta_hat`'s percentile on the matched (k, N, q_hat) null
+  distribution (>= 95th caution, >= 99th divergent). ICC is reported on
   the panel with a `[distribution-sensitive]` marker but does not
   enter `delta_hat` by construction, because its reference surface
   depends on the full subject-prevalence distribution F rather than
@@ -131,9 +127,11 @@ for planned future families (ordinal, multi-rater nominal, continuous).
 
 ## Status
 
-v0.6.0 (first CRAN submission; Krippendorff alpha removed from the
-Report Card and delta_hat, legacy pre-0.2.0 API removed — see
-NEWS.md). Binary inter-rater and intra-rater families fully
-implemented. The intra-rater axis uses the inter-rater diagonal
-calibration as an approximation pending a dedicated intra-axis
-calibration cube. See `?grass_roadmap` for planned families.
+v0.7.1 (in development). The pooled-percentile + consistency-band card
+redesign and the implied-quality `delta_hat` (see NEWS.md); the CRAN
+submission line is the 0.6.2 series. Binary inter-rater and intra-rater
+families fully implemented. For the intra-rater axis, the inter-rater
+diagonal calibration is exact for the idealized intra model (an
+equivalence proposition); drift and within-subject dependence bounds are
+published rather than conditioned on. See `?grass_roadmap` for planned
+families.

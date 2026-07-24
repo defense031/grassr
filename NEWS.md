@@ -1,3 +1,215 @@
+# grassr 0.7.4
+
+CRAN resubmission fixes. No computational changes; cards are identical
+to 0.7.2 output apart from the version stamp.
+
+* The DESCRIPTION explains every acronym (PABAK: prevalence-adjusted
+  bias-adjusted kappa; AC1: first-order agreement coefficient) and
+  cites the method sources with DOIs (Byrt, Bishop, and Carlin 1993;
+  Gwet 2008; Fleiss 1971; Dawid and Skene 1979; Hui and Walter 1980).
+* All examples are unwrapped and run during checks. The
+  `latent_class_fit()` example had an unnecessary `\dontrun{}`
+  wrapper; the four `\donttest{}` wrappers elsewhere dated from when
+  those code paths were slower. Every example now completes in under
+  a second.
+* Fixed a checkRd "Lost braces" NOTE in `?grass_roadmap` (a stray
+  LaTeX-style thousands separator).
+* The vignette's "Extending the calibration" section records the live
+  state of the open calibration program: 165 of the 2,166 blocks had
+  been run and verified by outside contributors when this release was
+  built. Contributed cells fold into the bundled calibration in a
+  future data release.
+
+# grassr 0.7.2
+
+The open-calibration release. The calibration's remaining bounds are
+compute limits rather than method limits, and the package now includes
+the machinery for anyone to remove them.
+
+## Contribute compute from the installed package
+
+Three new functions:
+
+* `grass_calibration_manifest()` -- the 2,166 open calibration blocks
+  (null tail top-ups, a prevalence-stratified null, intermediate rater
+  counts), each a seeded bite-sized cell.
+* `grass_contribute()` -- benchmarks the machine, answers "what would
+  five hours buy?" (`dry_run = TRUE`), runs selected blocks from their
+  declared seeds, and writes a submission bundle with checksums and
+  session information. Runs are bit-reproducible at a pinned package
+  version. No network access; writes only to the caller's directory.
+* `grass_verify_contribution()` -- checks a bundle by checksum,
+  completeness, and seed replay, for contributors before submission and
+  maintainers at intake.
+
+Submissions land as pull requests on the repository's
+`calibration-contrib` branch; see CONTRIBUTING.md (new). Every block's
+seed (20300000 + block_id) is disjoint from the shipped programs'
+seeds, so contributed draws can never replay shipped draws.
+
+The vignette gains a closing section, "Extending the calibration",
+that walks the contributor path from the bundled manifest to the pull
+request.
+
+# grassr 0.7.1
+
+The card-redesign release. The headline reading changes from a
+nearest-cell surface percentile with a four-band adjective to a pooled
+percentile plus a consistency band on panel quality, and `delta_hat`
+becomes an implied-quality spread. Supersedes the 0.7.0 tarball.
+
+## Single vignette
+
+The `reporting-card` and `methods-companion` vignettes are merged into
+one: `vignette("grassr")` carries the whole story, from why fixed
+labels mislead through two synthetic worked panels, the full API, and
+the calibration machinery behind the flag.
+
+## Pooled percentile + consistency band (sweep redesign)
+
+`position_on_surface()` now evaluates the observed coefficient against
+every calibrated quality level at the matched design -- a sweep -- and
+reports three read-outs of one object:
+
+* **Pooled percentile** -- the trapezoid-weighted average of
+  `p(q) = P(coefficient <= obs | quality q, this design)` over the
+  calibrated quality axis: the coefficient's position within the
+  design's achievable agreement range, monotone in the coefficient by
+  construction. This retires the nearest-q_hat-cell percentile, whose
+  cohort selection by a statistic derived from the coefficient made it a
+  non-monotone sawtooth (7-9 full 0-100 cycles across the PABAK range at
+  k=8-10, N=200; five-agent panel review 2026-07-05).
+* **Consistency band** -- the 95% test-inversion band on panel quality
+  `q_hat`: the quality levels whose sampling distributions are
+  consistent with the observed value at this design. `q_hat` is promoted
+  to the card via this band (previously internal scaffolding, never
+  printed).
+* **`sweep`** -- the full `p(q)` profile (the sweep-ridgeline graphic).
+
+The stipulated four-band partition (Poor / Moderate / Strong /
+Excellent) and the modal-band bootstrap qualifier (decisive / moderate /
+weak), with their 0.60 / 0.90 cuts, are retired. The `bands` and
+`band_labels` arguments are removed from `position_on_surface()` and
+`grass_report()` outright, along with the legacy `delta_thresholds`
+override on `check_asymmetry()` / `grass_report()` and the never-wired
+`grass_spec_*()` constructor family (and the internal spec-dispatch and
+retired `classify()` machinery behind it). None of this ever shipped in
+a CRAN release, so it is gone without deprecation shims.
+
+## Correctness and determinism
+
+* Fixed an inversion in the consistency band's two degenerate branches:
+  an observation below the achievable range of every calibrated quality
+  reported a band open *above* the grid (a worst-possible panel printed
+  as consistent with near-perfect quality). Off-range observations now
+  open the band on the correct side, with regression tests in both
+  directions and a monotonicity test on the band endpoints.
+* The divergent-branch latent-class bootstrap is now seeded inside
+  `grass_report()`, so the per-rater confidence intervals on a card are
+  deterministic: the same rating matrix always prints the same card.
+  `latent_class_fit()` restores the caller's RNG state after a seeded
+  call.
+
+## delta-hat is now an implied-quality spread (Option B)
+
+`delta_hat` becomes the max-min spread of the agreement family's
+*implied panel qualities* (PABAK, mean AC1, Fleiss kappa), in quality
+percentage points: each coefficient inverts to its own `q_hat` on the
+shared (q, pi_+) reference, and their spread measures cross-coefficient
+model discordance in interpretable units (Option B, ratified
+2026-07-05). The previous definition -- spread of surface percentiles
+across four coefficients including Krippendorff alpha -- ran through the
+retired sawtooth machinery. Krippendorff alpha left the panel at 0.6.0
+and does not re-enter; ICC is never in `delta_hat`. The flag convention
+(percentile on the matched (k, N, q_hat) null, >= 95th caution,
+>= 99th divergent) is unchanged in form.
+
+* The delta null was REGENERATED under the Option-B implied-quality
+  definition (2026-07-06): 440 (k, N, q) ridges, ~22M production-pipeline
+  draws, at least 46,002 per ridge. The shipped `delta_null_ecdf`
+  carries the 385 k >= 3 ridges on a fine 1% + 99.5% probability grid.
+  At k = 2 the two-coefficient family implies identical quality by
+  construction (the null is a point mass at zero on all draws), so
+  `delta_hat` reports `not_applicable` there and asymmetry assessment
+  routes to the pairwise/bounds path. Tie runs (point masses) use the
+  mid-p convention. Divergent-flag power at the same asymmetry roughly
+  doubles relative to the retired percentile-spread definition (e.g.
+  TPR 0.82 at mean-norm A = 0.20 pooled over designs, vs 0.38 at the
+  modal design previously); realized null flag rates are slightly
+  conservative (caution 3.7% vs nominal 5%, divergent 0.6% vs 1%).
+
+## Bug fixes
+
+* **Zero-plateau percentile.** `delta_null_percentile()` now resolves a
+  value at or below the null's lowest stored quantile to the TOP of the
+  zero/floor plateau. At small N the null often has a point mass at
+  `delta_hat = 0` reaching well past the 1st percentile; 0.7.0 reported a
+  value at the plateau's lowest prob, so identical raters printed
+  "1.0 percentile" on cells where `P(D <= 0)` was ~35%.
+* **`grass_report()` lme4 NA-skip.** A missing lme4 (Suggests) or a
+  failed glmer no longer hard-errors `grass_report()`: non-finite panel
+  entries (e.g. ICC when lme4 is unavailable) are dropped before
+  positioning and the coefficient degrades to "absent from the panel".
+  0.7.0's NEWS claimed this fix, but the 0.7.0 code landed it in
+  `check_asymmetry()` only; the `grass_report()` positioning loop still
+  errored. It is genuinely fixed here.
+
+## Documentation layer
+
+* DESCRIPTION, the roxygen sources for `check_asymmetry()`,
+  `grass_report()`, `position_on_surface()`, and `?grass_roadmap`, and
+  the README were still describing the 0.6.x conventions (per-(k, N)
+  size-alpha thresholds `c(9.25, 11.75)`, the four-band adjective, the
+  four-coefficient percentile spread). All corrected to the 0.7.1 card
+  convention. Suggests-dependent examples wrapped in `\donttest{}`.
+
+## Hygiene
+
+* Removed macOS duplicate `" 2"` file strays from the source tree.
+* `inst/preview/` and dev-scratch example scripts excluded from the
+  build via `.Rbuildignore`.
+* `data-raw/round_sysdata_for_release.R` skips sysdata objects that are
+  absent (the retired `delta_thresholds_lookup`) instead of erroring.
+
+# grassr 0.7.0
+
+The calibration release. Two structural changes, both from the v0.7.0
+calibration program (July 2026).
+
+## delta-hat flag redesigned: percentile on the matched null
+
+The per-(k, N) threshold table is retired. `check_asymmetry()` and
+`grass_report()` now report delta-hat as its **percentile on the null
+distribution of delta-hat at the matched (k, N, q-hat) cell**, with
+flags as conventions on that percentile (>= 95th caution, >= 99th
+divergent). Motivation: recalibration across panel quality showed the
+old single-quality (q = 0.85) thresholds were mis-sized off their
+calibration point, and at small N the null's extreme quantiles are not
+stably invertible; the ECDF-position reading is stable, holds its
+false-positive rate at every quality by construction, and matches how
+every other quantity on the card is read.
+
+* New sysdata object `delta_null_ecdf`: 440 (k, N, q) null ECDFs
+  generated through the production pipeline (24.85M panels, >= 50k
+  draws per cell), with per-cell instability metadata.
+* New card fields: `delta$delta_percentile`, `delta$matched_null`;
+  `delta$thresholds` now carries the implied pp cuts (95th/99th of the
+  matched null) as context.
+* `delta_thresholds` argument deprecated (honored with legacy
+  semantics plus a warning); `delta_thresholds_lookup` removed.
+* Bug fix: a missing lme4 (Suggests) no longer hard-errors
+  `check_asymmetry()`; non-finite panel entries are dropped before
+  positioning.
+
+## Reference surface densified
+
+`empirical_q_hat_surface` grows from 10,140 to 44,616 cells:
+N in {15, 20, 30, 50, 75, 100, 150, 200, 300, 500, 1000} (was
+{50, 200, 1000}) and a unified 13-point q-grid at every k. Lookups
+that previously clamped (e.g. N = 22 -> 50) now resolve to near
+cells. sysdata is 6.91 MB (storage-precision reduction to follow
+before any CRAN submission of this line).
+
 # grassr 0.6.2
 
 CRAN resubmission release. No changes to package functionality.

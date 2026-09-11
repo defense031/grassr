@@ -10,6 +10,15 @@ prevalence node at 0.875, and a sample-size node at 25 (581 million
 null draws in total, 50,000 per cell). Off-grid Report Card readings
 change; on-node readings are unchanged up to storage quantization.
 
+* New `grass_power()` reads the reference surface forward for study
+  planning, in the `power.t.test()` convention: give a coefficient and a
+  target value, fix four of `q`, `pi_hat`, `k`, `N`, `power`, and it
+  solves for the fifth. `N` and `k` solve to the smallest feasible value
+  or return `NA` with the reason when the expected coefficient sits
+  below the target; `pi_hat` solves to the feasible prevalence range.
+  `plot()` draws the power curve over the solved variable. The
+  probability is the sweep `position_on_surface()` already returns,
+  read as `1 - p(q)`; nothing new is calibrated.
 * Input handling: a two-level factor or character column is accepted
   only when one level reads as a positive call (1, TRUE, yes, positive,
   pos, present, case; case-insensitive). Anything else is an error that

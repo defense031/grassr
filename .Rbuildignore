@@ -22,3 +22,4 @@
 ^inst/examples/first_tour\.R$
 ^inst/examples/plot_r_paradox\.png$
 ^synthetic_cases_v071\.out$
+^tests/testthat/testthat-problems\.rds$

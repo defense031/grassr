@@ -3,7 +3,7 @@ title: "grassr: rater reliability on binary outcomes, from rating matrix to Repo
 author:
   - Austin Semmel
   - Rachel Gidaro
-date: "2026-09-06"
+date: "2026-09-11"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{grassr: rater reliability on binary outcomes, from rating matrix to Report Card}
@@ -607,6 +607,97 @@ position_on_surface(0.45, "fleiss_kappa", pi_hat = 0.10, k = 3, N = 80)
 #>   consistency band     : consistent with panel quality 0.90-0.99 (95%)
 ```
 
+**Power for a planned study.** `grass_power()` reads the same surface
+forward, in the `power.t.test()` convention. Give a coefficient and a
+target value, fix four of quality, positive rate, rater count, sample
+size, and power, and it solves for the fifth. The screening study
+above asks how likely a panel of quality 0.95 is to reach a Fleiss'
+kappa of 0.45 with three raters and 80 subjects.
+
+
+```r
+grass_power("fleiss_kappa", target = 0.45, q = 0.95, pi_hat = 0.10,
+            k = 3, N = 80)
+#> 
+#>      GRASS power analysis: Fleiss kappa >= 0.45
+#> 
+#>          q = 0.95
+#>     pi_hat = 0.10
+#>          k = 3
+#>          N = 80
+#>      power = 0.54  <- solved
+#> 
+#>   expected Fleiss kappa at this quality and prevalence: 0.47
+#> 
+#>   Power is P(Fleiss kappa >= target) on the calibrated reference surface;
+#>   see `plot()` for the curve over Number of subjects (N).
+```
+
+Leave `N` empty and the answer is the smallest sample size that
+reaches a chosen power. Here there is none on the calibrated surface:
+the kappa a panel of quality 0.95 produces at a 10% positive rate
+sits close to 0.45, so a larger sample narrows the sampling
+distribution around a value near the target and the chance of
+clearing it stays well short of 0.80 even at 1,000 subjects. The
+result says so, with the best power any sample size reaches, instead
+of returning a number. When the expected coefficient sits below the
+target the message says that instead.
+
+
+```r
+grass_power("fleiss_kappa", target = 0.45, q = 0.95, pi_hat = 0.10,
+            k = 3, power = 0.80)
+#> 
+#>      GRASS power analysis: Fleiss kappa >= 0.45
+#> 
+#>          q = 0.95
+#>     pi_hat = 0.10
+#>          k = 3
+#>          N = NA  <- solved
+#>      power = 0.80
+#> 
+#>   expected Fleiss kappa at this quality and prevalence: 0.47
+#> 
+#>     - Expected Fleiss kappa at q = 0.95 and pi_hat = 0.10 is 0.47, near the
+#>       target 0.45; no sample size (15 to 1,000) reaches power 0.80. The
+#>       largest power on the calibrated surface is 0.65, at N = 1,000.
+#> 
+#>   Power is P(Fleiss kappa >= target) on the calibrated reference surface;
+#>   see `plot()` for the curve over Number of subjects (N).
+```
+
+A panel of quality 0.97 clears the target, and `plot()` draws the
+power curve over the solved quantity. Leave `pi_hat` empty instead and
+the answer is the range of positive rates over which a fixed design
+keeps the requested power, the question to ask when raters and
+subjects are set by budget.
+
+
+```r
+pw <- grass_power("fleiss_kappa", target = 0.45, q = 0.97, pi_hat = 0.10,
+                  k = 3, power = 0.80)
+pw
+#> 
+#>      GRASS power analysis: Fleiss kappa >= 0.45
+#> 
+#>          q = 0.97
+#>     pi_hat = 0.10
+#>          k = 3
+#>          N = 61  <- solved
+#>      power = 0.80
+#> 
+#>   expected Fleiss kappa at this quality and prevalence: 0.68
+#> 
+#>   Power is P(Fleiss kappa >= target) on the calibrated reference surface;
+#>   see `plot()` for the curve over Number of subjects (N).
+plot(pw)
+```
+
+<div class="figure">
+<img src="grassr-plan-power-plot-1.png" alt="A line chart of the probability of reaching Fleiss' kappa 0.45 against the number of subjects on a log axis, for three raters of quality 0.97 at a 10 percent positive rate. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."  />
+<p class="caption">Power curve over sample size for the planned screening study at quality 0.97, with the requested power as a dashed line and the solved N marked.</p>
+</div>
+
 **Each stage of `grass_report()` on its own.**
 
 
@@ -747,7 +838,7 @@ summary(card1)
 #>       grid nodes.
 #> 
 #>   grass version : 0.8.0
-#>   timestamp     : 2026-09-06 21:43:10
+#>   timestamp     : 2026-09-11 13:28:11
 ```
 
 `summary()` prints everything behind the card, the full panel with

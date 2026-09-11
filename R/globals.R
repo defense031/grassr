@@ -4,5 +4,6 @@
 utils::globalVariables(c(
   "coefficient", "col_rater", "estimate", "fill", "M1",
   "observed_value", "pabak_label", "percentile", "pos", "rater",
-  "row_rater", "surface_percentile", "xmax", "xmin", "y_pos"
+  "row_rater", "surface_percentile", "xmax", "xmin", "y_pos",
+  "x", "power"
 ))

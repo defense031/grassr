@@ -499,6 +499,46 @@ above, as with the card.
 position_on_surface(0.45, "fleiss_kappa", pi_hat = 0.10, k = 3, N = 80)
 ```
 
+**Power for a planned study.** `grass_power()` reads the same surface
+forward, in the `power.t.test()` convention. Give a coefficient and a
+target value, fix four of quality, positive rate, rater count, sample
+size, and power, and it solves for the fifth. The screening study
+above asks how likely a panel of quality 0.95 is to reach a Fleiss'
+kappa of 0.45 with three raters and 80 subjects.
+
+```{r plan-power}
+grass_power("fleiss_kappa", target = 0.45, q = 0.95, pi_hat = 0.10,
+            k = 3, N = 80)
+```
+
+Leave `N` empty and the answer is the smallest sample size that
+reaches a chosen power. Here there is none on the calibrated surface:
+the kappa a panel of quality 0.95 produces at a 10% positive rate
+sits close to 0.45, so a larger sample narrows the sampling
+distribution around a value near the target and the chance of
+clearing it stays well short of 0.80 even at 1,000 subjects. The
+result says so, with the best power any sample size reaches, instead
+of returning a number. When the expected coefficient sits below the
+target the message says that instead.
+
+```{r plan-power-n}
+grass_power("fleiss_kappa", target = 0.45, q = 0.95, pi_hat = 0.10,
+            k = 3, power = 0.80)
+```
+
+A panel of quality 0.97 clears the target, and `plot()` draws the
+power curve over the solved quantity. Leave `pi_hat` empty instead and
+the answer is the range of positive rates over which a fixed design
+keeps the requested power, the question to ask when raters and
+subjects are set by budget.
+
+```{r plan-power-plot, fig.cap = "Power curve over sample size for the planned screening study at quality 0.97, with the requested power as a dashed line and the solved N marked.", fig.alt = "A line chart of the probability of reaching Fleiss' kappa 0.45 against the number of subjects on a log axis, for three raters of quality 0.97 at a 10 percent positive rate. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."}
+pw <- grass_power("fleiss_kappa", target = 0.45, q = 0.97, pi_hat = 0.10,
+                  k = 3, power = 0.80)
+pw
+plot(pw)
+```
+
 **Each stage of `grass_report()` on its own.**
 
 ```{r blocks-position}

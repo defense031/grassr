@@ -501,7 +501,7 @@ position_on_surface(0.45, "fleiss_kappa", pi_hat = 0.10, k = 3, N = 80)
 
 **Planning a study's size.** `grass_power()` plans a study's size.
 Assume a prevalence and a rough rater quality, and it gives the
-probability that a design of a given size tells a panel of quality
+probability that a design of a given size discerns a panel of quality
 0.90 from one of quality 0.80, and the size at which that probability
 reaches the level you want. A panel weaker than assumed returns a band
 that sits lower and is about as wide, so the study reports the quality
@@ -509,7 +509,7 @@ it finds at the precision it was planned for. Fix four of quality,
 positive rate, rater count, sample size, and power, and it solves for
 the fifth. For the screening study above:
 
-```{r plan-power, fig.cap = "Power curve over sample size for the planned screening study, with the requested power as a dashed line and the solved N marked.", fig.alt = "A line chart of the probability that a study tells panel quality 0.90 from 0.80 against the number of subjects on a log axis, for three raters at a 10 percent positive rate. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."}
+```{r plan-power, fig.cap = "Power curve over sample size for the planned screening study, with the requested power as a dashed line and the solved N marked.", fig.alt = "A line chart of the probability that a study discerns panel quality 0.90 from 0.80 against the number of subjects on a log axis, for three raters at a 10 percent positive rate. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."}
 pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
                   k = 3, power = 0.80)
 pw

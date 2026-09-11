@@ -6,7 +6,7 @@
 #' show more. The result describes the design, how much a study of that
 #' size can learn about its raters.
 #'
-#' A study sized to tell a panel of quality `q` from one of quality `q0`
+#' A study sized to discern a panel of quality `q` from one of quality `q0`
 #' returns a 95% consistency band on quality narrow enough to separate
 #' the two. `q0` sets the resolution of the plan. A panel weaker than
 #' assumed returns a band that sits lower and is about as wide, so the
@@ -49,7 +49,7 @@
 #' @param q Panel quality, the probability of a correct call on the
 #'   `Se = Sp` diagonal, in `[0.55, 0.99]`.
 #' @param q0 The lower edge of the quality resolution the study is planned
-#'   for, in `[0.55, 0.99]`: the study is sized to tell a panel of quality
+#'   for, in `[0.55, 0.99]`: the study is sized to discern a panel of quality
 #'   `q` from one of quality `q0`. Give `q0` or `target`, not both.
 #' @param target A fixed coefficient value to reach. Give `q0` or `target`,
 #'   not both.
@@ -355,7 +355,7 @@ print.grass_power <- function(x, digits = 2, ...) {
   cat("\n")
   if (x$mode == "quality") {
     cat(.wrap_note_lines(sprintf(
-      "Power is the probability that a study of this size tells panel quality %s from %.2f.",
+      "Power is the probability that a study of this size discerns panel quality %s from %.2f.",
       if (is.null(x$q) || is.na(x$q)) "the solved quality" else formatC(x$q, digits = digits, format = "f"), x$q0),
       indent = "  "), sep = "\n")
   } else {

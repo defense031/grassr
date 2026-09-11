@@ -22,7 +22,7 @@ grass_power(
 \code{Se = Sp} diagonal, in \verb{[0.55, 0.99]}.}
 
 \item{q0}{The lower edge of the quality resolution the study is planned
-for, in \verb{[0.55, 0.99]}: the study is sized to tell a panel of quality
+for, in \verb{[0.55, 0.99]}: the study is sized to discern a panel of quality
 \code{q} from one of quality \code{q0}. Give \code{q0} or \code{target}, not both.}
 
 \item{target}{A fixed coefficient value to reach. Give \code{q0} or \code{target},
@@ -53,7 +53,7 @@ show more. The result describes the design, how much a study of that
 size can learn about its raters.
 }
 \details{
-A study sized to tell a panel of quality \code{q} from one of quality \code{q0}
+A study sized to discern a panel of quality \code{q} from one of quality \code{q0}
 returns a 95\% consistency band on quality narrow enough to separate
 the two. \code{q0} sets the resolution of the plan. A panel weaker than
 assumed returns a band that sits lower and is about as wide, so the

@@ -609,7 +609,7 @@ position_on_surface(0.45, "fleiss_kappa", pi_hat = 0.10, k = 3, N = 80)
 
 **Planning a study's size.** `grass_power()` plans a study's size.
 Assume a prevalence and a rough rater quality, and it gives the
-probability that a design of a given size tells a panel of quality
+probability that a design of a given size discerns a panel of quality
 0.90 from one of quality 0.80, and the size at which that probability
 reaches the level you want. A panel weaker than assumed returns a band
 that sits lower and is about as wide, so the study reports the quality
@@ -632,14 +632,14 @@ pw
 #>          N = 129  <- solved
 #>      power = 0.80
 #> 
-#>   Power is the probability that a study of this size tells panel quality 0.90
-#>   from 0.80.
+#>   Power is the probability that a study of this size discerns panel quality
+#>   0.90 from 0.80.
 #>   See `plot()` for the curve over Number of subjects (N).
 plot(pw)
 ```
 
 <div class="figure">
-<img src="grassr-plan-power-1.png" alt="A line chart of the probability that a study tells panel quality 0.90 from 0.80 against the number of subjects on a log axis, for three raters at a 10 percent positive rate. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."  />
+<img src="grassr-plan-power-1.png" alt="A line chart of the probability that a study discerns panel quality 0.90 from 0.80 against the number of subjects on a log axis, for three raters at a 10 percent positive rate. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."  />
 <p class="caption">Power curve over sample size for the planned screening study, with the requested power as a dashed line and the solved N marked.</p>
 </div>
 
@@ -665,8 +665,8 @@ grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
 #>          N = 50  <- solved
 #>      power = 0.80
 #> 
-#>   Power is the probability that a study of this size tells panel quality 0.90
-#>   from 0.80.
+#>   Power is the probability that a study of this size discerns panel quality
+#>   0.90 from 0.80.
 #>   See `plot()` for the curve over Number of subjects (N).
 ```
 
@@ -816,7 +816,7 @@ summary(card1)
 #>       grid nodes.
 #> 
 #>   grass version : 0.8.0
-#>   timestamp     : 2026-09-11 18:19:50
+#>   timestamp     : 2026-09-11 18:30:18
 ```
 
 `summary()` prints everything behind the card, the full panel with

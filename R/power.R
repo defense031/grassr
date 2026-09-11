@@ -1,74 +1,97 @@
 #' Power analysis for a planned rating study
 #'
-#' `grass_power()` reads the calibrated reference surface forward. Given a
-#' coefficient and a target value, it returns the probability that a panel
-#' of quality `q` rating `N` subjects with `k` raters at observed positive
-#' rate `pi_hat` produces a coefficient at or above `target`, or solves for
-#' whichever one of `q`, `pi_hat`, `k`, `N`, `power` is left `NULL`. The
-#' convention follows [stats::power.t.test()]: exactly one argument is
-#' `NULL` and is solved for.
+#' `grass_power()` sizes a rating study in the Report Card's own currency.
+#' Its primary question is: at this design, how likely is the study's 95%
+#' consistency band on panel quality to exclude a quality `q0` the study
+#' must rule out, when the panel's true quality is `q`? The convention
+#' follows [stats::power.t.test()]: fix four of `q`, `pi_hat`, `k`, `N`,
+#' `power`, leave one `NULL`, and it is solved for.
 #'
-#' The probability is a direct read of the quality sweep that
-#' [position_on_surface()] returns, `P(coefficient >= target | q, design)
-#' = 1 - p(q)`, with `p(q)` interpolated between the calibrated quality
-#' levels. Nothing is simulated at call time.
+#' Two targets are accepted, exactly one of which must be given.
+#' `q0` (recommended) is a panel quality to rule out; the target is on the
+#' latent quality scale, so it means the same thing at every design and
+#' power rises with sample size everywhere. `target` is a fixed
+#' coefficient value, for a threshold imposed from outside (a journal's or
+#' regulator's band); a fixed coefficient value has no fixed meaning across
+#' designs, and the answer shows it: when the value a panel of quality `q`
+#' produces at the design sits below `target`, power falls with `N`.
+#'
+#' @section How it is computed:
+#' Every quantity is a direct read of the quality sweep that
+#' [position_on_surface()] returns, `p(q) = P(coefficient <= c | q, design)`.
+#' Nothing is simulated at call time. For `q0`, by test inversion the band's
+#' lower endpoint clears `q0` exactly when the observed coefficient exceeds
+#' the 97.5th percentile of the `q0` distribution, `c0`, so
+#' `power = 1 - p_q(c0)`. For `target`, `power = 1 - p_q(target)`.
 #'
 #' @section Solving for `N` or `k`:
 #' The smallest value on the calibrated surface at which `power` is
-#' reached. When the expected coefficient at the given quality and
-#' prevalence sits below `target`, no sample size or rater count reaches
-#' the requested power: larger designs concentrate the sampling
-#' distribution around that expected value. The result then carries
-#' `NA`, `feasible = FALSE`, and the reason.
+#' reached. When none reaches it the result carries `NA`,
+#' `feasible = FALSE`, and the reason, including the best power any
+#' design on the surface reaches.
 #'
 #' @section Solving for `pi_hat`:
-#' The solution is the range of observed positive rates over which
-#' `power` is reached, because feasibility in prevalence is an interval,
-#' not a point. `solution` holds its two endpoints.
+#' The range of observed positive rates over which `power` is reached;
+#' `solution` holds its two endpoints.
 #'
 #' @param metric One of `"pabak"`, `"fleiss_kappa"`, `"mean_ac1"`, `"icc"`.
-#' @param target Coefficient value the study is planned to reach.
 #' @param q Panel quality, the probability of a correct call on the
 #'   `Se = Sp` diagonal, in `[0.55, 0.99]`.
+#' @param q0 Panel quality the study must rule out, in `[0.55, 0.99]`.
+#'   Give `q0` or `target`, not both.
+#' @param target A fixed coefficient value to reach. Give `q0` or `target`,
+#'   not both.
 #' @param pi_hat Observed positive rate in `[0.05, 0.95]`.
 #' @param k Number of raters. Snaps to the nearest calibrated rater count
 #'   (2, 3, 5, 8, 15, 25), as the surfaces do everywhere.
 #' @param N Number of subjects in `[15, 1000]`.
-#' @param power Probability of reaching `target`, in `(0, 1)`.
+#' @param power Probability, in `(0, 1)`.
 #'
-#' @return An object of class `grass_power`: the six quantities with the
-#'   solved one filled in, `solved` naming it, `feasible`, `reason` (when
-#'   not feasible), `expected` (the median coefficient at the fixed
-#'   design, when `q` is fixed), `curve` (power across the solved
-#'   variable's range, the data `plot()` draws), and `notes` from the
-#'   surface lookup.
+#' @return An object of class `grass_power`: the design quantities with the
+#'   solved one filled in, `solved` naming it, `mode` (`"quality"` or
+#'   `"value"`), `feasible`, `reason` (when not feasible), `expected` (the
+#'   median coefficient a panel of quality `q` produces at the design, in
+#'   `"value"` mode), `curve` (power across the solved variable's range,
+#'   the data `plot()` draws), and `notes` from the surface lookup.
 #'
 #' @examples
-#' # What is the chance that five raters of quality 0.90 reach a "substantial"
-#' # Fleiss' kappa on 200 subjects at 50% prevalence?
-#' grass_power("fleiss_kappa", target = 0.61, q = 0.90, pi_hat = 0.50,
-#'             k = 5, N = 200)
-#'
-#' # How many subjects for an 80% chance?
-#' pw <- grass_power("fleiss_kappa", target = 0.61, q = 0.90, pi_hat = 0.50,
-#'                   k = 5, power = 0.80)
+#' # A panel believed to be near quality 0.90 must rule out 0.80. How many
+#' # subjects, with three raters at a 10% positive rate, for 80% power?
+#' pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
+#'                   k = 3, power = 0.80)
 #' pw
 #' if (requireNamespace("ggplot2", quietly = TRUE)) plot(pw)
 #'
-#' # Over what prevalence range does the same study keep that chance?
-#' grass_power("fleiss_kappa", target = 0.61, q = 0.90, k = 5, N = 200,
+#' # Over what positive rates does a fixed design keep that power?
+#' grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, k = 5, N = 100,
 #'             power = 0.80)
+#'
+#' # Against a fixed coefficient value imposed from outside:
+#' grass_power("fleiss_kappa", target = 0.61, q = 0.90, pi_hat = 0.50,
+#'             k = 5, N = 200)
 #' @export
-grass_power <- function(metric, target, q = NULL, pi_hat = NULL, k = NULL,
-                        N = NULL, power = NULL) {
+grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
+                        pi_hat = NULL, k = NULL, N = NULL, power = NULL) {
   allowed <- c("pabak", "fleiss_kappa", "mean_ac1", "icc")
   if (!is.character(metric) || length(metric) != 1L || !metric %in% allowed) {
     stop("`metric` must be one of: ", paste(shQuote(allowed), collapse = ", "),
          ".", call. = FALSE)
   }
-  if (!is.numeric(target) || length(target) != 1L || !is.finite(target)) {
-    stop("`target` must be a finite numeric scalar.", call. = FALSE)
+  if (is.null(q0) == is.null(target)) {
+    stop("Give exactly one of `q0` (a panel quality to rule out) or ",
+         "`target` (a fixed coefficient value).", call. = FALSE)
   }
+  mode <- if (is.null(target)) "quality" else "value"
+  .chk <- function(x, nm, lo, hi) {
+    if (is.null(x)) return(invisible())
+    if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x < lo || x > hi)
+      stop(sprintf("`%s` must be a single number in [%s, %s].", nm, lo, hi),
+           call. = FALSE)
+  }
+  .chk(q0, "q0", .pw_q_range[1], .pw_q_range[2])
+  if (!is.null(target) && (!is.numeric(target) || length(target) != 1L ||
+                           !is.finite(target)))
+    stop("`target` must be a finite numeric scalar.", call. = FALSE)
   args <- list(q = q, pi_hat = pi_hat, k = k, N = N, power = power)
   nulls <- names(args)[vapply(args, is.null, logical(1))]
   if (length(nulls) != 1L) {
@@ -76,12 +99,6 @@ grass_power <- function(metric, target, q = NULL, pi_hat = NULL, k = NULL,
          "(the one to solve for); got ", length(nulls), ".", call. = FALSE)
   }
   solved <- nulls
-  .chk <- function(x, nm, lo, hi) {
-    if (is.null(x)) return(invisible())
-    if (!is.numeric(x) || length(x) != 1L || !is.finite(x) || x < lo || x > hi)
-      stop(sprintf("`%s` must be a single number in [%s, %s].", nm, lo, hi),
-           call. = FALSE)
-  }
   .chk(q, "q", .pw_q_range[1], .pw_q_range[2])
   .chk(pi_hat, "pi_hat", .pw_pi_range[1], .pw_pi_range[2])
   .chk(N, "N", .pw_n_range[1], .pw_n_range[2])
@@ -91,87 +108,91 @@ grass_power <- function(metric, target, q = NULL, pi_hat = NULL, k = NULL,
   if (!is.null(power) && (!is.numeric(power) || length(power) != 1L ||
                           power <= 0 || power >= 1))
     stop("`power` must be a single number in (0, 1).", call. = FALSE)
+  if (mode == "quality" && !is.null(q) && q <= q0)
+    stop("`q` (the panel's true quality) must exceed `q0` (the quality to rule out).",
+         call. = FALSE)
 
-  notes <- character()
-  res <- list(metric = metric, target = target, q = q, pi_hat = pi_hat,
-              k = k, N = N, power = power, solved = solved,
-              solution = NA_real_, feasible = TRUE, reason = NULL,
-              expected = NA_real_, curve = NULL, notes = notes)
+  tg <- list(mode = mode, q0 = q0, target = target)
+  res <- list(metric = metric, mode = mode, q0 = q0, target = target,
+              q = q, pi_hat = pi_hat, k = k, N = N, power = power,
+              solved = solved, solution = NA_real_, feasible = TRUE,
+              reason = NULL, expected = NA_real_, curve = NULL,
+              curve_var = NULL, notes = character())
 
   if (solved == "power") {
-    ev <- .pw_eval(metric, target, q, pi_hat, k, N)
-    res$power <- ev$power; res$solution <- ev$power; res$notes <- ev$notes
-    res$expected <- .pw_expected(metric, q, pi_hat, k, N)
-    res$curve <- .pw_curve(metric, target, q, pi_hat, k, N, over = "N")
+    res$power <- res$solution <- .pw_eval(metric, tg, q, pi_hat, k, N)$power
+    res$curve <- .pw_curve(metric, tg, q, pi_hat, k, N, over = "N")
     res$curve_var <- "N"
-  } else if (solved == "N") {
-    res$expected <- .pw_expected(metric, q, pi_hat, k, .pw_n_range[2])
-    cv <- .pw_curve(metric, target, q, pi_hat, k, NULL, over = "N")
-    res$curve <- cv; res$curve_var <- "N"
+  } else if (solved %in% c("N", "k")) {
+    cv <- .pw_curve(metric, tg, q, pi_hat,
+                    if (solved == "k") NULL else k,
+                    if (solved == "N") NULL else N, over = solved)
+    res$curve <- cv; res$curve_var <- solved
     ok <- which(cv$power >= power)
     if (length(ok)) {
       i <- ok[1L]
-      n_hat <- if (i == 1L) cv$x[1L] else
-        .pw_refine(function(n) .pw_eval(metric, target, q, pi_hat, k, n)$power - power,
-                   cv$x[i - 1L], cv$x[i])
-      res$N <- res$solution <- ceiling(n_hat)
+      if (solved == "N") {
+        n_hat <- if (i == 1L) cv$x[1L] else
+          .pw_refine(function(n) .pw_eval(metric, tg, q, pi_hat, k, n)$power - power,
+                     cv$x[i - 1L], cv$x[i])
+        res$N <- res$solution <- ceiling(n_hat)
+      } else {
+        res$k <- res$solution <- cv$x[i]
+      }
     } else {
-      res$N <- NA_real_; res$feasible <- FALSE
-      res$reason <- .pw_reason(metric, target, q, pi_hat, res$expected, power, "N", cv)
-    }
-  } else if (solved == "k") {
-    res$expected <- .pw_expected(metric, q, pi_hat, .pw_k_grid[length(.pw_k_grid)], N)
-    cv <- .pw_curve(metric, target, q, pi_hat, NULL, N, over = "k")
-    res$curve <- cv; res$curve_var <- "k"
-    ok <- which(cv$power >= power)
-    if (length(ok)) {
-      res$k <- res$solution <- cv$x[ok[1L]]
-    } else {
-      res$k <- NA_real_; res$feasible <- FALSE
-      res$reason <- .pw_reason(metric, target, q, pi_hat, res$expected, power, "k", cv)
+      res[[solved]] <- NA_real_; res$feasible <- FALSE
+      res$reason <- .pw_reason(metric, tg, q, pi_hat, k, N, power, solved, cv)
     }
   } else if (solved == "q") {
-    cv <- .pw_curve(metric, target, NULL, pi_hat, k, N, over = "q")
+    lo <- if (mode == "quality") max(.pw_q_range[1], q0 + 0.005) else .pw_q_range[1]
+    cv <- .pw_curve(metric, tg, NULL, pi_hat, k, N, over = "q", q_lo = lo)
     res$curve <- cv; res$curve_var <- "q"
-    f <- function(qq) .pw_eval(metric, target, qq, pi_hat, k, N)$power - power
+    f <- function(qq) .pw_eval(metric, tg, qq, pi_hat, k, N)$power - power
     if (f(.pw_q_range[2]) < 0) {
       res$q <- NA_real_; res$feasible <- FALSE
       res$reason <- sprintf(
-        "No calibrated panel quality (up to %.2f) reaches power %.2f for %s >= %.2f at pi_hat = %.2f, k = %d, N = %d.",
-        .pw_q_range[2], power, .coef_label(metric), target, pi_hat, k, N)
-    } else if (f(.pw_q_range[1]) >= 0) {
-      res$q <- res$solution <- .pw_q_range[1]
+        "No calibrated panel quality (up to %.2f) reaches power %.2f %s at pi_hat = %.2f, k = %d, N = %d.",
+        .pw_q_range[2], power, .pw_goal(metric, tg), pi_hat, k, N)
+    } else if (f(lo) >= 0) {
+      res$q <- res$solution <- lo
       res$notes <- c(res$notes, sprintf(
-        "Power %.2f is reached at the lowest calibrated quality %.2f; the solution is a floor.",
-        power, .pw_q_range[1]))
+        "Power %.2f is reached at the lowest admissible quality %.3f; the solution is a floor.",
+        power, lo))
     } else {
-      res$q <- res$solution <- .pw_refine(f, .pw_q_range[1], .pw_q_range[2])
+      res$q <- res$solution <- .pw_refine(f, lo, .pw_q_range[2])
     }
   } else if (solved == "pi_hat") {
-    cv <- .pw_curve(metric, target, q, NULL, k, N, over = "pi_hat")
+    cv <- .pw_curve(metric, tg, q, NULL, k, N, over = "pi_hat")
     res$curve <- cv; res$curve_var <- "pi_hat"
-    ok <- cv$x[cv$power >= power]
+    hit <- !is.na(cv$power) & cv$power >= power
+    ok <- cv$x[hit]
     if (length(ok)) {
       res$pi_hat <- res$solution <- range(ok)
-      runs <- rle(cv$power >= power)
-      if (sum(runs$values) > 1L)
+      if (sum(rle(hit)$values) > 1L)
         res$notes <- c(res$notes,
           "The feasible prevalence set is not one contiguous interval; `curve` holds the full profile.")
     } else {
       res$pi_hat <- NA_real_; res$feasible <- FALSE
       res$reason <- sprintf(
-        "No observed positive rate on the calibrated surface (%.2f to %.2f) reaches power %.2f for %s >= %.2f at q = %.2f, k = %d, N = %d.",
-        .pw_pi_range[1], .pw_pi_range[2], power, .coef_label(metric), target, q, k, N)
+        "No observed positive rate on the calibrated surface (%.2f to %.2f) reaches power %.2f %s at q = %.2f, k = %d, N = %d.",
+        .pw_pi_range[1], .pw_pi_range[2], power, .pw_goal(metric, tg), q, k, N)
     }
   }
-  if (is.null(res$curve_var)) res$curve_var <- solved
+  # Value mode: the median coefficient a quality-q panel produces at the
+  # design (at the largest calibrated N or k when that axis is unsolved).
+  if (mode == "value" && !is.null(res$q) && !is.na(res$q) &&
+      length(res$pi_hat) == 1L && !is.na(res$pi_hat)) {
+    N_e <- if (is.null(res$N) || is.na(res$N)) .pw_n_range[2] else res$N
+    k_e <- if (is.null(res$k) || is.na(res$k)) .pw_k_grid[length(.pw_k_grid)] else res$k
+    res$expected <- .pw_expected(metric, res$q, res$pi_hat, k_e, N_e)
+  }
   # Lookup notes from one evaluation at the resolved design (k snap, N or
   # prevalence clamp, F-shape preset). Band notes describe the consistency
   # band on an observed value and do not apply to a power reading.
   if (res$feasible) {
     pi_eval <- if (length(res$pi_hat) == 2L) mean(res$pi_hat) else res$pi_hat
-    ev <- .pw_eval(metric, target, res$q, pi_eval, res$k, res$N)
-    keep <- ev$notes[!grepl("Consistency band|band", ev$notes)]
+    ev <- .pw_eval(metric, tg, res$q, pi_eval, res$k, res$N)
+    keep <- ev$notes[!grepl("band", ev$notes)]
     res$notes <- unique(c(res$notes, keep))
   }
   class(res) <- "grass_power"
@@ -185,68 +206,88 @@ grass_power <- function(metric, target, q = NULL, pi_hat = NULL, k = NULL,
 .pw_n_range  <- c(15, 1000)
 .pw_k_grid   <- c(2L, 3L, 5L, 8L, 15L, 25L)
 
-# One evaluation: P(coefficient >= target | q, pi_hat, k, N) = 1 - p(q).
-.pw_eval <- function(metric, target, q, pi_hat, k, N) {
+.pw_sweep <- function(metric, cc, pi_hat, k, N) {
   s <- suppressMessages(suppressWarnings(
-    position_on_surface(obs_value = target, metric = metric,
+    position_on_surface(obs_value = cc, metric = metric,
                         pi_hat = pi_hat, k = k, N = N)))
-  sw <- s$sweep
-  if (is.null(sw) || !nrow(sw)) return(list(power = NA_real_, notes = s$notes))
-  p <- stats::approx(sw$q, sw$p, xout = q, rule = 2)$y
-  list(power = 1 - p, notes = s$notes)
+  list(sweep = s$sweep, notes = s$notes)
 }
 
-# Median coefficient a quality-q panel produces at the design: the value c
-# with P(coefficient <= c | q) = 0.5, found by inverting the sweep.
-.pw_expected <- function(metric, q, pi_hat, k, N) {
+# p_q(c): P(coefficient <= c | quality q, design), q interpolated between
+# the calibrated levels.
+.pw_p <- function(sw, qq) stats::approx(sw$q, sw$p, xout = qq, rule = 2)$y
+
+# The coefficient value c with p_{qq}(c) = prob at the design.
+.pw_quantile <- function(metric, qq, prob, pi_hat, k, N) {
   f <- function(cc) {
-    sw <- suppressMessages(suppressWarnings(
-      position_on_surface(obs_value = cc, metric = metric,
-                          pi_hat = pi_hat, k = k, N = N)))$sweep
+    sw <- .pw_sweep(metric, cc, pi_hat, k, N)$sweep
     if (is.null(sw)) return(NA_real_)
-    stats::approx(sw$q, sw$p, xout = q, rule = 2)$y - 0.5
+    .pw_p(sw, qq) - prob
   }
-  lo <- -0.99; hi <- 0.999
-  flo <- f(lo); fhi <- f(hi)
+  flo <- f(-0.999); fhi <- f(0.9999)
   if (!is.finite(flo) || !is.finite(fhi) || flo * fhi > 0) return(NA_real_)
-  tryCatch(stats::uniroot(f, c(lo, hi), tol = 1e-4)$root,
+  tryCatch(stats::uniroot(f, c(-0.999, 0.9999), tol = 1e-4)$root,
            error = function(e) NA_real_)
 }
+
+# One evaluation of power at a design.
+.pw_eval <- function(metric, tg, q, pi_hat, k, N) {
+  cc <- if (tg$mode == "value") tg$target else
+    .pw_quantile(metric, tg$q0, 0.975, pi_hat, k, N)
+  if (is.na(cc)) return(list(power = NA_real_, notes = character()))
+  s <- .pw_sweep(metric, cc, pi_hat, k, N)
+  if (is.null(s$sweep) || !nrow(s$sweep)) return(list(power = NA_real_, notes = s$notes))
+  list(power = 1 - .pw_p(s$sweep, q), notes = s$notes)
+}
+
+.pw_expected <- function(metric, q, pi_hat, k, N) .pw_quantile(metric, q, 0.5, pi_hat, k, N)
 
 .pw_refine <- function(f, lo, hi) {
   tryCatch(stats::uniroot(f, c(lo, hi), tol = 1e-4)$root,
            error = function(e) hi)
 }
 
-.pw_reason <- function(metric, target, q, pi_hat, expected, power, var, cv) {
+.pw_goal <- function(metric, tg) {
+  if (tg$mode == "quality") sprintf("to rule out panel quality %.2f", tg$q0)
+  else sprintf("for %s >= %.2f", .coef_label(metric), tg$target)
+}
+
+.pw_reason <- function(metric, tg, q, pi_hat, k, N, power, var, cv) {
   what <- if (var == "N") "sample size (15 to 1,000)" else "rater count (2 to 25)"
   best <- cv[which.max(cv$power), ]
   reach <- sprintf("The largest power on the calibrated surface is %.2f, at %s = %s.",
                    best$power, var, format(best$x, big.mark = ","))
-  if (is.finite(expected) && expected < target) {
+  if (tg$mode == "quality") {
+    return(sprintf("No %s reaches power %.2f to rule out panel quality %.2f when the true quality is %.2f (pi_hat = %.2f). %s",
+                   what, power, tg$q0, q, pi_hat, reach))
+  }
+  expected <- .pw_expected(metric, q, pi_hat,
+                           if (var == "k") .pw_k_grid[length(.pw_k_grid)] else k,
+                           if (var == "N") .pw_n_range[2] else N)
+  if (is.finite(expected) && expected < tg$target) {
     sprintf(paste0(
       "Expected %s at q = %.2f and pi_hat = %.2f is %.2f, below the target %.2f; ",
       "no %s reaches power %.2f. Larger designs concentrate the sampling ",
       "distribution around %.2f. %s"),
-      .coef_label(metric), q, pi_hat, expected, target, what, power, expected, reach)
+      .coef_label(metric), q, pi_hat, expected, tg$target, what, power, expected, reach)
   } else {
     sprintf(paste0(
       "Expected %s at q = %.2f and pi_hat = %.2f is %.2f, near the target %.2f; ",
       "no %s reaches power %.2f. %s"),
-      .coef_label(metric), q, pi_hat, expected, target, what, power, reach)
+      .coef_label(metric), q, pi_hat, expected, tg$target, what, power, reach)
   }
 }
 
 # Power across one variable's range; the other four are fixed.
-.pw_curve <- function(metric, target, q, pi_hat, k, N, over) {
+.pw_curve <- function(metric, tg, q, pi_hat, k, N, over, q_lo = .pw_q_range[1]) {
   xs <- switch(over,
     N      = sort(unique(c(15L, 20L, 30L, 50L, 75L, 100L, 150L, 200L, 300L, 500L, 1000L,
                           as.integer(round(exp(seq(log(15), log(1000), length.out = 40))))))),
     k      = .pw_k_grid,
-    q      = seq(.pw_q_range[1], .pw_q_range[2], by = 0.01),
+    q      = seq(q_lo, .pw_q_range[2], length.out = 45),
     pi_hat = seq(.pw_pi_range[1], .pw_pi_range[2], by = 0.01))
   pw <- vapply(xs, function(x) {
-    .pw_eval(metric, target,
+    .pw_eval(metric, tg,
              q      = if (over == "q") x else q,
              pi_hat = if (over == "pi_hat") x else pi_hat,
              k      = if (over == "k") x else k,
@@ -261,11 +302,20 @@ grass_power <- function(metric, target, q = NULL, pi_hat = NULL, k = NULL,
          power = "Power")
 }
 
+.pw_ylab <- function(x) {
+  if (x$mode == "quality") sprintf("P(band excludes quality %.2f)", x$q0)
+  else sprintf("P(%s >= %.2f)", .coef_label(x$metric), x$target)
+}
+
 #' @export
 print.grass_power <- function(x, digits = 2, ...) {
   lab <- .coef_label(x$metric)
-  cat(sprintf("\n     GRASS power analysis: %s >= %s\n\n", lab,
-              formatC(x$target, digits = digits, format = "f")))
+  hdr <- if (x$mode == "quality")
+    sprintf("rule out panel quality %s", formatC(x$q0, digits = digits, format = "f"))
+  else
+    sprintf("reach %s >= %s (fixed value)", lab, formatC(x$target, digits = digits, format = "f"))
+  cat(sprintf("\n     GRASS power analysis: %s\n", hdr))
+  cat(sprintf("     coefficient: %s\n\n", lab))
   fmt <- function(v, d = digits) {
     if (is.null(v) || all(is.na(v))) return("NA")
     if (length(v) == 2L) return(sprintf("%s to %s",
@@ -280,7 +330,7 @@ print.grass_power <- function(x, digits = 2, ...) {
     mark <- if (nm == x$solved) "  <- solved" else ""
     cat(sprintf("  %8s = %s%s\n", nm, rows[[nm]], mark))
   }
-  if (is.finite(x$expected) && !is.null(x$q)) {
+  if (x$mode == "value" && is.finite(x$expected)) {
     cat(sprintf("\n  expected %s at this quality and prevalence: %s\n", lab,
                 formatC(x$expected, digits = digits, format = "f")))
   }
@@ -290,9 +340,18 @@ print.grass_power <- function(x, digits = 2, ...) {
   if (length(x$notes)) {
     cat("\n  notes:\n"); for (n in x$notes) cat(.wrap_note_lines(n), sep = "\n")
   }
-  cat("\n  Power is P(", lab, " >= target) on the calibrated reference surface;\n",
-      "  see `plot()` for the curve over ", .pw_var_label(x$curve_var), ".\n",
-      sep = "")
+  cat("\n")
+  if (x$mode == "quality") {
+    cat(.wrap_note_lines(sprintf(
+      "Power is the probability that the study's 95%% consistency band on panel quality excludes %.2f when the panel's true quality is %s.",
+      x$q0, if (is.null(x$q) || is.na(x$q)) "as solved" else formatC(x$q, digits = digits, format = "f")),
+      indent = "  "), sep = "\n")
+  } else {
+    cat(.wrap_note_lines(sprintf(
+      "Power is P(%s >= %.2f) at this design. A fixed coefficient value has no fixed meaning across designs; `q0 =` sizes the study on panel quality instead.",
+      lab, x$target), indent = "  "), sep = "\n")
+  }
+  cat("  See `plot()` for the curve over ", .pw_var_label(x$curve_var), ".\n", sep = "")
   invisible(x)
 }
 
@@ -310,15 +369,14 @@ plot.grass_power <- function(x, ...) {
   if (!requireNamespace("ggplot2", quietly = TRUE))
     stop("Package 'ggplot2' is required for plot().", call. = FALSE)
   cv <- x$curve
-  lab <- .coef_label(x$metric)
+  ttl <- if (x$mode == "quality")
+    sprintf("Power to rule out panel quality %.2f", x$q0)
+  else sprintf("Power to reach %s >= %.2f", .coef_label(x$metric), x$target)
   p <- ggplot2::ggplot(cv, ggplot2::aes(x = x, y = power)) +
     ggplot2::geom_line(linewidth = 1, colour = "#1a1a1a") +
     ggplot2::scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25)) +
-    ggplot2::labs(
-      x = .pw_var_label(x$curve_var),
-      y = sprintf("P(%s >= %.2f)", lab, x$target),
-      title = sprintf("Power to reach %s >= %.2f", lab, x$target),
-      subtitle = .pw_fixed_label(x)) +
+    ggplot2::labs(x = .pw_var_label(x$curve_var), y = .pw_ylab(x),
+                  title = ttl, subtitle = .pw_fixed_label(x)) +
     theme_grass()
   if (x$curve_var == "N") p <- p + ggplot2::scale_x_log10()
   if (x$solved != "power") {
@@ -331,10 +389,9 @@ plot.grass_power <- function(x, ...) {
                                    ymin = 0, ymax = 1, alpha = 0.08,
                                    fill = "#377EB8")
       } else {
-        xs <- if (x$curve_var == "N") ceiling(sol) else sol
-        p <- p + ggplot2::annotate("point", x = xs, y = x$power, size = 3,
+        p <- p + ggplot2::annotate("point", x = sol, y = x$power, size = 3,
                                    colour = "#377EB8") +
-          ggplot2::geom_vline(xintercept = xs, linetype = "dotted",
+          ggplot2::geom_vline(xintercept = sol, linetype = "dotted",
                               colour = "#377EB8")
       }
     }
@@ -346,11 +403,13 @@ plot.grass_power <- function(x, ...) {
 }
 
 .pw_fixed_label <- function(x) {
-  parts <- character()
-  if (x$curve_var != "q"      && !is.null(x$q))      parts <- c(parts, sprintf("q = %.2f", x$q))
-  if (x$curve_var != "pi_hat" && !is.null(x$pi_hat) && length(x$pi_hat) == 1L)
+  parts <- sprintf("%s", .coef_label(x$metric))
+  if (x$curve_var != "q"      && !is.null(x$q) && !is.na(x$q))
+    parts <- c(parts, sprintf("q = %.2f", x$q))
+  if (x$curve_var != "pi_hat" && !is.null(x$pi_hat) && length(x$pi_hat) == 1L && !is.na(x$pi_hat))
     parts <- c(parts, sprintf("pi_hat = %.2f", x$pi_hat))
-  if (x$curve_var != "k"      && !is.null(x$k))      parts <- c(parts, sprintf("k = %d", as.integer(x$k)))
+  if (x$curve_var != "k"      && !is.null(x$k) && !is.na(x$k))
+    parts <- c(parts, sprintf("k = %d", as.integer(x$k)))
   if (x$curve_var != "N"      && !is.null(x$N) && !is.na(x$N))
     parts <- c(parts, sprintf("N = %d", as.integer(x$N)))
   paste(parts, collapse = ", ")

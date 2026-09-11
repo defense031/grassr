@@ -6,8 +6,9 @@
 \usage{
 grass_power(
   metric,
-  target,
   q = NULL,
+  q0 = NULL,
+  target = NULL,
   pi_hat = NULL,
   k = NULL,
   N = NULL,
@@ -17,10 +18,14 @@ grass_power(
 \arguments{
 \item{metric}{One of \code{"pabak"}, \code{"fleiss_kappa"}, \code{"mean_ac1"}, \code{"icc"}.}
 
-\item{target}{Coefficient value the study is planned to reach.}
-
 \item{q}{Panel quality, the probability of a correct call on the
 \code{Se = Sp} diagonal, in \verb{[0.55, 0.99]}.}
+
+\item{q0}{Panel quality the study must rule out, in \verb{[0.55, 0.99]}.
+Give \code{q0} or \code{target}, not both.}
+
+\item{target}{A fixed coefficient value to reach. Give \code{q0} or \code{target},
+not both.}
 
 \item{pi_hat}{Observed positive rate in \verb{[0.05, 0.95]}.}
 
@@ -29,60 +34,71 @@ grass_power(
 
 \item{N}{Number of subjects in \verb{[15, 1000]}.}
 
-\item{power}{Probability of reaching \code{target}, in \verb{(0, 1)}.}
+\item{power}{Probability, in \verb{(0, 1)}.}
 }
 \value{
-An object of class \code{grass_power}: the six quantities with the
-solved one filled in, \code{solved} naming it, \code{feasible}, \code{reason} (when
-not feasible), \code{expected} (the median coefficient at the fixed
-design, when \code{q} is fixed), \code{curve} (power across the solved
-variable's range, the data \code{plot()} draws), and \code{notes} from the
-surface lookup.
+An object of class \code{grass_power}: the design quantities with the
+solved one filled in, \code{solved} naming it, \code{mode} (\code{"quality"} or
+\code{"value"}), \code{feasible}, \code{reason} (when not feasible), \code{expected} (the
+median coefficient a panel of quality \code{q} produces at the design, in
+\code{"value"} mode), \code{curve} (power across the solved variable's range,
+the data \code{plot()} draws), and \code{notes} from the surface lookup.
 }
 \description{
-\code{grass_power()} reads the calibrated reference surface forward. Given a
-coefficient and a target value, it returns the probability that a panel
-of quality \code{q} rating \code{N} subjects with \code{k} raters at observed positive
-rate \code{pi_hat} produces a coefficient at or above \code{target}, or solves for
-whichever one of \code{q}, \code{pi_hat}, \code{k}, \code{N}, \code{power} is left \code{NULL}. The
-convention follows \code{\link[stats:power.t.test]{stats::power.t.test()}}: exactly one argument is
-\code{NULL} and is solved for.
+\code{grass_power()} sizes a rating study in the Report Card's own currency.
+Its primary question is: at this design, how likely is the study's 95\%
+consistency band on panel quality to exclude a quality \code{q0} the study
+must rule out, when the panel's true quality is \code{q}? The convention
+follows \code{\link[stats:power.t.test]{stats::power.t.test()}}: fix four of \code{q}, \code{pi_hat}, \code{k}, \code{N},
+\code{power}, leave one \code{NULL}, and it is solved for.
 }
 \details{
-The probability is a direct read of the quality sweep that
-\code{\link[=position_on_surface]{position_on_surface()}} returns, \code{P(coefficient >= target | q, design) = 1 - p(q)}, with \code{p(q)} interpolated between the calibrated quality
-levels. Nothing is simulated at call time.
+Two targets are accepted, exactly one of which must be given.
+\code{q0} (recommended) is a panel quality to rule out; the target is on the
+latent quality scale, so it means the same thing at every design and
+power rises with sample size everywhere. \code{target} is a fixed
+coefficient value, for a threshold imposed from outside (a journal's or
+regulator's band); a fixed coefficient value has no fixed meaning across
+designs, and the answer shows it: when the value a panel of quality \code{q}
+produces at the design sits below \code{target}, power falls with \code{N}.
 }
+\section{How it is computed}{
+
+Every quantity is a direct read of the quality sweep that
+\code{\link[=position_on_surface]{position_on_surface()}} returns, \code{p(q) = P(coefficient <= c | q, design)}.
+Nothing is simulated at call time. For \code{q0}, by test inversion the band's
+lower endpoint clears \code{q0} exactly when the observed coefficient exceeds
+the 97.5th percentile of the \code{q0} distribution, \code{c0}, so
+\code{power = 1 - p_q(c0)}. For \code{target}, \code{power = 1 - p_q(target)}.
+}
+
 \section{Solving for \code{N} or \code{k}}{
 
 The smallest value on the calibrated surface at which \code{power} is
-reached. When the expected coefficient at the given quality and
-prevalence sits below \code{target}, no sample size or rater count reaches
-the requested power: larger designs concentrate the sampling
-distribution around that expected value. The result then carries
-\code{NA}, \code{feasible = FALSE}, and the reason.
+reached. When none reaches it the result carries \code{NA},
+\code{feasible = FALSE}, and the reason, including the best power any
+design on the surface reaches.
 }
 
 \section{Solving for \code{pi_hat}}{
 
-The solution is the range of observed positive rates over which
-\code{power} is reached, because feasibility in prevalence is an interval,
-not a point. \code{solution} holds its two endpoints.
+The range of observed positive rates over which \code{power} is reached;
+\code{solution} holds its two endpoints.
 }
 
 \examples{
-# What is the chance that five raters of quality 0.90 reach a "substantial"
-# Fleiss' kappa on 200 subjects at 50\% prevalence?
-grass_power("fleiss_kappa", target = 0.61, q = 0.90, pi_hat = 0.50,
-            k = 5, N = 200)
-
-# How many subjects for an 80\% chance?
-pw <- grass_power("fleiss_kappa", target = 0.61, q = 0.90, pi_hat = 0.50,
-                  k = 5, power = 0.80)
+# A panel believed to be near quality 0.90 must rule out 0.80. How many
+# subjects, with three raters at a 10\% positive rate, for 80\% power?
+pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
+                  k = 3, power = 0.80)
 pw
 if (requireNamespace("ggplot2", quietly = TRUE)) plot(pw)
 
-# Over what prevalence range does the same study keep that chance?
-grass_power("fleiss_kappa", target = 0.61, q = 0.90, k = 5, N = 200,
+# Over what positive rates does a fixed design keep that power?
+grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, k = 5, N = 100,
             power = 0.80)
+
+# Against a fixed coefficient value imposed from outside:
+grass_power("fleiss_kappa", target = 0.61, q = 0.90, pi_hat = 0.50,
+            k = 5, N = 200)
 }

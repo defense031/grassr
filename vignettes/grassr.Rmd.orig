@@ -499,24 +499,25 @@ above, as with the card.
 position_on_surface(0.45, "fleiss_kappa", pi_hat = 0.10, k = 3, N = 80)
 ```
 
-**Power for a planned study.** `grass_power()` reads the surface
-forward in the `power.t.test()` convention: fix four of quality,
-positive rate, rater count, sample size, and power, and it solves for
-the fifth. For the screening study above, the smallest sample size at
-which a panel of quality 0.97 reaches a Fleiss' kappa of 0.45 with
-power 0.80, and the power curve behind it:
+**Power for a planned study.** `grass_power()` sizes a study in the
+card's own currency: the probability that the consistency band on
+panel quality excludes a quality the study must rule out. Fix four of
+quality, positive rate, rater count, sample size, and power, and it
+solves for the fifth. For the screening study above, a panel believed
+to be near quality 0.90 that must rule out 0.80 with power 0.80:
 
-```{r plan-power, fig.cap = "Power curve over sample size for the planned screening study, with the requested power as a dashed line and the solved N marked.", fig.alt = "A line chart of the probability of reaching Fleiss' kappa 0.45 against the number of subjects on a log axis, for three raters of quality 0.97 at a 10 percent positive rate. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."}
-pw <- grass_power("fleiss_kappa", target = 0.45, q = 0.97, pi_hat = 0.10,
+```{r plan-power, fig.cap = "Power curve over sample size for the planned screening study, with the requested power as a dashed line and the solved N marked.", fig.alt = "A line chart of the probability that the consistency band on panel quality excludes 0.80 against the number of subjects on a log axis, for three raters of true quality 0.90 at a 10 percent positive rate. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."}
+pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
                   k = 3, power = 0.80)
 pw
 plot(pw)
 ```
 
 Leave `pi_hat` empty instead and it returns the range of positive
-rates over which a fixed design keeps that power. When no design on
-the calibrated surface reaches the target, `N` comes back `NA` with
-the reason and the best power any sample size reaches.
+rates over which a fixed design keeps that power. `target =` sizes a
+study against a fixed coefficient value instead, for a threshold
+imposed from outside; a fixed value has no fixed meaning across
+designs, and the answer shows it.
 
 **Each stage of `grass_report()` on its own.**
 

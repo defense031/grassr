@@ -46,41 +46,40 @@ median coefficient a panel of quality \code{q} produces at the design, in
 the data \code{plot()} draws), and \code{notes} from the surface lookup.
 }
 \description{
-\code{grass_power()} is a planning tool. Assume a prevalence and a rough
-rater quality, and it tells you what a design of a given size can show
+\code{grass_power()} plans a study's size. Assume a prevalence and a rough
+rater quality, and it says what a design of a given size can show
 about the panel, and how many more subjects or raters it would take to
-show more. It never grades the raters. It grades whether the design is
-big enough to learn about them.
+show more. The result describes the design, how much a study of that
+size can learn about its raters.
 }
 \details{
-The question is posed as resolution. A study sized to separate a panel
-of quality \code{q} from one of quality \code{q0} returns a 95\% consistency band
-on quality narrow enough to tell the two apart. \code{q0} is not a bar the
-panel has to clear; it is the lower edge of the resolution you want.
-If the raters turn out weaker than assumed, the band lands lower and is
-about as narrow, so the study still reports how good they are to the
-precision it was planned for. The convention follows
-\code{\link[stats:power.t.test]{stats::power.t.test()}}: fix four of \code{q}, \code{pi_hat}, \code{k}, \code{N}, \code{power},
-leave one \code{NULL}, and it is solved for.
+A study sized to tell a panel of quality \code{q} from one of quality \code{q0}
+returns a 95\% consistency band on quality narrow enough to separate
+the two. \code{q0} sets the resolution of the plan. A panel weaker than
+assumed returns a band that sits lower and is about as wide, so the
+study reports the quality it finds at the precision it was planned
+for. The convention follows \code{\link[stats:power.t.test]{stats::power.t.test()}}. Fix four of \code{q},
+\code{pi_hat}, \code{k}, \code{N}, \code{power}, leave one \code{NULL}, and the function solves
+for it.
 
-Prevalence decides which lever moves a design. At balanced prevalence a
-few more raters can stand in for subjects. At a rare or very common
-finding they cannot, because a small sample holds only a handful of the
-minority class; the answer is more subjects, and the tool says so.
+Whether more subjects or more raters raises power depends on
+prevalence. At balanced prevalence a few more raters do the work of
+subjects. At a rare or very common finding they do not, because a
+small sample holds only a handful of the minority class, and the
+answer is more subjects.
 
-\code{target} is the other target the function accepts: a fixed coefficient
-value, for a threshold imposed from outside (a journal's or regulator's
-band). A fixed coefficient value has no fixed meaning across designs,
-and the answer shows it: when the value a panel of quality \code{q} produces
-at the design sits below \code{target}, power falls with \code{N}. Give \code{q0} or
-\code{target}, not both.
+The function also accepts \code{target}, a fixed coefficient value, for a
+threshold imposed from outside (a journal's or regulator's band). A
+fixed coefficient value means something different at each design.
+When the value a panel of quality \code{q} produces at the design sits
+below \code{target}, power falls with \code{N}. Give \code{q0} or \code{target}, not both.
 }
 \section{How it is computed}{
 
 Every quantity is a direct read of the quality sweep that
 \code{\link[=position_on_surface]{position_on_surface()}} returns, \code{p(q) = P(coefficient <= c | q, design)}.
-Nothing is simulated at call time. For \code{q0}, by test inversion the band's
-lower endpoint clears \code{q0} exactly when the observed coefficient exceeds
+Nothing is simulated at call time. For \code{q0}, by test inversion the lower
+end of the band is above \code{q0} exactly when the observed coefficient exceeds
 the 97.5th percentile of the \code{q0} distribution, \code{c0}, so
 \code{power = 1 - p_q(c0)}. For \code{target}, \code{power = 1 - p_q(target)}.
 }

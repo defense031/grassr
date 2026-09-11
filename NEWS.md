@@ -15,8 +15,8 @@ change; on-node readings are unchanged up to storage quantization.
   show about the panel, and how many more subjects or raters it would
   take to show more. In the `power.t.test()` convention, fix four of
   `q`, `pi_hat`, `k`, `N`, `power` and it solves for the fifth; `q0`
-  sets the resolution (the study is sized to tell quality `q` from
-  `q0`), not a bar the raters must clear. Power is read from the sweep
+  sets the resolution, the study is sized to tell quality `q` from
+  `q0`. Power is read from the sweep
   `position_on_surface()` already returns; nothing new is calibrated,
   and power rises with sample size at every design. `N` and `k` solve
   to the smallest feasible value or return `NA` with the reason;

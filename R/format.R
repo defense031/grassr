@@ -33,21 +33,25 @@
 .fmt_thresholds_line <- function(delta_list) {
   # v0.7.0: the flag is delta_hat's percentile on the matched null; the
   # implied pp cuts (95th/99th of that null) are shown as context.
+  .wrap_note_lines(.fmt_thresholds_text(delta_list), indent = "  ")
+}
+
+.fmt_thresholds_text <- function(delta_list) {
   mn <- delta_list$matched_null
   pct <- delta_list$delta_percentile
   if (!is.null(mn) && is.finite(pct %||% NA_real_)) {
-    sprintf("  matched null = (k=%d, N=%d, q=%.2f): delta_hat sits at percentile %.1f of the null%s%s",
+    sprintf("matched null = (k=%d, N=%d, q=%.2f): delta_hat sits at percentile %.1f of the null%s%s",
             mn$k, mn$N, mn$q, pct,
             if (isTRUE(mn$snapped)) " [design snapped]" else "",
             if (isTRUE(mn$unstable_tail)) " [tail not stably invertible]" else "")
   } else if (identical(delta_list$thresholds_source, "user_supplied_legacy")) {
     thr <- delta_list$thresholds
-    sprintf("  thresholds  = (%.2f, %.2f) [user-supplied, legacy pp cuts]",
+    sprintf("thresholds  = (%.2f, %.2f) [user-supplied, legacy pp cuts]",
             thr[["caution"]], thr[["divergent"]])
   } else if (identical(delta_list$thresholds_source, "not_applicable_k2")) {
-    "  matched null = n/a at k = 2 (PABAK and AC1 imply the same quality; see the pairwise table and the Hui-Walter bounds)"
+    "matched null = n/a at k = 2 (PABAK and AC1 imply the same quality; see the pairwise table and the Hui-Walter bounds)"
   } else {
-    "  matched null = unavailable (flag not calibrated)"
+    "matched null = unavailable (flag not calibrated)"
   }
 }
 
@@ -84,11 +88,33 @@
           if (isTRUE(open_high)) "+" else "")
 }
 
+# Wrap a note to the console width with a hanging indent under the bullet.
+.wrap_note_lines <- function(n, indent = "    - ") {
+  width <- max(40L, min(getOption("width", 80L), 80L) - nchar(indent) - 2L)
+  w <- strwrap(n, width = width)
+  if (length(w) == 0L) w <- ""
+  paste0(c(indent, rep(strrep(" ", nchar(indent)), length(w) - 1L)), w)
+}
+
 # Debug-grade notes (reference-curve provenance, glmer F_key fitting) stay
 # off the headline card and print in summary() only; calibration caveats
 # (clamps, snaps, band boundaries) stay on the card.
 .is_debug_note <- function(n) {
-  grepl("ICC reference: a logit-normal profile|ICC reference: calibrated profile|ICC reference: profile chosen|ICC reference curve from bundled|reference curve supplied|q_grid_per_rep", n)
+  # Provenance and teaching notes stay in `card$notes` and print from
+  # summary(); the card itself shows only notes that change how the
+  # reader should use the result.
+  grepl(paste(
+    "ICC reference: a logit-normal profile",
+    "ICC reference: calibrated profile",
+    "ICC reference: profile chosen",
+    "ICC reference curve from bundled",
+    "reference curve supplied",
+    "q_grid_per_rep",
+    "^delta_hat is the implied-quality spread",
+    "^delta_hat is not applicable at k = 2",
+    "^flag from delta_hat's percentile",
+    "^Consistency band narrower than the calibrated",
+    sep = "|"), n)
 }
 
 # Pretty label-mapping for the panel coefficient names.
@@ -215,6 +241,8 @@ format.grass_card <- function(x, digits = 2, ...) {
                     pp$n_pool_pos[ii], pp$n_pool_neg[ii],
                     pp$n_pool_excluded[ii]))
         }
+        lines <- c(lines,
+                   "    (excl = subjects the other raters tied on, left out of that rater's pool)")
       }
     }
     if (!is.null(x$per_rater) && nrow(x$per_rater) > 0L) {
@@ -287,14 +315,14 @@ format.grass_card <- function(x, digits = 2, ...) {
     pband <- x$coefficient$consistency_band
     if (is.finite(ppct %||% NA_real_)) {
       gloss <- sprintf(
-        "  read: this panel's agreement exceeds %.0f%% of what panels in this study context can produce%s.",
+        "read: this panel's agreement exceeds %.0f%% of what panels in this study context can produce%s.",
         ppct,
         if (!is.null(pband) && is.finite(pband$lo %||% NA_real_) &&
             is.finite(pband$hi %||% NA_real_))
           sprintf("; the data are consistent with panel quality %.2f-%.2f",
                   pband$lo, pband$hi)
         else "")
-      lines <- c(lines, gloss)
+      lines <- c(lines, .wrap_note_lines(gloss, indent = "  "))
     }
     lines <- c(lines,
                sprintf("  delta       = %s pp implied-quality spread (%s)",
@@ -309,7 +337,7 @@ format.grass_card <- function(x, digits = 2, ...) {
     lines <- c(lines, "")
     lines <- c(lines, "  Notes:")
     for (n in card_notes) {
-      lines <- c(lines, paste0("    - ", n))
+      lines <- c(lines, .wrap_note_lines(n))
     }
   }
 

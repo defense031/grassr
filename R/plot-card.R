@@ -15,8 +15,10 @@
 # ---- package availability check ----------------------------------------
 
 check_patchwork <- function() {
-  if (!requireNamespace("patchwork", quietly = TRUE)) {
-    stop("The 'diagnostic' view requires the 'patchwork' package. ",
+  if (!requireNamespace("patchwork", quietly = TRUE) ||
+      utils::packageVersion("patchwork") < "1.2.0") {
+    stop("The 'diagnostic' view requires patchwork >= 1.2.0 ",
+         "(earlier versions fail with ggplot2 >= 3.5). ",
          "Install it with install.packages(\"patchwork\").",
          call. = FALSE)
   }
@@ -108,8 +110,7 @@ check_patchwork <- function() {
 #' The plot is a heatmap of the closed-form expectation
 #' `E[metric](M_1, q)` over the surface, where `M_1` is the marginal
 #' positive rate and `q in [0.5, 1]` is the diagonal rater operating
-#' quality. Dotted contours mark evenly spaced reference gridlines on
-#' `q` (`bands` argument). When `pi_hat` is supplied alone, a dashed vertical
+#' quality. When `pi_hat` is supplied alone, a dashed vertical
 #' line marks the design's marginal. When both `pi_hat` and `observed`
 #' are supplied, a filled marker pins the implied `(M_1, hat q)` point on
 #' the surface; `hat q` is recovered by closed-form inversion of `observed`
@@ -139,10 +140,10 @@ check_patchwork <- function() {
 #'   the surface represents.
 #' @param axis One of `"inter"` (default) or `"intra"`. Used for the
 #'   subtitle only.
-#' @param bands Numeric length-5 increasing vector giving the `q`
-#'   values of the dotted reference gridlines.
-#'   Default `c(0.5, 0.625, 0.75, 0.875, 1.0)`. Cosmetic only; nothing
-#'   is labeled or classified by these lines.
+#' @param bands Optional numeric length-5 increasing vector of `q`
+#'   values at which to draw dotted reference gridlines. Default `NULL`
+#'   draws none. Cosmetic only; nothing is labeled or classified by
+#'   these lines.
 #' @param ... Reserved for future extension.
 #'
 #' @return A `ggplot` object.
@@ -168,7 +169,7 @@ plot_surface <- function(metric,
                          k = NULL,
                          N = NULL,
                          axis = c("inter", "intra"),
-                         bands = c(0.5, 0.625, 0.75, 0.875, 1.0),
+                         bands = NULL,
                          ...) {
   check_ggplot2()
   axis <- match.arg(axis)
@@ -182,8 +183,9 @@ plot_surface <- function(metric,
          "supported via plot_surface(); see ?position_on_surface and ",
          "?plot.grass_card.", call. = FALSE)
   }
-  if (!is.numeric(bands) || length(bands) != 5L ||
-      any(!is.finite(bands)) || any(diff(bands) <= 0)) {
+  if (!is.null(bands) &&
+      (!is.numeric(bands) || length(bands) != 5L ||
+       any(!is.finite(bands)) || any(diff(bands) <= 0))) {
     stop("`bands` must be a length-5 strictly increasing numeric vector.",
          call. = FALSE)
   }
@@ -240,30 +242,33 @@ plot_surface <- function(metric,
     }
   }
 
-  title <- sprintf("E[%s] reference surface", .pretty_metric_name(metric))
+  title <- sprintf("Expected %s reference surface", .pretty_metric_name(metric))
+  # Plotmath so pi_hat renders as a hatted pi on every device.
   sub_parts <- character(0L)
   if (!is.null(pi_hat)) sub_parts <- c(sub_parts,
-                                       sprintf("pi_hat = %.2f", pi_hat))
+                                       sprintf('hat(pi) == "%.2f"', pi_hat))
   if (!is.null(k)) sub_parts <- c(sub_parts,
-                                  sprintf("k = %d", as.integer(k)))
+                                  sprintf("k == %d", as.integer(k)))
   if (!is.null(N)) sub_parts <- c(sub_parts,
-                                  sprintf("N = %d", as.integer(N)))
-  sub_parts <- c(sub_parts, sprintf("axis = %s", axis))
+                                  sprintf("N == %d", as.integer(N)))
+  sub_parts <- c(sub_parts, sprintf('axis == "%s"', axis))
   if (!is.null(observed)) sub_parts <- c(sub_parts,
-                                         sprintf("observed = %.3f", observed))
-  subtitle <- paste(sub_parts, collapse = ",  ")
+                                         sprintf('observed == "%.3f"', observed))
+  subtitle <- .plotmath_subtitle(sub_parts)
 
   # na.rm and inherit.aes = FALSE keep ggplot quiet about the grid's NA
   # cells and about carrying `fill` into the contour statistic; both
   # warnings were harmless and both alarmed first-time users.
   p <- ggplot2::ggplot(grid, ggplot2::aes(x = M1, y = q, fill = value)) +
-    ggplot2::geom_raster(interpolate = TRUE, na.rm = TRUE) +
-    ggplot2::geom_contour(data = grid,
-                          ggplot2::aes(x = M1, y = q, z = q),
-                          inherit.aes = FALSE, na.rm = TRUE,
-                          breaks = bands,
-                          color = "white", linetype = "dotted",
-                          linewidth = 0.5)
+    ggplot2::geom_raster(interpolate = TRUE, na.rm = TRUE)
+  if (!is.null(bands)) {
+    p <- p + ggplot2::geom_contour(data = grid,
+                                   ggplot2::aes(x = M1, y = q, z = q),
+                                   inherit.aes = FALSE, na.rm = TRUE,
+                                   breaks = bands,
+                                   color = "white", linetype = "dotted",
+                                   linewidth = 0.5)
+  }
 
   if (!is.null(pin) && is.finite(pin$M1) && is.finite(pin$q)) {
     p <- p + ggplot2::geom_point(data = pin, ggplot2::aes(x = M1, y = q),
@@ -279,11 +284,11 @@ plot_surface <- function(metric,
   if (requireNamespace("viridisLite", quietly = TRUE)) {
     p <- p + ggplot2::scale_fill_gradientn(
       colours = viridisLite::viridis(64),
-      name = paste0("E[", .pretty_metric_name(metric), "]"))
+      name = paste0("Expected ", .pretty_metric_name(metric)))
   } else {
     p <- p + ggplot2::scale_fill_gradient(
       low = "#440154", high = "#FDE725",
-      name = paste0("E[", .pretty_metric_name(metric), "]"))
+      name = paste0("Expected ", .pretty_metric_name(metric)))
   }
 
   p +
@@ -294,10 +299,15 @@ plot_surface <- function(metric,
     ggplot2::labs(
       title    = title,
       subtitle = subtitle,
-      x = expression(M[1]~"(mean prevalence)"),
-      y = expression(q~"(rater operating quality)")
+      x = "Mean prevalence",
+      y = expression("Rater operating quality" ~ (q))
     ) +
-    theme_grass()
+    theme_grass() +
+    ggplot2::theme(legend.position = "right",
+                   legend.direction = "vertical",
+                   legend.title = ggplot2::element_text(size = 10),
+                   legend.key.height = ggplot2::unit(1.6, "cm"),
+                   legend.key.width = ggplot2::unit(0.4, "cm"))
 }
 
 # ---- view 1: surface ---------------------------------------------------
@@ -352,34 +362,25 @@ plot_surface <- function(metric,
   pct_lbl <- if (!is.na(pct_int)) {
     paste0(pct_int, .ord_suffix(pct_int))
   } else "--"
-  band_txt <- if (!is.null(band) && length(band) == 1L &&
-                   !is.na(band) && nzchar(band) &&
-                   !identical(band, "suppressed"))
-    paste0("  |  ", band) else ""
-  card_summary <- sprintf("%s = %.2f -> %s percentile%s",
-                          .pretty_metric_name(primary),
-                          obs_val %||% NA_real_, pct_lbl, band_txt)
+  card_summary <- sprintf(
+    "%s = %.2f, %s percentile of what this study context can produce",
+    .pretty_metric_name(primary), obs_val %||% NA_real_, pct_lbl)
   if (!is.null(fallback_note)) {
     card_summary <- paste0(card_summary, "  |  ", fallback_note)
   }
 
-  subtitle <- sprintf("k = %d, N = %d, pi_hat = %.2f, axis = %s",
-                      as.integer(k), as.integer(N),
-                      as.numeric(pi_hat), as.character(axis))
+  subtitle <- .plotmath_subtitle(c(
+    sprintf("k == %d", as.integer(k)),
+    sprintf("N == %d", as.integer(N)),
+    sprintf('hat(pi) == "%.2f"', as.numeric(pi_hat)),
+    sprintf('axis == "%s"', as.character(axis))))
 
-  bands <- c(0.5, 0.625, 0.75, 0.875, 1.0)  # q reference gridlines
 
   # na.rm and inherit.aes = FALSE keep ggplot quiet about the grid's NA
   # cells and about carrying `fill` into the contour statistic; both
   # warnings were harmless and both alarmed first-time users.
   p <- ggplot2::ggplot(grid, ggplot2::aes(x = M1, y = q, fill = value)) +
-    ggplot2::geom_raster(interpolate = TRUE, na.rm = TRUE) +
-    ggplot2::geom_contour(data = grid,
-                          ggplot2::aes(x = M1, y = q, z = q),
-                          inherit.aes = FALSE, na.rm = TRUE,
-                          breaks = bands,
-                          color = "white", linetype = "dotted",
-                          linewidth = 0.5)
+    ggplot2::geom_raster(interpolate = TRUE, na.rm = TRUE)
 
   # The pinned observation: solid white-filled black-bordered point.
   if (is.finite(pin$M1) && is.finite(pin$q)) {
@@ -394,11 +395,11 @@ plot_surface <- function(metric,
   if (requireNamespace("viridisLite", quietly = TRUE)) {
     p <- p + ggplot2::scale_fill_gradientn(
       colours = viridisLite::viridis(64),
-      name = paste0("E[", .pretty_metric_name(primary_for_grid), "]"))
+      name = paste0("Expected ", .pretty_metric_name(primary_for_grid)))
   } else {
     p <- p + ggplot2::scale_fill_gradient(
       low = "#440154", high = "#FDE725",
-      name = paste0("E[", .pretty_metric_name(primary_for_grid), "]"))
+      name = paste0("Expected ", .pretty_metric_name(primary_for_grid)))
   }
 
   p <- p +
@@ -409,15 +410,25 @@ plot_surface <- function(metric,
     ggplot2::labs(
       title    = card_summary,
       subtitle = subtitle,
-      x = expression(M[1]~"(mean prevalence)"),
-      y = expression(q~"(rater operating quality)")
+      x = "Mean prevalence",
+      y = expression("Rater operating quality" ~ (q))
     ) +
-    theme_grass()
+    theme_grass() +
+    ggplot2::theme(legend.position = "right",
+                   legend.direction = "vertical",
+                   legend.title = ggplot2::element_text(size = 10),
+                   legend.key.height = ggplot2::unit(1.6, "cm"),
+                   legend.key.width = ggplot2::unit(0.4, "cm"))
 
   p
 }
 
 # Ordinal suffix ("st", "nd", "rd", "th") for an integer percentile.
+# Join plotmath fragments with ", " separators into one expression.
+.plotmath_subtitle <- function(parts) {
+  parse(text = paste(parts, collapse = ' * ", " ~ '))[[1]]
+}
+
 .ord_suffix <- function(n) {
   if (!is.finite(n)) return("")
   n <- as.integer(n)
@@ -489,7 +500,7 @@ plot_surface <- function(metric,
                                 limits = c(0.5, n_rows + 0.7),
                                 expand = c(0, 0)) +
     ggplot2::labs(title = ttl, subtitle = sub,
-                  x = "pooled percentile (of the design's achievable range)",
+                  x = "Pooled percentile (of the design's achievable range)",
                   y = NULL) +
     theme_grass()
   p
@@ -513,8 +524,10 @@ plot_surface <- function(metric,
   has_cuts <- is.finite(caut) && is.finite(div) && div > caut
 
   ttl <- expression(hat(delta) ~ "asymmetry gauge")
-  x_max <- max(c(50, ceiling(delta_hat) + 5,
-                 if (has_cuts) div + 10 else NA_real_), na.rm = TRUE)
+  # Axis scaled to the matched-null cuts and the observation, not to a
+  # fixed 0-50 range: the cuts sit at a few hundredths of a quality pp.
+  x_max <- max(c(0.05, delta_hat * 1.5,
+                 if (has_cuts) div * 1.6 else NA_real_), na.rm = TRUE)
 
   p <- ggplot2::ggplot()
   if (has_cuts) {
@@ -537,7 +550,7 @@ plot_surface <- function(metric,
                                  name = NULL)
     sub <- sprintf("delta_hat = %.2f pp (%s); implied cuts %.2f / %.2f",
                    delta_hat, flag, caut, div)
-    x_breaks <- c(0, caut, div, seq(0, 100, 10))
+    x_breaks <- pretty(c(0, x_max), n = 5)  # cuts are named in the subtitle
   } else {
     # Degraded gauge: no calibrated cuts -> neutral bar, no band segments.
     p <- p + ggplot2::geom_rect(
@@ -547,7 +560,7 @@ plot_surface <- function(metric,
     )
     sub <- sprintf("delta_hat = %.2f pp (%s); matched-null cuts unavailable (uncalibrated)",
                    delta_hat, flag)
-    x_breaks <- seq(0, 100, 10)
+    x_breaks <- pretty(c(0, x_max))
   }
 
   # Pointer.
@@ -555,7 +568,7 @@ plot_surface <- function(metric,
     p <- p + ggplot2::geom_segment(
       data = data.frame(x = delta_hat),
       ggplot2::aes(x = x, xend = x, y = 1.05, yend = 1.5),
-      arrow = grid::arrow(angle = 25, length = grid::unit(0.18, "inches"),
+      arrow = grid::arrow(angle = 25, length = ggplot2::unit(0.18, "inches"),
                           ends = "first", type = "closed"),
       linewidth = 1.2, color = "black"
     )
@@ -566,11 +579,13 @@ plot_surface <- function(metric,
   p <- p +
     ggplot2::scale_x_continuous(limits = c(0, x_max),
                                 expand = c(0, 0),
-                                breaks = x_breaks) +
+                                breaks = x_breaks,
+                                labels = function(b) formatC(b, format = "f", digits = 2)) +
+    ggplot2::coord_cartesian(clip = "off") +
     ggplot2::scale_y_continuous(limits = c(-0.1, 2.1), expand = c(0, 0),
                                 breaks = NULL) +
     ggplot2::labs(title = ttl, subtitle = sub,
-                  x = expression(hat(delta) ~ "(implied-quality spread, pp)"),
+                  x = expression("Implied-quality spread" ~ hat(delta) ~ "(pp)"),
                   y = NULL) +
     theme_grass() +
     ggplot2::theme(panel.grid = ggplot2::element_blank(),
@@ -632,7 +647,7 @@ plot_surface <- function(metric,
     ggplot2::geom_point(size = 3.2, color = "black") +
     ggplot2::scale_x_continuous(limits = xlim) +
     ggplot2::labs(title = ttl, subtitle = sub,
-                  x = "coefficient value", y = NULL) +
+                  x = "Coefficient value", y = NULL) +
     theme_grass()
   p
 }
@@ -696,7 +711,7 @@ plot_surface <- function(metric,
   p <- p +
     ggplot2::scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25)) +
     ggplot2::labs(title = ttl, subtitle = sub,
-                  x = "estimate", y = NULL) +
+                  x = "Estimate", y = NULL) +
     theme_grass()
   p
 }
@@ -809,7 +824,7 @@ plot_surface <- function(metric,
 #'     at the study's (k, N), with the observation pinned and dotted band
 #'     contours at q in \{0.5, 0.625, 0.75, 0.875, 1.0\}.
 #'   - `"panel"` -- forest plot of all panel coefficients on the percentile
-#'     axis (0-100 pp), so the cross-coefficient spread is visible.
+#'     axis (0-100), so the cross-coefficient spread is visible.
 #'   - `"thermometer"` -- colored gauge for `delta_hat` with the
 #'     aligned/caution/divergent thresholds shown.
 #'   - `"intervals"` -- forest plot of observed coefficients with 95%
@@ -817,7 +832,7 @@ plot_surface <- function(metric,
 #'   - `"per_rater"` -- forest plot of per-rater Se-hat and Sp-hat (latent-class
 #'     bootstrap CIs). Errors when `card$per_rater` is `NULL`.
 #'   - `"pairwise"` -- k x k tile heatmap of pairwise surface percentiles
-#'     (cell label = percentile in pp; parenthetical label = PABAK_ij). Only
+#'     (cell label = percentile; parenthetical label = PABAK_ij). Only
 #'     available when `card$delta$flag == "divergent"` (auto-populated by
 #'     [grass_report()] via [pairwise_agreement()]).
 #'   - `"diagnostic"` -- `patchwork` composite of "panel" + "thermometer" +

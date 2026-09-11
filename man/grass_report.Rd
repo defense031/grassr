@@ -17,19 +17,20 @@ grass_report(
 }
 \arguments{
 \item{ratings}{User input: an \verb{N x k} binary matrix, an \verb{N x k} data.frame
-whose columns are 0/1 / logical / 2-level factor, or a list of two
-equal-length 0/1 vectors (\code{k = 2} paired form). See
-\code{?normalize_ratings} for accepted shapes. Rows must be independent
+whose columns are 0/1, logical, or two-level factor or character
+(positive level named yes, TRUE, positive, present, or case), or a list of two
+equal-length 0/1 vectors (\code{k = 2} paired form); the Quick start
+section of \code{vignette("grassr")} lists the accepted shapes. Rows must be independent
 subjects, one row each: the calibration assumes every row is a new
 subject, and stacking repeated measurements of one subject as rows
 overstates the effective sample size (analyze one card per occasion
-instead; \code{vignette("grassr")}, section "The data").}
+instead; \code{vignette("grassr")}, section "Quick start").}
 
 \item{axis}{One of \code{"inter"} (default) or \code{"intra"}. Selects the surface
 family. The intra-axis path uses \code{occasion} to identify viewings.}
 
 \item{metric}{One of \code{"auto"} (default; calls \code{pick_primary_coefficient()}
-per Table 2), \code{"pabak"}, \code{"ac1"}, \code{"fleiss_kappa"},
+by prevalence), \code{"pabak"}, \code{"ac1"}, \code{"fleiss_kappa"},
 \code{"icc"}. Selects which coefficient is the headline in the printed Report
 Card; the full panel is always populated. (Krippendorff's alpha left
 the Report Card panel at v0.6.0; it coincides with Fleiss' kappa in
@@ -48,13 +49,14 @@ values below \code{50L} are treated as off.}
 \item{verbose}{Logical; emit progress messages on long calls. Default
 \code{FALSE}.}
 
-\item{...}{Reserved for future extension.}
+\item{...}{Passed to \code{\link[=position_on_surface]{position_on_surface()}}. There is no \code{seed}
+argument: the divergent-branch bootstrap is seeded internally, so
+repeated calls on the same ratings reproduce.}
 }
 \value{
 An object of class \code{c("grass_card", "list")} with fields
 \code{sample}, \code{coefficient}, \code{delta}, \code{panel}, \code{per_rater}, \code{surface},
-\code{call}, \code{grass_version}, \code{timestamp}, \code{inputs}, \code{notes}. See the
-v0.2.0 paper-alignment design doc Sec.3.1 for the full structure.
+\code{call}, \code{grass_version}, \code{timestamp}, \code{inputs}, \code{notes}.
 
 \strong{\code{coefficient}} carries the primary coefficient's \code{observed_value},
 its \code{surface_percentile} (the pooled percentile -- position within the
@@ -80,8 +82,7 @@ prose convention. The \code{print} and \code{format} methods use ordinal
 notation ("46th percentile").
 }
 \description{
-\code{grass_report()} is the headline entry point for the v0.2.0 Target-2
-framework. It takes an \verb{N x k} binary rating matrix and returns a
+\code{grass_report()} is the package's headline entry point. It takes an \verb{N x k} binary rating matrix and returns a
 four-field Report Card: the sample summary \verb{(k, N, pi_hat)}, the primary
 coefficient and its surface position, the cross-coefficient asymmetry
 diagnostic \code{delta_hat} and flag, and (when \code{flag == "divergent"}) the
@@ -101,7 +102,7 @@ derive \code{pi_hat = mean(Y)}, \code{k = ncol(Y)}, \code{N = nrow(Y)}. Validate
 kappa; at \code{k >= 3}, PABAK / AC1 / Fleiss kappa / ICC.
 \item For each panel coefficient, position the observed value on its
 DGP-calibrated reference surface via \code{\link[=position_on_surface]{position_on_surface()}}.
-\item Pick the primary coefficient via Table 2 (\code{metric = "auto"}) or accept
+\item Pick the primary coefficient by prevalence (\code{metric = "auto"}) or accept
 the user's override.
 \item Compute the cross-coefficient implied-quality spread \code{delta_hat}
 (in pp of quality) via \code{\link[=check_asymmetry]{check_asymmetry()}} and flag \code{aligned} /

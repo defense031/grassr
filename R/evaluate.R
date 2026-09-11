@@ -1,7 +1,6 @@
 #' Generate a GRASS Report Card from a rating matrix
 #'
-#' `grass_report()` is the headline entry point for the v0.2.0 Target-2
-#' framework. It takes an `N x k` binary rating matrix and returns a
+#' `grass_report()` is the package's headline entry point. It takes an `N x k` binary rating matrix and returns a
 #' four-field Report Card: the sample summary `(k, N, pi_hat)`, the primary
 #' coefficient and its surface position, the cross-coefficient asymmetry
 #' diagnostic `delta_hat` and flag, and (when `flag == "divergent"`) the
@@ -20,7 +19,7 @@
 #'    kappa; at `k >= 3`, PABAK / AC1 / Fleiss kappa / ICC.
 #' 3. For each panel coefficient, position the observed value on its
 #'    DGP-calibrated reference surface via [position_on_surface()].
-#' 4. Pick the primary coefficient via Table 2 (`metric = "auto"`) or accept
+#' 4. Pick the primary coefficient by prevalence (`metric = "auto"`) or accept
 #'    the user's override.
 #' 5. Compute the cross-coefficient implied-quality spread `delta_hat`
 #'    (in pp of quality) via [check_asymmetry()] and flag `aligned` /
@@ -32,17 +31,18 @@
 #' 7. Assemble the `grass_card` S3 object.
 #'
 #' @param ratings User input: an `N x k` binary matrix, an `N x k` data.frame
-#'   whose columns are 0/1 / logical / 2-level factor, or a list of two
-#'   equal-length 0/1 vectors (`k = 2` paired form). See
-#'   `?normalize_ratings` for accepted shapes. Rows must be independent
+#'   whose columns are 0/1, logical, or two-level factor or character
+#'   (positive level named yes, TRUE, positive, present, or case), or a list of two
+#'   equal-length 0/1 vectors (`k = 2` paired form); the Quick start
+#'   section of `vignette("grassr")` lists the accepted shapes. Rows must be independent
 #'   subjects, one row each: the calibration assumes every row is a new
 #'   subject, and stacking repeated measurements of one subject as rows
 #'   overstates the effective sample size (analyze one card per occasion
-#'   instead; `vignette("grassr")`, section "The data").
+#'   instead; `vignette("grassr")`, section "Quick start").
 #' @param axis One of `"inter"` (default) or `"intra"`. Selects the surface
 #'   family. The intra-axis path uses `occasion` to identify viewings.
 #' @param metric One of `"auto"` (default; calls `pick_primary_coefficient()`
-#'   per Table 2), `"pabak"`, `"ac1"`, `"fleiss_kappa"`,
+#'   by prevalence), `"pabak"`, `"ac1"`, `"fleiss_kappa"`,
 #'   `"icc"`. Selects which coefficient is the headline in the printed Report
 #'   Card; the full panel is always populated. (Krippendorff's alpha left
 #'   the Report Card panel at v0.6.0; it coincides with Fleiss' kappa in
@@ -56,12 +56,13 @@
 #'   values below `50L` are treated as off.
 #' @param verbose Logical; emit progress messages on long calls. Default
 #'   `FALSE`.
-#' @param ... Reserved for future extension.
+#' @param ... Passed to [position_on_surface()]. There is no `seed`
+#'   argument: the divergent-branch bootstrap is seeded internally, so
+#'   repeated calls on the same ratings reproduce.
 #'
 #' @return An object of class `c("grass_card", "list")` with fields
 #'   `sample`, `coefficient`, `delta`, `panel`, `per_rater`, `surface`,
-#'   `call`, `grass_version`, `timestamp`, `inputs`, `notes`. See the
-#'   v0.2.0 paper-alignment design doc Sec.3.1 for the full structure.
+#'   `call`, `grass_version`, `timestamp`, `inputs`, `notes`.
 #'
 #'   **`coefficient`** carries the primary coefficient's `observed_value`,
 #'   its `surface_percentile` (the pooled percentile -- position within the

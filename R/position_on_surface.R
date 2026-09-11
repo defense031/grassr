@@ -1037,7 +1037,7 @@ lookup_fitted_icc_reference_curve <- function(pi_hat, k, N, q_grid,
                      F_key_near, k_near, N_near, F_family, M1_near))
   if (as.numeric(k) != k_near) {
     notes <- c(notes,
-               sprintf("ICC reference only: k=%s uses the nearest calibrated k=%d. The agreement-family surfaces and the delta_hat null use k=%s.",
+               sprintf("ICC reference: k=%s uses the nearest calibrated k=%d; the delta_hat null is calibrated at k=%s.",
                        as.character(k), k_near, as.character(k)))
   }
   if (as.numeric(N) != N_near) {
@@ -1314,7 +1314,7 @@ print.grass_surface_position <- function(x, digits = 3, ...) {
   }
   if (length(x$notes)) {
     cat("  notes                :\n")
-    for (n in x$notes) cat("    - ", n, "\n", sep = "")
+    for (n in x$notes) cat(.wrap_note_lines(n), sep = "\n")
   }
   invisible(x)
 }

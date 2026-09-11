@@ -269,13 +269,9 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #' to its own `q_hat` on the shared (q, pi_+) reference; if the
 #' calibration DGP held exactly, all three would imply the same quality,
 #' so the spread measures cross-coefficient model discordance in
-#' interpretable units of quality. (Option B, ratified 2026-07-05; the
-#' previous definition -- spread of surface percentiles across four
-#' coefficients including Krippendorff alpha -- ran through the retired
-#' nearest-cell percentile machinery, whose sawtooth inflated `delta_hat`
-#' with quantization noise. Alpha left the panel at 0.6.0; ICC never
-#' enters `delta_hat`, its reference being distribution-sensitive in ways
-#' the agreement family is not.)
+#' interpretable units of quality. ICC never enters `delta_hat`, since
+#' its reference is distribution-sensitive in ways the agreement family
+#' is not.
 #'
 #' `delta_hat` is a *split-bias* detector. It fires when raters tilt in
 #' different directions across (Se, Sp) -- e.g., one rater high-Se / low-Sp,
@@ -347,8 +343,8 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #'
 #' @param ratings User input: an `N x k` binary matrix, an `N` x `k`
 #'   data.frame whose columns are 0/1 / logical / 2-level factor, or a
-#'   list of two equal-length 0/1 vectors (k = 2 paired form). See
-#'   `?normalize_ratings` for accepted shapes.
+#'   list of two equal-length 0/1 vectors (k = 2 paired form); the Quick
+#'   start section of `vignette("grassr")` lists the accepted shapes.
 #' @param axis `"inter"` (default) or `"intra"`. Selects the surface
 #'   family.
 #' @param occasion Reserved for `axis = "intra"` (a vector / factor
@@ -717,7 +713,7 @@ print.grass_asymmetry_panel <- function(x, digits = 1, ...) {
   if (length(x$notes) > 0L) {
     cat("\n  Surface caveats:\n")
     for (n in x$notes) {
-      cat("    - ", n, "\n", sep = "")
+      cat(.wrap_note_lines(n), sep = "\n")
     }
   }
   invisible(x)

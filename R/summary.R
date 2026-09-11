@@ -36,6 +36,20 @@ print.summary.grass_metrics <- function(x, digits = 4, ...) {
 # per-rater table (when non-NULL), all notes, sample info, and the full
 # delta. print.summary.grass_card formats this as a multi-section block.
 
+#' Summarize a GRASS Report Card
+#'
+#' The full detail behind the card: the primary coefficient with its
+#' estimate `q_hat`, the `delta_hat` diagnostic and its matched-null
+#' percentile, the whole panel table, the per-rater latent-class table on
+#' a divergent card, and every note the card carries, including the
+#' provenance notes the card print leaves out.
+#'
+#' @param object A `grass_card` object from [grass_report()].
+#' @param x A `summary.grass_card` object.
+#' @param digits Decimals for printed values. Default 3.
+#' @param ... Ignored.
+#' @return For `summary()`, a `summary.grass_card` list; its print method
+#'   returns it invisibly.
 #' @export
 summary.grass_card <- function(object, ...) {
   out <- list(
@@ -52,6 +66,7 @@ summary.grass_card <- function(object, ...) {
   out
 }
 
+#' @rdname summary.grass_card
 #' @export
 print.summary.grass_card <- function(x, digits = 3, ...) {
   s <- x$sample
@@ -103,7 +118,7 @@ print.summary.grass_card <- function(x, digits = 3, ...) {
     }
     if (!nzchar(band_str)) band_str <- "NA"
     ref_used <- if ("reference_used" %in% names(pn)) pn$reference_used[i] else NA_character_
-    cat(sprintf("    %-15s observed = %.*f  q_hat = %.*f  pct = %5.*f  %-30s ref = %s\n",
+    cat(sprintf("    %-15s observed = %.*f  q_hat = %.*f  pct = %5.*f  %s  ref = %s\n",
                 pn$coefficient[i],
                 digits, pn$observed_value[i],
                 digits, pn$q_hat[i],
@@ -136,7 +151,7 @@ print.summary.grass_card <- function(x, digits = 3, ...) {
 
   if (length(x$notes) > 0L) {
     cat("\n  notes\n")
-    for (n in x$notes) cat("    - ", n, "\n", sep = "")
+    for (n in x$notes) cat(.wrap_note_lines(n), sep = "\n")
   }
 
   cat(sprintf("\n  grass version : %s\n", as.character(x$grass_version)))

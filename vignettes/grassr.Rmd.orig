@@ -40,31 +40,32 @@ coefficients into an empirical Report Card that reports a percentile
 for each coefficient, a consistency band on rater quality, and a flag
 when the coefficients disagree.
 
-The code below fixes two raters at quality 0.87, meaning each calls 87%
-of cases correctly, sweeps prevalence from 2% to 98%, and plots the
-expected Cohen's kappa against the Landis and Koch bands.
+For two raters fixed at quality 0.87, meaning each calls 87% of cases
+correctly, the expected Cohen's kappa crosses three Landis and Koch
+bands as prevalence runs from 2% to 98%.
 
-```{r hook-figure, echo = TRUE, fig.cap = "One panel of raters, three published verdicts.", fig.alt = "Expected Cohen's kappa plotted against prevalence for raters fixed at quality 0.87. The curve rises from near zero at 2 percent prevalence, peaks around 0.55 at balanced prevalence, and falls again toward 98 percent, crossing the slight, fair, and moderate bands on the way."}
+```{r hook-figure, echo = FALSE, fig.cap = "One panel of raters, three published verdicts.", fig.alt = "Expected Cohen's kappa plotted against prevalence for raters fixed at quality 0.87. The curve rises from near zero at 2 percent prevalence, peaks around 0.55 at balanced prevalence, and falls again toward 98 percent, crossing the slight, fair, and moderate bands on the way."}
 q <- 0.87                       # every rater calls 87% of cases correctly
 prev <- seq(0.02, 0.98, 0.005)
 Pa <- q^2 + (1 - q)^2           # P(two such raters agree); prevalence-free
 pip <- prev * q + (1 - prev) * (1 - q)  # observed positive rate
 kappa <- (Pa - (pip^2 + (1 - pip)^2)) / (1 - (pip^2 + (1 - pip)^2))
 
-op <- par(mar = c(4.2, 4.2, 2.4, 1))
+op <- par(mar = c(4.2, 4.2, 2.4, 3.2))
 plot(prev, kappa, type = "l", lwd = 2, ylim = c(0, 0.8),
-     xlab = "prevalence of the finding", ylab = "expected Cohen's kappa",
+     xlab = "Prevalence of the finding", ylab = "Expected Cohen's kappa",
      main = "Same raters (q = 0.87) at every prevalence")
 abline(h = c(0.20, 0.40, 0.60), lty = 3, col = "grey55")
-text(rep(0.99, 4), c(0.10, 0.30, 0.50, 0.70), adj = 1, col = "grey40",
+text(rep(0.99, 4), c(0.035, 0.30, 0.50, 0.70), adj = 1, col = "grey40",
      cex = 0.8, labels = c("slight", "fair", "moderate", "substantial"))
+mtext("Landis and Koch label", side = 4, line = 1, col = "grey40")
 pts <- c(0.05, 0.50, 0.90)
 ptk <- sapply(pts, function(p) {
   pp <- p * q + (1 - p) * (1 - q)
   (Pa - (pp^2 + (1 - pp)^2)) / (1 - (pp^2 + (1 - pp)^2))
 })
 points(pts, ptk, pch = 19)
-text(pts, ptk + 0.05, sprintf("%.2f", ptk), cex = 0.85)
+text(pts + c(0.045, 0, -0.045), ptk - 0.06, sprintf("%.2f", ptk), cex = 0.85)
 par(op)
 ```
 
@@ -81,16 +82,16 @@ positive level means present. For a factor or character column the
 level named yes, true, positive, present, or case, in any letter case,
 is taken as positive; any other pair of labels is refused with a
 message asking for a 0/1 recode, so an outcome is never inverted
-silently. Drop identifier columns before the call. Column names, if
-given, become rater labels on the card. The functions stop on `NA`
-rather than silently dropping rows, so filter first with `Y <-
-Y[complete.cases(Y), ]` and report the exclusions in your Methods.
-Binary outcomes only.
+erroneously. Drop identifier columns before the call. Column names, if
+given, become rater labels on the card. Outcomes must be binary and
+complete, since the functions stop on `NA` rather than dropping rows,
+so remove incomplete rows first with `Y <- Y[complete.cases(Y), ]` and
+report the exclusions.
 
-The examples simulate the panel, so the true classes are known and
-every claim below can be checked against them. This first panel has
-150 subjects at 30% prevalence and three raters who each call 87% of
-cases correctly.
+The examples use simulated panels so that the true classes are known
+and each reading can be checked against them. This first simulated
+panel has 150 subjects at 30% prevalence and three raters who each
+call 87% of cases correctly.
 
 ```{r the-data}
 library(grassr)
@@ -104,8 +105,9 @@ head(Y0, 8)
 
 Row 6 is unanimously positive, rows 2, 4, 5, and 7 unanimously
 negative, and rows 1, 3, and 8 split. One call produces the card.
-Inside a script, assign the result and `print()` it; the same goes for
-`plot()`.
+Use `print()` and `plot()` for the card and its diagnostics. The
+`bootstrap_B` argument matters only when the panel flags divergent,
+and `verbose` defaults to `FALSE`.
 
 ```{r headline}
 grass_report(ratings = Y0)
@@ -123,26 +125,28 @@ grass_report(ratings = Y0)
   value falls among everything this study could have produced, from
   the lowest-quality panels in the reference to the highest. **Panel
   quality `q`** is the share of cases a rater gets correct. The
-  reference panels give every rater the same `q` for both sensitivity
-  and specificity, and `q` is what the package is estimating. The
-  **consistency band** is the range of qualities that could plausibly
-  have produced this coefficient. Formally, it is every `q` at which
+  reference panels assume that sensitivity and specificity are equal,
+  so that each coefficient traces back to a single quality, `q`. The
+  package estimates `q` by inverting the
+  reference: the quality whose panels produce the observed coefficient
+  on average is the estimate, `q_hat`. The **consistency band** is the
+  range of `q` that could plausibly have produced this coefficient. Formally, it is every `q` at which
   the observed value sits inside the middle 95% of that quality's
-  panels. A wide band means the study cannot tell those qualities
-  apart, and a small study always gives a wide band.
+  panels. A wide band indicates that the study cannot distinguish
+  among those qualities. A small-`N` study will always produce a wide
+  band.
 - **`<- primary`** marks the coefficient to report: PABAK
-  (prevalence-adjusted bias-adjusted kappa; Byrt, Bishop, and Carlin,
-  1993) at moderate prevalence, AC1 (Gwet, 2008) when the positive
-  rate is below 0.15 or above 0.85 (0.20 or 0.80 at two raters), where
-  its percentile is less noisy.
+  (prevalence-adjusted bias-adjusted kappa; Byrt, Bishop, and
+  Carlin, 1993) at moderate prevalence, AC1 (Gwet, 2008) when the
+  positive rate is below 0.15 or above 0.85 (0.20 or 0.80 at two
+  raters), where its percentile is less noisy.
   The intraclass correlation coefficient (ICC) is tagged
   `[distribution-sensitive]` because its reference
   depends on how the positives are spread across subjects, a few
   obvious cases or many borderline ones, and not just on how many
   there are, so its percentile is less certain than the other three.
-- **The `read:` line** restates the headline in plain language. The
-  card prints no verdict label, and the band's width states the
-  uncertainty.
+- **`read`** is the headline as a sentence. There is no verdict
+  label. The width of the band is the uncertainty.
 - **`delta`** is `delta_hat` as the card prints it, the spread of the
   qualities implied by PABAK, AC1 (both averaged over rater pairs),
   and Fleiss' kappa, in percentage points (pp), followed by its flag.
@@ -150,14 +154,13 @@ grass_report(ratings = Y0)
 
 **Intra-rater agreement**, one rater scoring the same subjects on
 repeated occasions, uses the same layout with the occasions as columns
-and the call `grass_report(Y, axis = "intra")`. The same reference
-applies, since a rater re-reading the same subjects is modeled exactly
-like independent raters of equal quality, and the card has the same
-fields. On this axis the card marks ICC as primary, the conventional
-intra-rater statistic; the three agreement coefficients still print
-and still feed `delta_hat`. The card's note says which way the two
-departures from that model push the reading: drift between occasions
-lowers it, and memory of an earlier pass raises it.
+and the call `grass_report(Y, axis = "intra")`. The percentile and
+band come from the same simulated panels as the inter-rater case,
+because one rater scoring on several occasions is modeled as that many
+independent raters of equal quality. The card has the same fields. On
+this axis, ICC is marked primary because it is the conventional
+intra-rater statistic. The three agreement coefficients still print
+and still feed `delta_hat`.
 
 ## When coefficients disagree: the `delta_hat` flag
 
@@ -186,13 +189,24 @@ summary `suppressed`, and shows the raters one at a time in three
 views. A matrix of pairwise PABAK values fills the lower triangle,
 with each pair's percentile at its own positive rate in the upper. A
 table scores each rater against the majority vote of the other raters
-(`Se_tilde` and `Sp_tilde`, excluding subjects on which the majority
-tied). A latent-class fit, the Dawid and Skene (1979) model, estimates
-each rater's sensitivity and specificity from the rating matrix alone.
-Start with the majority table. It compares each rater with the other
-raters' votes, which are observed, so unlike the latent-class fit it
-can never mix up which class is positive. An over-caller shows high
-`Se_tilde` and lower `Sp_tilde`, an under-caller the reverse.
+(`Se_tilde` and `Sp_tilde`). A latent-class fit, the Dawid and Skene
+(1979) model, estimates each rater's sensitivity and specificity from
+the rating matrix alone.
+
+In the majority table, the majority vote of the other raters stands
+in for the truth, subject by subject, with tied subjects excluded. `Se_tilde` is the share of subjects the others
+called positive that this rater also called positive, and `Sp_tilde`
+is the same share on the subjects the others called negative. A rater
+who calls positive more often than the rest catches nearly everything
+the others flagged, so `Se_tilde` is high, but also flags many
+subjects the others did not, so `Sp_tilde` is low. A rater who calls
+positive less often shows the reverse. The latent-class fit does not
+use the majority. It estimates a hidden true class for every subject
+along with each rater's sensitivity and specificity, and because
+nothing in the ratings tells the model which hidden class is the
+positive one, it can label them backwards and report every rater's
+two numbers swapped. So the majority table is the safe view and the
+latent-class fit is the check.
 
 ## Case studies
 
@@ -213,8 +227,9 @@ Y1 <- gen_flat(1000, prev = 0.15, Se = 0.87, Sp = 0.87, k = 5, seed = 61)
 
 The three coefficients draw three different fixed labels from this
 one panel: Fleiss' kappa 0.36 reads *fair*, PABAK 0.54 reads
-*moderate*, AC1 0.64 reads *substantial*. A reader who saw only the
-labels would conclude they describe three different panels.
+*moderate*, AC1 0.64 reads *substantial*. A reader could reach three
+different conclusions depending on which agreement coefficient they
+chose.
 
 ```{r case1-card}
 grass_report(Y1, verbose = FALSE)
@@ -309,6 +324,10 @@ rate 0.24. PABAK was 0.54, at the 74th percentile of what a five-rater,
 1,000-subject study at this positive rate can produce, and the data are
 consistent with panel quality 0.85 to 0.90. The three agreement
 coefficients implied the same quality (spread 0.00 pp, aligned)."
+Gloss quality once for the reader, as the share of subjects each rater
+classifies correctly. Nothing further is needed. A caution card is
+reported the same way with the flag stated, after a look at the
+pairwise table.
 
 A divergent card is reported rater by rater, and the coefficient values
 appear only as description. From Case 2: "Five raters rated 1,000
@@ -321,7 +340,9 @@ percentile) and 0.17 to 0.27 for every pair involving R4 or R5 (35th to
 48th). Against the majority of the other raters, R4 and R5 had
 specificity 0.51 and 0.50 versus 0.91 to 0.93 for the rest; a
 latent-class fit placed them at 0.51 and 0.50 (95% bootstrap intervals
-0.47 to 0.55 and 0.46 to 0.54)."
+0.47 to 0.55 and 0.46 to 0.54)." The follow-up is on the raters the
+tables single out: adjudicate the subjects they disputed, retrain them
+on the criterion they miss, and re-screen.
 
 A two-rater card has no flag to report. From Case 3: "Two raters
 rated 200 subjects, observed positive rate 0.39. PABAK was 0.50, at the
@@ -359,7 +380,7 @@ Y_shared <- gen_logitnormal(151L, 5L, 1000L,
 ```{r split-vs-shared-scatter, echo = FALSE, fig.cap = "Two panels with one coefficient value and two different internal structures.", fig.alt = "Sensitivity against specificity for two five-rater panels that both return Fleiss' kappa 0.36. Three raters of the first panel sit together at 0.92 sensitivity and 0.92 specificity while two fall into the shaded low-specificity zone near 0.51. All five raters of the second panel sit together at 0.95 sensitivity and 0.70 specificity."}
 op <- par(mar = c(4.2, 4.2, 2.2, 1))
 plot(NA, xlim = c(0.45, 1.02), ylim = c(0.45, 1.02),
-     xlab = "sensitivity", ylab = "specificity",
+     xlab = "Sensitivity", ylab = "Specificity",
      main = "True rater operating points; both panels return Fleiss k = 0.36")
 rect(0.45, 0.45, 1.02, 0.60, col = "#fdecea", border = NA)
 text(0.47, 0.575, "low-specificity zone", adj = 0, col = "#b04a3a", cex = 0.8)
@@ -369,11 +390,11 @@ points(rep(0.92, 3) + c(-0.012, 0, 0.012), rep(0.92, 3), pch = 19,
        col = "#2a7e43", cex = 1.2)
 points(c(0.92, 0.92) + c(-0.006, 0.006), c(0.51, 0.51), pch = 19,
        col = "#2a7e43", cex = 1.2)
-text(0.86, 0.94, "raters differ: R1-R3", col = "#2a7e43", adj = 1, cex = 0.85)
-text(0.86, 0.51, "raters differ: R4, R5", col = "#2a7e43", adj = 1, cex = 0.85)
+text(0.86, 0.94, "split panel: R1-R3", col = "#2a7e43", adj = 1, cex = 0.85)
+text(0.86, 0.51, "split panel: R4, R5", col = "#2a7e43", adj = 1, cex = 0.85)
 points(rep(0.95, 5) + seq(-0.024, 0.024, length.out = 5), rep(0.70, 5),
        pch = 17, col = "#2c5f8a", cex = 1.1)
-text(0.87, 0.70, "raters agree: all five", col = "#2c5f8a", adj = 1, cex = 0.85)
+text(0.87, 0.70, "shared panel: all five", col = "#2c5f8a", adj = 1, cex = 0.85)
 par(op)
 ```
 
@@ -533,7 +554,14 @@ plot(card1)
 ```
 
 The default `plot()` places the panel on the expected-value surface in
-its study context. Other views (`type = "thermometer"` for the
+its study context. The surface is flat across prevalence because
+PABAK's reference depends on quality alone, which holds when each
+rater is equally good at positives and negatives. When sensitivity and
+specificity differ, PABAK moves with prevalence as well, and the flat
+surface no longer describes it. The `delta_hat` flag catches the case
+where raters differ from each other. The panel where all raters share
+the same asymmetry is the one it cannot catch, and the boundaries
+section shows it. Other views (`type = "thermometer"` for the
 `delta_hat` gauge, `"panel"`, `"intervals"`, `"per_rater"`,
 `"diagnostic"`) are documented in `?plot.grass_card`.
 

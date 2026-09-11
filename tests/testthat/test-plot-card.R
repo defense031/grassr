@@ -216,12 +216,17 @@ test_that("plot_surface with pi_hat alone draws a vertical reference line", {
   skip_if_not_installed("ggplot2")
   p <- plot_surface("pabak", pi_hat = 0.30, k = 5, N = 200)
   built <- ggplot2::ggplot_build(p)
-  # Layers: raster, contour, vline -> at least 3
-  expect_gte(length(p$layers), 3L)
+  # Layers: raster, vline -> at least 2 (no contour by default)
+  expect_gte(length(p$layers), 2L)
+  expect_false(any(vapply(p$layers, function(l) inherits(l$geom, "GeomContour"), logical(1))))
+  # Gridlines only when bands are supplied
+  p2 <- plot_surface("pabak", pi_hat = 0.30, k = 5, N = 200,
+                     bands = c(0.5, 0.625, 0.75, 0.875, 1.0))
+  expect_true(any(vapply(p2$layers, function(l) inherits(l$geom, "GeomContour"), logical(1))))
   # Subtitle should mention pi_hat = 0.30
-  expect_match(p$labels$subtitle, "pi_hat = 0\\.30")
-  expect_match(p$labels$subtitle, "k = 5")
-  expect_match(p$labels$subtitle, "N = 200")
+  expect_match(deparse1(p$labels$subtitle), 'hat\\(pi\\) == "0.30"')
+  expect_match(deparse1(p$labels$subtitle), "k == 5")
+  expect_match(deparse1(p$labels$subtitle), "N == 200")
 })
 
 test_that("plot_surface with observed pins a marker via closed-form inversion", {
@@ -229,7 +234,7 @@ test_that("plot_surface with observed pins a marker via closed-form inversion", 
   # PABAK = 0.62 inverts algebraically to q = (1 + sqrt(0.62))/2 ~ 0.894
   p <- plot_surface("pabak", pi_hat = 0.30, observed = 0.62, k = 5, N = 200)
   expect_s3_class(p, "ggplot")
-  expect_match(p$labels$subtitle, "observed = 0\\.620")
+  expect_match(deparse1(p$labels$subtitle), 'observed == "0.620"')
   # The pin layer (geom_point) carries the data.frame with M1 / q.
   point_layer_idx <- vapply(p$layers, function(l) inherits(l$geom, "GeomPoint"),
                             logical(1L))

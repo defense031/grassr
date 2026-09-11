@@ -43,7 +43,7 @@ Suggests:
     future.apply,
     irr,
     irrCAC,
-    patchwork,
+    patchwork (>= 1.2.0),
     progressr,
     knitr,
     lme4 (>= 1.1-30),

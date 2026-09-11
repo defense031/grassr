@@ -41,6 +41,34 @@ change; on-node readings are unchanged up to storage quantization.
 * `summary()` and the pairwise print no longer show `tau2_hat`, an
   internal heterogeneity estimate that no user-facing text defined. It
   stays in the returned objects (`card$sample$tau2_hat`).
+* Card, `summary()`, and `position_on_surface()` notes wrap to the
+  console width with a hanging indent instead of printing as one long
+  line.
+* Surface plots no longer draw the dotted quality gridlines at 0.625,
+  0.75, and 0.875, which were the cutoffs of the retired four-band
+  scheme. `plot_surface(bands = )` now defaults to `NULL`; pass a
+  vector to draw gridlines. The x-axis reads "mean prevalence".
+* The card's surface plot titles the pinned point by its percentile of
+  the study context and no longer restates the consistency band, which
+  stays on the printed card. The colour bar is titled ("Expected
+  PABAK") and sits vertically at the right, aligned with the quality
+  axis it encodes.
+* The printed card no longer repeats the delta_hat definition, the
+  matched-null provenance, the k = 2 explanation, or the band
+  interpolation note on every call. They stay in `card$notes` and print
+  from `summary()`; the vignette carries the explanations.
+* Fixes from a blind usability round: the ICC rater-count note no longer
+  claims the agreement-family surfaces use the uncalibrated `k` (they
+  snap to the nearest calibrated value, as the generic note says);
+  `as.data.frame()` blanks the consistency-band columns on a divergent
+  card, matching the printed card; the `delta_hat` thermometer scales
+  its axis to the matched-null cuts instead of a fixed 0 to 50 range;
+  the card's per-rater table defines `excl`; `plot(type = "diagnostic")`
+  now requires patchwork >= 1.2.0 with a clear message, since earlier
+  versions error against ggplot2 3.5; help pages for `print()` and
+  `summary()` methods added, dangling `?normalize_ratings` references
+  and internal project vocabulary removed from `?grass_report` and
+  `?check_asymmetry`, character rating columns documented.
 * The delta-hat null is prevalence-resolved everywhere. The bundled
   `delta_null_ecdf` holds 11,616 cells: eleven rater counts (3-25),
   twelve sample sizes (15-1,000), eleven quality levels (0.65-0.99),

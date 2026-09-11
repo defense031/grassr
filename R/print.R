@@ -48,6 +48,17 @@ print.grass_reference <- function(x, digits = 4, ...) {
 # shows ALL panel coefficients with their percentiles + delta(divergent) +
 # band=suppressed + per-rater table (if non-NULL).
 
+#' Print a GRASS Report Card
+#'
+#' Prints the card assembled by [format.grass_card()]: the sample line,
+#' one line per coefficient with its percentile and consistency band, the
+#' plain-language read, the `delta_hat` spread and flag, and, on a
+#' divergent card, the pairwise and per-rater tables.
+#'
+#' @param x A `grass_card` object from [grass_report()].
+#' @param digits Decimals for coefficient values. Default 2.
+#' @param ... Ignored.
+#' @return `x`, invisibly.
 #' @export
 print.grass_card <- function(x, digits = 2, ...) {
   lines <- format(x, digits = digits, ...)

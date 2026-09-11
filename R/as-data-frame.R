@@ -68,6 +68,13 @@ as.data.frame.grass_card <- function(x, row.names = NULL, optional = FALSE, ...)
   if (!is.null(x$per_rater) && nrow(x$per_rater) > 0L) {
     attr(panel, "per_rater") <- x$per_rater
   }
+
+  # The card suppresses the consistency bands at the divergent flag; the
+  # frame must not carry values the card refused to print.
+  if (identical(panel$delta_flag[1L], "divergent")) {
+    for (col in c("band_lo", "band_hi")) if (col %in% names(panel)) panel[[col]] <- NA_real_
+    for (col in c("band_open_low", "band_open_high")) if (col %in% names(panel)) panel[[col]] <- NA
+  }
   panel
 }
 

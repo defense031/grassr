@@ -15,8 +15,8 @@ check_asymmetry(
 \arguments{
 \item{ratings}{User input: an \verb{N x k} binary matrix, an \code{N} x \code{k}
 data.frame whose columns are 0/1 / logical / 2-level factor, or a
-list of two equal-length 0/1 vectors (k = 2 paired form). See
-\code{?normalize_ratings} for accepted shapes.}
+list of two equal-length 0/1 vectors (k = 2 paired form); the Quick
+start section of \code{vignette("grassr")} lists the accepted shapes.}
 
 \item{axis}{\code{"inter"} (default) or \code{"intra"}. Selects the surface
 family.}
@@ -65,13 +65,9 @@ coefficients (PABAK, mean AC1, Fleiss kappa). Each coefficient inverts
 to its own \code{q_hat} on the shared (q, pi_+) reference; if the
 calibration DGP held exactly, all three would imply the same quality,
 so the spread measures cross-coefficient model discordance in
-interpretable units of quality. (Option B, ratified 2026-07-05; the
-previous definition -- spread of surface percentiles across four
-coefficients including Krippendorff alpha -- ran through the retired
-nearest-cell percentile machinery, whose sawtooth inflated \code{delta_hat}
-with quantization noise. Alpha left the panel at 0.6.0; ICC never
-enters \code{delta_hat}, its reference being distribution-sensitive in ways
-the agreement family is not.)
+interpretable units of quality. ICC never enters \code{delta_hat}, since
+its reference is distribution-sensitive in ways the agreement family
+is not.
 }
 \details{
 \code{delta_hat} is a \emph{split-bias} detector. It fires when raters tilt in

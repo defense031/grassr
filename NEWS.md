@@ -10,18 +10,19 @@ prevalence node at 0.875, and a sample-size node at 25 (581 million
 null draws in total, 50,000 per cell). Off-grid Report Card readings
 change; on-node readings are unchanged up to storage quantization.
 
-* New `grass_power()` sizes a planned study in the Report Card's own
-  currency, in the `power.t.test()` convention: give a panel quality
-  `q0` the study must rule out, fix four of `q`, `pi_hat`, `k`, `N`,
-  `power`, and it solves for the fifth. Power is the probability that
-  the 95% consistency band on panel quality excludes `q0`, read from
-  the sweep `position_on_surface()` already returns; nothing new is
-  calibrated, and power rises with sample size at every design. `N`
-  and `k` solve to the smallest feasible value or return `NA` with the
-  reason; `pi_hat` solves to the feasible prevalence range; `plot()`
-  draws the power curve. `target =` sizes against a fixed coefficient
-  value instead, for thresholds imposed from outside; a fixed value has
-  no fixed meaning across designs, and the answer shows it.
+* New `grass_power()` is a planning tool: assume a prevalence and a
+  rater quality, and it tells you what a design of a given size can
+  show about the panel, and how many more subjects or raters it would
+  take to show more. In the `power.t.test()` convention, fix four of
+  `q`, `pi_hat`, `k`, `N`, `power` and it solves for the fifth; `q0`
+  sets the resolution (the study is sized to tell quality `q` from
+  `q0`), not a bar the raters must clear. Power is read from the sweep
+  `position_on_surface()` already returns; nothing new is calibrated,
+  and power rises with sample size at every design. `N` and `k` solve
+  to the smallest feasible value or return `NA` with the reason;
+  `pi_hat` solves to the feasible prevalence range; `plot()` draws the
+  power curve. `target =` sizes against a fixed coefficient value
+  instead, for thresholds imposed from outside.
 * Input handling: a two-level factor or character column is accepted
   only when one level reads as a positive call (1, TRUE, yes, positive,
   pos, present, case; case-insensitive). Anything else is an error that

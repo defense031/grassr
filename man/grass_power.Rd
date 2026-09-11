@@ -2,7 +2,7 @@
 % Please edit documentation in R/power.R
 \name{grass_power}
 \alias{grass_power}
-\title{Power analysis for a planned rating study}
+\title{Plan a rating study: what a design can show}
 \usage{
 grass_power(
   metric,
@@ -21,8 +21,9 @@ grass_power(
 \item{q}{Panel quality, the probability of a correct call on the
 \code{Se = Sp} diagonal, in \verb{[0.55, 0.99]}.}
 
-\item{q0}{Panel quality the study must rule out, in \verb{[0.55, 0.99]}.
-Give \code{q0} or \code{target}, not both.}
+\item{q0}{The lower edge of the quality resolution the study is planned
+for, in \verb{[0.55, 0.99]}: the study is sized to tell a panel of quality
+\code{q} from one of quality \code{q0}. Give \code{q0} or \code{target}, not both.}
 
 \item{target}{A fixed coefficient value to reach. Give \code{q0} or \code{target},
 not both.}
@@ -45,22 +46,34 @@ median coefficient a panel of quality \code{q} produces at the design, in
 the data \code{plot()} draws), and \code{notes} from the surface lookup.
 }
 \description{
-\code{grass_power()} sizes a rating study in the Report Card's own currency.
-Its primary question is: at this design, how likely is the study's 95\%
-consistency band on panel quality to exclude a quality \code{q0} the study
-must rule out, when the panel's true quality is \code{q}? The convention
-follows \code{\link[stats:power.t.test]{stats::power.t.test()}}: fix four of \code{q}, \code{pi_hat}, \code{k}, \code{N},
-\code{power}, leave one \code{NULL}, and it is solved for.
+\code{grass_power()} is a planning tool. Assume a prevalence and a rough
+rater quality, and it tells you what a design of a given size can show
+about the panel, and how many more subjects or raters it would take to
+show more. It never grades the raters. It grades whether the design is
+big enough to learn about them.
 }
 \details{
-Two targets are accepted, exactly one of which must be given.
-\code{q0} (recommended) is a panel quality to rule out; the target is on the
-latent quality scale, so it means the same thing at every design and
-power rises with sample size everywhere. \code{target} is a fixed
-coefficient value, for a threshold imposed from outside (a journal's or
-regulator's band); a fixed coefficient value has no fixed meaning across
-designs, and the answer shows it: when the value a panel of quality \code{q}
-produces at the design sits below \code{target}, power falls with \code{N}.
+The question is posed as resolution. A study sized to separate a panel
+of quality \code{q} from one of quality \code{q0} returns a 95\% consistency band
+on quality narrow enough to tell the two apart. \code{q0} is not a bar the
+panel has to clear; it is the lower edge of the resolution you want.
+If the raters turn out weaker than assumed, the band lands lower and is
+about as narrow, so the study still reports how good they are to the
+precision it was planned for. The convention follows
+\code{\link[stats:power.t.test]{stats::power.t.test()}}: fix four of \code{q}, \code{pi_hat}, \code{k}, \code{N}, \code{power},
+leave one \code{NULL}, and it is solved for.
+
+Prevalence decides which lever moves a design. At balanced prevalence a
+few more raters can stand in for subjects. At a rare or very common
+finding they cannot, because a small sample holds only a handful of the
+minority class; the answer is more subjects, and the tool says so.
+
+\code{target} is the other target the function accepts: a fixed coefficient
+value, for a threshold imposed from outside (a journal's or regulator's
+band). A fixed coefficient value has no fixed meaning across designs,
+and the answer shows it: when the value a panel of quality \code{q} produces
+at the design sits below \code{target}, power falls with \code{N}. Give \code{q0} or
+\code{target}, not both.
 }
 \section{How it is computed}{
 
@@ -87,8 +100,8 @@ The range of observed positive rates over which \code{power} is reached;
 }
 
 \examples{
-# A panel believed to be near quality 0.90 must rule out 0.80. How many
-# subjects, with three raters at a 10\% positive rate, for 80\% power?
+# Raters assumed near quality 0.90, a 10\% positive rate, three raters:
+# how many subjects to tell a 0.90 panel from a 0.80 one, 80\% power?
 pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
                   k = 3, power = 0.80)
 pw

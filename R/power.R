@@ -1,20 +1,32 @@
-#' Power analysis for a planned rating study
+#' Plan a rating study: what a design can show
 #'
-#' `grass_power()` sizes a rating study in the Report Card's own currency.
-#' Its primary question is: at this design, how likely is the study's 95%
-#' consistency band on panel quality to exclude a quality `q0` the study
-#' must rule out, when the panel's true quality is `q`? The convention
-#' follows [stats::power.t.test()]: fix four of `q`, `pi_hat`, `k`, `N`,
-#' `power`, leave one `NULL`, and it is solved for.
+#' `grass_power()` is a planning tool. Assume a prevalence and a rough
+#' rater quality, and it tells you what a design of a given size can show
+#' about the panel, and how many more subjects or raters it would take to
+#' show more. It never grades the raters. It grades whether the design is
+#' big enough to learn about them.
 #'
-#' Two targets are accepted, exactly one of which must be given.
-#' `q0` (recommended) is a panel quality to rule out; the target is on the
-#' latent quality scale, so it means the same thing at every design and
-#' power rises with sample size everywhere. `target` is a fixed
-#' coefficient value, for a threshold imposed from outside (a journal's or
-#' regulator's band); a fixed coefficient value has no fixed meaning across
-#' designs, and the answer shows it: when the value a panel of quality `q`
-#' produces at the design sits below `target`, power falls with `N`.
+#' The question is posed as resolution. A study sized to separate a panel
+#' of quality `q` from one of quality `q0` returns a 95% consistency band
+#' on quality narrow enough to tell the two apart. `q0` is not a bar the
+#' panel has to clear; it is the lower edge of the resolution you want.
+#' If the raters turn out weaker than assumed, the band lands lower and is
+#' about as narrow, so the study still reports how good they are to the
+#' precision it was planned for. The convention follows
+#' [stats::power.t.test()]: fix four of `q`, `pi_hat`, `k`, `N`, `power`,
+#' leave one `NULL`, and it is solved for.
+#'
+#' Prevalence decides which lever moves a design. At balanced prevalence a
+#' few more raters can stand in for subjects. At a rare or very common
+#' finding they cannot, because a small sample holds only a handful of the
+#' minority class; the answer is more subjects, and the tool says so.
+#'
+#' `target` is the other target the function accepts: a fixed coefficient
+#' value, for a threshold imposed from outside (a journal's or regulator's
+#' band). A fixed coefficient value has no fixed meaning across designs,
+#' and the answer shows it: when the value a panel of quality `q` produces
+#' at the design sits below `target`, power falls with `N`. Give `q0` or
+#' `target`, not both.
 #'
 #' @section How it is computed:
 #' Every quantity is a direct read of the quality sweep that
@@ -37,8 +49,9 @@
 #' @param metric One of `"pabak"`, `"fleiss_kappa"`, `"mean_ac1"`, `"icc"`.
 #' @param q Panel quality, the probability of a correct call on the
 #'   `Se = Sp` diagonal, in `[0.55, 0.99]`.
-#' @param q0 Panel quality the study must rule out, in `[0.55, 0.99]`.
-#'   Give `q0` or `target`, not both.
+#' @param q0 The lower edge of the quality resolution the study is planned
+#'   for, in `[0.55, 0.99]`: the study is sized to tell a panel of quality
+#'   `q` from one of quality `q0`. Give `q0` or `target`, not both.
 #' @param target A fixed coefficient value to reach. Give `q0` or `target`,
 #'   not both.
 #' @param pi_hat Observed positive rate in `[0.05, 0.95]`.
@@ -55,8 +68,8 @@
 #'   the data `plot()` draws), and `notes` from the surface lookup.
 #'
 #' @examples
-#' # A panel believed to be near quality 0.90 must rule out 0.80. How many
-#' # subjects, with three raters at a 10% positive rate, for 80% power?
+#' # Raters assumed near quality 0.90, a 10% positive rate, three raters:
+#' # how many subjects to tell a 0.90 panel from a 0.80 one, 80% power?
 #' pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
 #'                   k = 3, power = 0.80)
 #' pw
@@ -78,7 +91,7 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
          ".", call. = FALSE)
   }
   if (is.null(q0) == is.null(target)) {
-    stop("Give exactly one of `q0` (a panel quality to rule out) or ",
+    stop("Give exactly one of `q0` (the lower edge of the quality resolution) or ",
          "`target` (a fixed coefficient value).", call. = FALSE)
   }
   mode <- if (is.null(target)) "quality" else "value"
@@ -109,7 +122,7 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
                           power <= 0 || power >= 1))
     stop("`power` must be a single number in (0, 1).", call. = FALSE)
   if (mode == "quality" && !is.null(q) && q <= q0)
-    stop("`q` (the panel's true quality) must exceed `q0` (the quality to rule out).",
+    stop("`q` (the assumed panel quality) must exceed `q0` (the lower edge of the resolution).",
          call. = FALSE)
 
   tg <- list(mode = mode, q0 = q0, target = target)
@@ -248,7 +261,7 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
 }
 
 .pw_goal <- function(metric, tg) {
-  if (tg$mode == "quality") sprintf("to rule out panel quality %.2f", tg$q0)
+  if (tg$mode == "quality") sprintf("to resolve panel quality from %.2f", tg$q0)
   else sprintf("for %s >= %.2f", .coef_label(metric), tg$target)
 }
 
@@ -258,8 +271,8 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
   reach <- sprintf("The largest power on the calibrated surface is %.2f, at %s = %s.",
                    best$power, var, format(best$x, big.mark = ","))
   if (tg$mode == "quality") {
-    return(sprintf("No %s reaches power %.2f to rule out panel quality %.2f when the true quality is %.2f (pi_hat = %.2f). %s",
-                   what, power, tg$q0, q, pi_hat, reach))
+    return(sprintf("No %s reaches power %.2f to separate panel quality %.2f from %.2f at pi_hat = %.2f. %s",
+                   what, power, q, tg$q0, pi_hat, reach))
   }
   expected <- .pw_expected(metric, q, pi_hat,
                            if (var == "k") .pw_k_grid[length(.pw_k_grid)] else k,
@@ -303,7 +316,7 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
 }
 
 .pw_ylab <- function(x) {
-  if (x$mode == "quality") sprintf("P(band excludes quality %.2f)", x$q0)
+  if (x$mode == "quality") sprintf("P(band separates quality from %.2f)", x$q0)
   else sprintf("P(%s >= %.2f)", .coef_label(x$metric), x$target)
 }
 
@@ -311,7 +324,7 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
 print.grass_power <- function(x, digits = 2, ...) {
   lab <- .coef_label(x$metric)
   hdr <- if (x$mode == "quality")
-    sprintf("rule out panel quality %s", formatC(x$q0, digits = digits, format = "f"))
+    sprintf("resolve panel quality %s from %s", if (is.null(x$q) || is.na(x$q)) "(solved)" else formatC(x$q, digits = digits, format = "f"), formatC(x$q0, digits = digits, format = "f"))
   else
     sprintf("reach %s >= %s (fixed value)", lab, formatC(x$target, digits = digits, format = "f"))
   cat(sprintf("\n     GRASS power analysis: %s\n", hdr))
@@ -343,8 +356,8 @@ print.grass_power <- function(x, digits = 2, ...) {
   cat("\n")
   if (x$mode == "quality") {
     cat(.wrap_note_lines(sprintf(
-      "Power is the probability that the study's 95%% consistency band on panel quality excludes %.2f when the panel's true quality is %s.",
-      x$q0, if (is.null(x$q) || is.na(x$q)) "as solved" else formatC(x$q, digits = digits, format = "f")),
+      "Power is the probability that a study of this size resolves panel quality finely enough to separate %s from %.2f. It grades the design, not the raters.",
+      if (is.null(x$q) || is.na(x$q)) "the solved quality" else formatC(x$q, digits = digits, format = "f"), x$q0),
       indent = "  "), sep = "\n")
   } else {
     cat(.wrap_note_lines(sprintf(
@@ -370,7 +383,7 @@ plot.grass_power <- function(x, ...) {
     stop("Package 'ggplot2' is required for plot().", call. = FALSE)
   cv <- x$curve
   ttl <- if (x$mode == "quality")
-    sprintf("Power to rule out panel quality %.2f", x$q0)
+    sprintf("Power to resolve panel quality %s from %.2f", if (is.null(x$q) || is.na(x$q)) "(solved)" else sprintf("%.2f", x$q), x$q0)
   else sprintf("Power to reach %s >= %.2f", .coef_label(x$metric), x$target)
   p <- ggplot2::ggplot(cv, ggplot2::aes(x = x, y = power)) +
     ggplot2::geom_line(linewidth = 1, colour = "#1a1a1a") +

@@ -113,15 +113,17 @@ is simulated in.
 - **The coefficient lines** show each observed value, its percentile,
   and its consistency band. The **percentile** is where the observed
   value falls among everything this study could have produced, from
-  the lowest-quality panels in the reference to the highest. **Panel
-  quality `q`** is the share of cases a rater gets correct. The
-  reference panels assume equal sensitivity and specificity, so each
-  coefficient traces back to a single quality. The estimate `q_hat` is
-  the quality whose panels produce the observed coefficient on
-  average. The **consistency band** is every `q` at which the observed
-  value sits inside the middle 95% of that quality's panels. A wide
-  band means the study cannot distinguish among those qualities, and a
-  small-`N` study always produces one.
+  the lowest-quality panels in the reference to the highest. It is
+  computed on the thirteen calibrated quality levels, so at large
+  samples it moves in steps between them; read it to the nearest whole
+  percentile. **Panel quality `q`** is the share of cases a rater gets
+  correct. The reference panels assume equal sensitivity and
+  specificity, so each coefficient traces back to a single quality.
+  The estimate `q_hat` is the quality whose panels produce the
+  observed coefficient on average. The **consistency band** is every
+  `q` at which the observed value sits inside the middle 95% of that
+  quality's panels. A wide band means the study cannot distinguish
+  among those qualities, and a small-`N` study always produces one.
 - **`<- primary`** marks the coefficient to report, PABAK (prevalence-
   adjusted bias-adjusted kappa; Byrt, Bishop, and Carlin, 1993) at
   moderate prevalence and AC1 (Gwet, 2008) when the positive rate is

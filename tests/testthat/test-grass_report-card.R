@@ -300,3 +300,12 @@ test_that("grass_report leaves card$pairwise NULL when flag is not divergent", {
   expect_false(card$delta$flag == "divergent")
   expect_null(card$pairwise)
 })
+
+test_that("exported percentiles carry one decimal, no more", {
+  set.seed(11)
+  Y <- sapply(1:5, function(j) rbinom(300, 1, 0.3))
+  d <- as.data.frame(grass_report(Y, verbose = FALSE))
+  expect_equal(d$surface_percentile, round(d$surface_percentile, 1))
+  p <- as.data.frame(position_on_surface(0.56, "pabak", pi_hat = 0.3, k = 5, N = 300))
+  expect_equal(p$percentile, round(p$percentile, 3))
+})

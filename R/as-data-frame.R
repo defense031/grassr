@@ -31,7 +31,10 @@ as.data.frame.grass_metrics <- function(x, row.names = NULL, optional = FALSE, .
 #' `in_delta_hat`), an `is_primary` flag, and the panel-level delta
 #' diagnostics recycled across rows (`delta_hat` implied-quality spread in
 #' pp, `delta_percentile`, `delta_flag`, and the matched-null cell
-#' `matched_null_k` / `matched_null_N` / `matched_null_q`). When the
+#' `matched_null_k` / `matched_null_N` / `matched_null_q`). Percentiles
+#' are rounded to one decimal: the pooled percentile is computed on the
+#' thirteen calibrated quality levels and moves in steps between them at
+#' large `N`, so finer digits are not resolution. When the
 #' cross-coefficient flag is `divergent` and the per-rater latent-class
 #' table is populated, returns a list `c(panel = ..., per_rater = ...)` so
 #' tidy consumers can pivot the per-rater rows separately.
@@ -46,6 +49,10 @@ as.data.frame.grass_metrics <- function(x, row.names = NULL, optional = FALSE, .
 as.data.frame.grass_card <- function(x, row.names = NULL, optional = FALSE, ...) {
   panel <- x$panel
   panel$is_primary <- panel$coefficient == x$coefficient$primary
+  # The pooled percentile is computed on thirteen calibrated quality
+  # levels and moves in steps between them at large N; one decimal is all
+  # the resolution it carries.
+  panel$surface_percentile <- round(panel$surface_percentile, 1)
 
   # Attach the panel-level delta diagnostics, recycled across coefficient
   # rows, so a single flat frame carries the flag and its basis alongside
@@ -54,7 +61,7 @@ as.data.frame.grass_card <- function(x, row.names = NULL, optional = FALSE, ...)
   d  <- x$delta
   mn <- d$matched_null
   panel$delta_hat        <- as.numeric(d$delta_hat %||% NA_real_)
-  panel$delta_percentile <- as.numeric(d$delta_percentile %||% NA_real_)
+  panel$delta_percentile <- round(as.numeric(d$delta_percentile %||% NA_real_), 1)
   panel$delta_flag       <- as.character(d$flag %||% NA_character_)
   panel$matched_null_k   <- if (!is.null(mn)) as.integer(mn$k) else NA_integer_
   panel$matched_null_N   <- if (!is.null(mn)) as.integer(mn$N) else NA_integer_

@@ -27,7 +27,10 @@ as a data.frame. Each row carries the v0.7.1 panel columns
 \code{in_delta_hat}), an \code{is_primary} flag, and the panel-level delta
 diagnostics recycled across rows (\code{delta_hat} implied-quality spread in
 pp, \code{delta_percentile}, \code{delta_flag}, and the matched-null cell
-\code{matched_null_k} / \code{matched_null_N} / \code{matched_null_q}). When the
+\code{matched_null_k} / \code{matched_null_N} / \code{matched_null_q}). Percentiles
+are rounded to one decimal: the pooled percentile is computed on the
+thirteen calibrated quality levels and moves in steps between them at
+large \code{N}, so finer digits are not resolution. When the
 cross-coefficient flag is \code{divergent} and the per-rater latent-class
 table is populated, returns a list \code{c(panel = ..., per_rater = ...)} so
 tidy consumers can pivot the per-rater rows separately.

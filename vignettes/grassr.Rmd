@@ -111,15 +111,17 @@ is simulated in.
 - **The coefficient lines** show each observed value, its percentile,
   and its consistency band. The **percentile** is where the observed
   value falls among everything this study could have produced, from
-  the lowest-quality panels in the reference to the highest. **Panel
-  quality `q`** is the share of cases a rater gets correct. The
-  reference panels assume equal sensitivity and specificity, so each
-  coefficient traces back to a single quality. The estimate `q_hat` is
-  the quality whose panels produce the observed coefficient on
-  average. The **consistency band** is every `q` at which the observed
-  value sits inside the middle 95% of that quality's panels. A wide
-  band means the study cannot distinguish among those qualities, and a
-  small-`N` study always produces one.
+  the lowest-quality panels in the reference to the highest. It is
+  computed on the thirteen calibrated quality levels, so at large
+  samples it moves in steps between them; read it to the nearest whole
+  percentile. **Panel quality `q`** is the share of cases a rater gets
+  correct. The reference panels assume equal sensitivity and
+  specificity, so each coefficient traces back to a single quality.
+  The estimate `q_hat` is the quality whose panels produce the
+  observed coefficient on average. The **consistency band** is every
+  `q` at which the observed value sits inside the middle 95% of that
+  quality's panels. A wide band means the study cannot distinguish
+  among those qualities, and a small-`N` study always produces one.
 - **`<- primary`** marks the coefficient to report, PABAK (prevalence-
   adjusted bias-adjusted kappa; Byrt, Bishop, and Carlin, 1993) at
   moderate prevalence and AC1 (Gwet, 2008) when the positive rate is
@@ -791,7 +793,7 @@ summary(card1)
 #>       grid nodes.
 #> 
 #>   grass version : 0.8.0
-#>   timestamp     : 2026-09-13 21:31:31
+#>   timestamp     : 2026-09-13 21:57:04
 ```
 
 `summary()` prints everything behind the card, the full panel with
@@ -802,20 +804,20 @@ package version, and the timestamp.
 ```r
 head(as.data.frame(card1), 5)
 #>    coefficient observed_value surface_percentile band_lo band_hi band_open_low
-#> 1        pabak      0.5372000           73.86364 0.85125 0.89875         FALSE
-#> 2     mean_ac1      0.6372062           73.86364 0.85125 0.89875         FALSE
-#> 3 fleiss_kappa      0.3609191           73.86364 0.85125 0.89875         FALSE
-#> 4          icc      0.4842583           62.50000 0.80125 0.84875         FALSE
+#> 1        pabak      0.5372000               73.9 0.85125 0.89875         FALSE
+#> 2     mean_ac1      0.6372062               73.9 0.85125 0.89875         FALSE
+#> 3 fleiss_kappa      0.3609191               73.9 0.85125 0.89875         FALSE
+#> 4          icc      0.4842583               62.5 0.80125 0.84875         FALSE
 #>   band_open_high     q_hat    se_q_hat clamped reference_used in_delta_hat
 #> 1          FALSE 0.8664693 0.005014575   FALSE    closed-form         TRUE
 #> 2          FALSE 0.8664471 0.005014821   FALSE    closed-form         TRUE
 #> 3          FALSE 0.8664693 0.005014575   FALSE    closed-form         TRUE
 #> 4          FALSE 0.8217253 0.002468171   FALSE     fitted-icc        FALSE
 #>   is_primary  delta_hat delta_percentile delta_flag matched_null_k
-#> 1       TRUE 0.00221665         36.38975    aligned              5
-#> 2      FALSE 0.00221665         36.38975    aligned              5
-#> 3      FALSE 0.00221665         36.38975    aligned              5
-#> 4      FALSE 0.00221665         36.38975    aligned              5
+#> 1       TRUE 0.00221665             36.4    aligned              5
+#> 2      FALSE 0.00221665             36.4    aligned              5
+#> 3      FALSE 0.00221665             36.4    aligned              5
+#> 4      FALSE 0.00221665             36.4    aligned              5
 #>   matched_null_N matched_null_q
 #> 1           1000      0.8664693
 #> 2           1000      0.8664693

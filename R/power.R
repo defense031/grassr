@@ -6,9 +6,9 @@
 #' show more. The result describes the design, how much a study of that
 #' size can learn about its raters.
 #'
-#' A study sized to discern a panel of quality `q` from one of quality `q0`
-#' returns a 95% consistency band on quality narrow enough to separate
-#' the two. `q0` sets the resolution of the plan. A panel weaker than
+#' A study sized to show that a panel of quality `q` is above `q0`
+#' returns a 95% consistency band on quality whose lower edge sits above
+#' `q0`. `q0` sets the resolution of the plan. A panel weaker than
 #' assumed returns a band that sits lower and is about as wide, so the
 #' study reports the quality it finds at the precision it was planned
 #' for. The convention follows [stats::power.t.test()]. Fix four of `q`,
@@ -49,8 +49,8 @@
 #' @param q Panel quality, the probability of a correct call on the
 #'   `Se = Sp` diagonal, in `[0.55, 0.99]`.
 #' @param q0 The lower edge of the quality resolution the study is planned
-#'   for, in `[0.55, 0.99]`: the study is sized to discern a panel of quality
-#'   `q` from one of quality `q0`. Give `q0` or `target`, not both.
+#'   for, in `[0.55, 0.99]`: the study is sized to show that a panel of
+#'   quality `q` is above `q0`. Give `q0` or `target`, not both.
 #' @param target A fixed coefficient value to reach. Give `q0` or `target`,
 #'   not both.
 #' @param pi_hat Observed positive rate in `[0.05, 0.95]`.
@@ -260,7 +260,7 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
 }
 
 .pw_goal <- function(metric, tg) {
-  if (tg$mode == "quality") sprintf("to resolve panel quality from %.2f", tg$q0)
+  if (tg$mode == "quality") sprintf("to show panel quality above %.2f", tg$q0)
   else sprintf("for %s >= %.2f", .coef_label(metric), tg$target)
 }
 
@@ -270,8 +270,8 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
   reach <- sprintf("The largest power on the calibrated surface is %.2f, at %s = %s.",
                    best$power, var, format(best$x, big.mark = ","))
   if (tg$mode == "quality") {
-    return(sprintf("No %s reaches power %.2f to separate panel quality %.2f from %.2f at pi_hat = %.2f. %s",
-                   what, power, q, tg$q0, pi_hat, reach))
+    return(sprintf("No %s reaches power %.2f to show panel quality above %.2f when the panel is %.2f, at pi_hat = %.2f. %s",
+                   what, power, tg$q0, q, pi_hat, reach))
   }
   expected <- .pw_expected(metric, q, pi_hat,
                            if (var == "k") .pw_k_grid[length(.pw_k_grid)] else k,
@@ -314,19 +314,16 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
          power = "Power")
 }
 
-.pw_ylab <- function(x) {
-  if (x$mode == "quality") sprintf("P(band separates quality from %.2f)", x$q0)
-  else sprintf("P(%s >= %.2f)", .coef_label(x$metric), x$target)
-}
+.pw_ylab <- function(x) "Power"
 
 #' @export
 print.grass_power <- function(x, digits = 2, ...) {
   lab <- .coef_label(x$metric)
   hdr <- if (x$mode == "quality")
-    sprintf("resolve panel quality %s from %s", if (is.null(x$q) || is.na(x$q)) "(solved)" else formatC(x$q, digits = digits, format = "f"), formatC(x$q0, digits = digits, format = "f"))
+    sprintf("show panel quality above %s (%s)", formatC(x$q0, digits = digits, format = "f"), if (is.null(x$q) || is.na(x$q)) "panel quality solved" else paste(if (identical(x$solved, "q")) "panel quality" else "panel assumed", formatC(x$q, digits = digits, format = "f"), if (identical(x$solved, "q")) "solved" else ""))
   else
     sprintf("reach %s >= %s (fixed value)", lab, formatC(x$target, digits = digits, format = "f"))
-  cat(sprintf("\n     GRASS power analysis: %s\n", hdr))
+  cat(sprintf("\n     GRASS power analysis: %s\n", trimws(hdr)))
   cat(sprintf("     coefficient: %s\n\n", lab))
   fmt <- function(v, d = digits) {
     if (is.null(v) || all(is.na(v))) return("NA")
@@ -355,8 +352,8 @@ print.grass_power <- function(x, digits = 2, ...) {
   cat("\n")
   if (x$mode == "quality") {
     cat(.wrap_note_lines(sprintf(
-      "Power is the probability that a study of this size discerns panel quality %s from %.2f.",
-      if (is.null(x$q) || is.na(x$q)) "the solved quality" else formatC(x$q, digits = digits, format = "f"), x$q0),
+      "Power is the probability that a study of this size shows panel quality above %.2f when the panel is %s.",
+      x$q0, if (is.null(x$q) || is.na(x$q)) "at the solved quality" else formatC(x$q, digits = digits, format = "f")),
       indent = "  "), sep = "\n")
   } else {
     cat(.wrap_note_lines(sprintf(
@@ -382,7 +379,7 @@ plot.grass_power <- function(x, ...) {
     stop("Package 'ggplot2' is required for plot().", call. = FALSE)
   cv <- x$curve
   ttl <- if (x$mode == "quality")
-    sprintf("Power to resolve panel quality %s from %.2f", if (is.null(x$q) || is.na(x$q)) "(solved)" else sprintf("%.2f", x$q), x$q0)
+    sprintf("Power to show panel quality above %.2f", x$q0)
   else sprintf("Power to reach %s >= %.2f", .coef_label(x$metric), x$target)
   p <- ggplot2::ggplot(cv, ggplot2::aes(x = x, y = power)) +
     ggplot2::geom_line(linewidth = 1, colour = "#1a1a1a") +
@@ -415,14 +412,16 @@ plot.grass_power <- function(x, ...) {
 }
 
 .pw_fixed_label <- function(x) {
-  parts <- sprintf("%s", .coef_label(x$metric))
+  parts <- character()
   if (x$curve_var != "q"      && !is.null(x$q) && !is.na(x$q))
-    parts <- c(parts, sprintf("q = %.2f", x$q))
+    parts <- c(parts, sprintf("Assumed panel quality %.2f", x$q))
   if (x$curve_var != "pi_hat" && !is.null(x$pi_hat) && length(x$pi_hat) == 1L && !is.na(x$pi_hat))
-    parts <- c(parts, sprintf("pi_hat = %.2f", x$pi_hat))
+    parts <- c(parts, sprintf("prevalence %.2f", x$pi_hat))
   if (x$curve_var != "k"      && !is.null(x$k) && !is.na(x$k))
-    parts <- c(parts, sprintf("k = %d", as.integer(x$k)))
+    parts <- c(parts, sprintf("%d raters", as.integer(x$k)))
   if (x$curve_var != "N"      && !is.null(x$N) && !is.na(x$N))
-    parts <- c(parts, sprintf("N = %d", as.integer(x$N)))
-  paste(parts, collapse = ", ")
+    parts <- c(parts, sprintf("%d subjects", as.integer(x$N)))
+  parts <- c(parts, .coef_label(x$metric))
+  lab <- paste(parts, collapse = ", ")
+  paste0(toupper(substr(lab, 1, 1)), substr(lab, 2, nchar(lab)))
 }

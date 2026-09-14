@@ -22,8 +22,8 @@ grass_power(
 \code{Se = Sp} diagonal, in \verb{[0.55, 0.99]}.}
 
 \item{q0}{The lower edge of the quality resolution the study is planned
-for, in \verb{[0.55, 0.99]}: the study is sized to discern a panel of quality
-\code{q} from one of quality \code{q0}. Give \code{q0} or \code{target}, not both.}
+for, in \verb{[0.55, 0.99]}: the study is sized to show that a panel of
+quality \code{q} is above \code{q0}. Give \code{q0} or \code{target}, not both.}
 
 \item{target}{A fixed coefficient value to reach. Give \code{q0} or \code{target},
 not both.}
@@ -53,9 +53,9 @@ show more. The result describes the design, how much a study of that
 size can learn about its raters.
 }
 \details{
-A study sized to discern a panel of quality \code{q} from one of quality \code{q0}
-returns a 95\% consistency band on quality narrow enough to separate
-the two. \code{q0} sets the resolution of the plan. A panel weaker than
+A study sized to show that a panel of quality \code{q} is above \code{q0}
+returns a 95\% consistency band on quality whose lower edge sits above
+\code{q0}. \code{q0} sets the resolution of the plan. A panel weaker than
 assumed returns a band that sits lower and is about as wide, so the
 study reports the quality it finds at the precision it was planned
 for. The convention follows \code{\link[stats:power.t.test]{stats::power.t.test()}}. Fix four of \code{q},

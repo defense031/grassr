@@ -3,7 +3,7 @@ title: "grassr: rater reliability on binary outcomes, from rating matrix to Repo
 author:
   - Austin Semmel
   - Rachel Gidaro
-date: "2026-09-11"
+date: "2026-09-13"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{grassr: rater reliability on binary outcomes, from rating matrix to Report Card}
@@ -609,9 +609,10 @@ position_on_surface(0.45, "fleiss_kappa", pi_hat = 0.10, k = 3, N = 80)
 
 **Planning a study's size.** `grass_power()` plans a study's size.
 Assume a prevalence and a rough rater quality, and it gives the
-probability that a design of a given size discerns a panel of quality
-0.90 from one of quality 0.80, and the size at which that probability
-reaches the level you want. A panel weaker than assumed returns a band
+probability that a study of a given size shows panel quality above a
+value you choose, and the size at which that probability reaches the
+level you want. Here the panel is assumed to be 0.90 and the study is
+sized to show it is above 0.80. A panel weaker than assumed returns a band
 that sits lower and is about as wide, so the study reports the quality
 it finds at the precision it was planned for. Fix four of quality,
 positive rate, rater count, sample size, and power, and it solves for
@@ -623,7 +624,7 @@ pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
                   k = 3, power = 0.80)
 pw
 #> 
-#>      GRASS power analysis: resolve panel quality 0.90 from 0.80
+#>      GRASS power analysis: show panel quality above 0.80 (panel assumed 0.90 )
 #>      coefficient: Fleiss kappa
 #> 
 #>          q = 0.90
@@ -632,14 +633,14 @@ pw
 #>          N = 129  <- solved
 #>      power = 0.80
 #> 
-#>   Power is the probability that a study of this size discerns panel quality
-#>   0.90 from 0.80.
+#>   Power is the probability that a study of this size shows panel quality
+#>   above 0.80 when the panel is 0.90.
 #>   See `plot()` for the curve over Number of subjects (N).
 plot(pw)
 ```
 
 <div class="figure">
-<img src="grassr-plan-power-1.png" alt="A line chart of the probability that a study discerns panel quality 0.90 from 0.80 against the number of subjects on a log axis, for three raters at a 10 percent positive rate. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."  />
+<img src="grassr-plan-power-1.png" alt="A line chart of the probability that a study shows panel quality above 0.80, when the panel is 0.90, against the number of subjects on a log axis, for three raters at a 10 percent positive rate. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."  />
 <p class="caption">Power curve over sample size for the planned screening study, with the requested power as a dashed line and the solved N marked.</p>
 </div>
 
@@ -656,7 +657,7 @@ power 0.97. Rater count snaps to the calibrated grid (2, 3, 5, 8, 15,
 grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
             k = 15, power = 0.80)
 #> 
-#>      GRASS power analysis: resolve panel quality 0.90 from 0.80
+#>      GRASS power analysis: show panel quality above 0.80 (panel assumed 0.90 )
 #>      coefficient: Fleiss kappa
 #> 
 #>          q = 0.90
@@ -665,8 +666,8 @@ grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
 #>          N = 50  <- solved
 #>      power = 0.80
 #> 
-#>   Power is the probability that a study of this size discerns panel quality
-#>   0.90 from 0.80.
+#>   Power is the probability that a study of this size shows panel quality
+#>   above 0.80 when the panel is 0.90.
 #>   See `plot()` for the curve over Number of subjects (N).
 ```
 
@@ -816,7 +817,7 @@ summary(card1)
 #>       grid nodes.
 #> 
 #>   grass version : 0.8.0
-#>   timestamp     : 2026-09-11 18:30:18
+#>   timestamp     : 2026-09-13 20:07:19
 ```
 
 `summary()` prints everything behind the card, the full panel with

@@ -60,7 +60,7 @@ test_that("value mode reproduces the 2026-09-10 anchors, including the falling c
 
 test_that("print and plot methods run in both modes", {
   pw <- grass_power("pabak", q = 0.90, q0 = 0.80, pi_hat = 0.50, k = 5, power = 0.80)
-  expect_output(print(pw), "resolve panel quality")
+  expect_output(print(pw), "show panel quality above")
   expect_output(print(pw), "solved")
   vv <- grass_power("pabak", target = 0.61, q = 0.90, pi_hat = 0.50, k = 5, N = 200)
   expect_output(print(vv), "fixed value")

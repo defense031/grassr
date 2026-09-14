@@ -22,8 +22,8 @@ reference:
   contents:
   - grass_report
   - position_on_surface
+  - grass_power
   - check_asymmetry
-  - check_rater_asymmetry
   - pairwise_agreement
   - latent_class_fit
 - title: Plotting
@@ -33,7 +33,6 @@ reference:
   contents:
   - obs_krippendorff_alpha
   - grass_compute
-  - grass_prevalence
   - grass_reference
   - grass_reference_table
 - title: Other

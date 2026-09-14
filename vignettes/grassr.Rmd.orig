@@ -115,9 +115,9 @@ is simulated in.
   value falls among everything this study could have produced, from
   the lowest-quality panels in the reference to the highest. It is
   computed on the thirteen calibrated quality levels, so at large
-  samples it moves in steps between them; read it to the nearest whole
-  percentile. **Panel quality `q`** is the share of cases a rater gets
-  correct. The reference panels assume equal sensitivity and
+  samples it moves in steps between them, and the card prints it as a
+  whole number. **Panel quality `q`** is the share of cases a rater
+  gets correct. The reference panels assume equal sensitivity and
   specificity, so each coefficient traces back to a single quality.
   The estimate `q_hat` is the quality whose panels produce the
   observed coefficient on average. The **consistency band** is every

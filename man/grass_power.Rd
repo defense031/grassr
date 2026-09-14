@@ -99,7 +99,9 @@ the 97.5th percentile of the \code{q0} distribution, \code{c0}, so
 \section{Solving for \code{N} or \code{k}}{
 
 The smallest value on the calibrated surface at which \code{power} is
-reached. When none reaches it the result carries \code{NA},
+reached. Below about 25 subjects the curve can step or dip between
+adjacent sample sizes, because the coefficient takes few distinct
+values there. When none reaches it the result carries \code{NA},
 \code{feasible = FALSE}, and the reason, including the best power any
 design on the surface reaches.
 }

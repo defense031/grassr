@@ -15,8 +15,9 @@
 #'    derive `pi_hat = mean(Y)`, `k = ncol(Y)`, `N = nrow(Y)`. Validate
 #'    `k >= 2`; warn at `N < 10`; note at `N < 30`.
 #' 2. Compute the panel of observed coefficients
-#'    (`compute_panel()`, internal): at `k = 2`, PABAK / AC1 / Cohen's
-#'    kappa; at `k >= 3`, PABAK / AC1 / Fleiss kappa / ICC.
+#'    (`compute_panel()`, internal): at `k = 2`, PABAK / AC1; at
+#'    `k >= 3`, PABAK / AC1 / Fleiss kappa / ICC. Cohen's kappa is not on
+#'    the card at any `k`; it has no calibrated reference.
 #' 3. For each panel coefficient, position the observed value on its
 #'    DGP-calibrated reference surface via [position_on_surface()].
 #' 4. Pick the primary coefficient by prevalence (`metric = "auto"`) or accept
@@ -39,8 +40,9 @@
 #'   subject, and stacking repeated measurements of one subject as rows
 #'   overstates the effective sample size (analyze one card per occasion
 #'   instead; `vignette("grassr")`, section "Quick start").
-#' @param axis One of `"inter"` (default) or `"intra"`. Selects the surface
-#'   family. The intra-axis path uses `occasion` to identify viewings.
+#' @param axis One of `"inter"` (default) or `"intra"`. Both axes use the
+#'   same reference panels; on the intra axis the columns are one rater's
+#'   occasions and ICC is marked primary.
 #' @param metric One of `"auto"` (default; calls `pick_primary_coefficient()`
 #'   by prevalence), `"pabak"`, `"ac1"`, `"fleiss_kappa"`,
 #'   `"icc"`. Selects which coefficient is the headline in the printed Report
@@ -48,7 +50,6 @@
 #'   the Report Card panel at v0.6.0; it coincides with Fleiss' kappa in
 #'   the binary fully-crossed case. Use [obs_krippendorff_alpha()] or
 #'   [position_on_surface()] to compute it manually.)
-#' @param occasion Reserved for `axis = "intra"`; ignored when `axis = "inter"`.
 #' @param bootstrap_B Integer; bootstrap replicates for the divergent-branch
 #'   latent-class CIs. Default `1000L`. Set lower for fast tests.
 #' @param bootstrap_delta_B Integer; subject-resampling replicates for the
@@ -101,7 +102,6 @@
 grass_report <- function(ratings,
                          axis = c("inter", "intra"),
                          metric = "auto",
-                         occasion = NULL,
                          bootstrap_B = 1000L,
                          bootstrap_delta_B = 0L,
                          verbose = FALSE,
@@ -148,7 +148,7 @@ grass_report <- function(ratings,
 
   # ---- Compute the observed panel ---------------------------------------
   if (isTRUE(verbose)) message("grass_report: computing observed-metric panel.")
-  panel_obs <- compute_panel(Y, axis = axis, occasion = occasion)
+  panel_obs <- compute_panel(Y, axis = axis)
 
   # Map compute_panel() short names to the surface-metric names accepted by
   # position_on_surface(). compute_panel() returns `ac1` (panel-friendly
@@ -227,11 +227,7 @@ grass_report <- function(ratings,
 
   # ---- Cross-coefficient delta_hat --------------------------------------
   if (isTRUE(verbose)) message("grass_report: computing cross-coefficient delta_hat.")
-  asym <- check_asymmetry(
-    ratings          = Y,
-    axis             = axis,
-    occasion         = occasion
-  )
+  asym <- check_asymmetry(ratings = Y, axis = axis)
   delta_hat_pp <- asym$delta_hat
   flag         <- asym$flag
   thresholds_source <- asym$thresholds_source
@@ -257,11 +253,7 @@ grass_report <- function(ratings,
       idx  <- sample.int(N, N, replace = TRUE)
       Y_b  <- Y[idx, , drop = FALSE]
       asym_b <- tryCatch(
-        suppressWarnings(check_asymmetry(
-          ratings          = Y_b,
-          axis             = axis,
-          occasion         = occasion
-        )),
+        suppressWarnings(check_asymmetry(ratings = Y_b, axis = axis)),
         error = function(e) list(delta_hat = NA_real_))
       delta_boot[b] <- asym_b$delta_hat
     }

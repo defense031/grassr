@@ -50,14 +50,18 @@ normalize_ratings <- function(ratings) {
 
   # Branch 2: data.frame with k rater columns.
   if (is.data.frame(ratings)) {
-    cols <- lapply(ratings, function(x) {
+    col_names <- names(ratings) %||% paste0("V", seq_along(ratings))
+    cols <- Map(function(x, nm) {
       if (is.logical(x)) return(as.integer(x))
       if (is.factor(x) || is.character(x)) {
         lv <- if (is.factor(x)) levels(droplevels(x)) else sort(unique(x[!is.na(x)]))
         if (length(lv) > 2) {
-          stop("data.frame column has more than 2 levels: ",
-               paste(shQuote(lv), collapse = ", "),
-               ". Recode to binary first.", call. = FALSE)
+          stop(sprintf(paste0("Column `%s` has %d distinct values (%s%s). Rater ",
+                              "columns must be binary; drop identifier columns ",
+                              "and recode labels to 0/1 with 1 = present."),
+                       nm, length(lv),
+                       paste(shQuote(utils::head(lv, 6L)), collapse = ", "),
+                       if (length(lv) > 6L) ", ..." else ""), call. = FALSE)
         }
         # Two-level factor or character: the positive level has to be
         # recognizable. Guessing (the old "second level" rule) silently
@@ -67,12 +71,12 @@ normalize_ratings <- function(ratings) {
         return(as.integer(as.character(x) == pos))
       }
       if (is.numeric(x)) return(as.integer(x))
-      stop("Unsupported data.frame column type: ",
+      stop("Unsupported data.frame column type in `", nm, "`: ",
            paste(class(x), collapse = "/"),
            ". Use logical, integer 0/1, or a two-level factor or character.",
            call. = FALSE)
-    })
-    Y <- do.call(cbind, cols)
+    }, ratings, col_names)
+    Y <- do.call(cbind, unname(cols))
     return(.coerce_to_binary_matrix(Y))
   }
 
@@ -196,7 +200,6 @@ compute_tau2_hat <- function(Y) {
 #'   under the reference model an intra matrix of W occasions is
 #'   distributionally identical to an inter panel at k = W (equivalence
 #'   proposition, v0.7.1), so no axis-specific reshape is needed.
-#' @param occasion Reserved for axis = "intra"; ignored in Phase 1A.
 #' @param fit_icc If `FALSE`, skip the `glmer` fit and return `icc = NA_real_`
 #'   at `k >= 3`. The fit dominates the cost of the panel (roughly 16x at
 #'   calibration cell sizes) and consumes no random numbers, so a caller that
@@ -205,8 +208,7 @@ compute_tau2_hat <- function(Y) {
 #' @return Named list of observed metric values.
 #' @keywords internal
 #' @noRd
-compute_panel <- function(ratings, axis = "inter", occasion = NULL,
-                          fit_icc = TRUE) {
+compute_panel <- function(ratings, axis = "inter", fit_icc = TRUE) {
   Y <- normalize_ratings(ratings)
   axis <- match.arg(axis, c("inter", "intra"))
   k <- ncol(Y)

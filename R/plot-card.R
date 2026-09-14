@@ -586,7 +586,7 @@ plot_surface <- function(metric,
       linewidth = 1.2, color = "black"
     )
     p <- p + ggplot2::annotate("text", x = delta_hat, y = 1.65,
-                                label = sprintf("%.1f pp", delta_hat),
+                                label = sprintf("%.2f pp", delta_hat),
                                 fontface = "bold", size = 4)
   }
   p <- p +

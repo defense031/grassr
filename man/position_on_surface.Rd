@@ -88,12 +88,14 @@ A list of class \code{grass_surface_position} with fields:
 \item \code{q_hat} -- implied panel quality (coefficient inverted on the
 reference curve); the point estimate the consistency band surrounds
 \item \code{se_q_hat} -- delta-method SE of \code{q_hat}
-\item \code{percentile} -- POOLED percentile in \verb{[0, 1]}: the observed
+\item \code{percentile} -- pooled percentile in \verb{[0, 1]} (the print method and
+the card show it on the 0-100 scale): the observed
 coefficient's position within the design's full achievable range
 (trapezoid-weighted mixture over every calibrated quality level).
 Monotone in \code{obs_value} by construction.
 \item \code{percentile_basis} -- provenance string for \code{percentile}
-\item \code{band} -- 95\% test-inversion consistency band on quality:
+\item \code{band} -- 95\% test-inversion consistency band on quality (printed as
+"consistency band"):
 \code{list(lo, hi, level, open_low, open_high, note)}. The quality levels
 whose sampling distributions are consistent with the observed value
 at this design.

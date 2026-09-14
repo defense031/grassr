@@ -81,7 +81,11 @@ print.summary.grass_card <- function(x, digits = 3, ...) {
               digits, co$observed_value))
   cat(sprintf("    %-12s : %.*f (of the achievable range in this study context)\n",
               "percentile", max(digits - 1L, 1L), co$surface_percentile))
-  cat(sprintf("    %-12s : %.*f\n", "q_hat", digits, co$q_hat %||% NA_real_))
+  if (identical(x$delta$flag, "divergent")) {
+    cat(sprintf("    %-12s : withheld (divergent; see per-rater tables)\n", "q_hat"))
+  } else {
+    cat(sprintf("    %-12s : %.*f\n", "q_hat", digits, co$q_hat %||% NA_real_))
+  }
   # v0.7.1: co$band is a rendered consistency-band string (or "suppressed"
   # when the flag is divergent); the retired modal-band label and
   # confidence qualifier are gone.

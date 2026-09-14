@@ -171,12 +171,14 @@
 #' - `q_hat` -- implied panel quality (coefficient inverted on the
 #'   reference curve); the point estimate the consistency band surrounds
 #' - `se_q_hat` -- delta-method SE of `q_hat`
-#' - `percentile` -- POOLED percentile in `[0, 1]`: the observed
+#' - `percentile` -- pooled percentile in `[0, 1]` (the print method and
+#'   the card show it on the 0-100 scale): the observed
 #'   coefficient's position within the design's full achievable range
 #'   (trapezoid-weighted mixture over every calibrated quality level).
 #'   Monotone in `obs_value` by construction.
 #' - `percentile_basis` -- provenance string for `percentile`
-#' - `band` -- 95% test-inversion consistency band on quality:
+#' - `band` -- 95% test-inversion consistency band on quality (printed as
+#'   "consistency band"):
 #'   `list(lo, hi, level, open_low, open_high, note)`. The quality levels
 #'   whose sampling distributions are consistent with the observed value
 #'   at this design.
@@ -294,6 +296,10 @@ position_on_surface <- function(obs_value = NULL,
   if (!is.numeric(k) || length(k) != 1L || !is.finite(k) ||
       k < 2 || k != as.integer(k)) {
     stop("`k` must be an integer >= 2.", call. = FALSE)
+  }
+  if (k == 2 && metric %in% c("fleiss_kappa", "icc")) {
+    stop("`", metric, "` is not on the two-rater card and is not positioned ",
+         "at k = 2. Use `pabak` or `mean_ac1`.", call. = FALSE)
   }
   if (!is.numeric(N) || length(N) != 1L || !is.finite(N) ||
       N < 1 || N != as.integer(N)) {
@@ -741,6 +747,11 @@ lookup_empirical_q_sweep <- function(metric, pi_hat, k, N) {
   if (nrow(sub) == 0L) return(NULL)
   F_keys <- .qs_memo(paste0(pfx, "fkeys|", k_near, "|", N_lo, "|", N_hi),
                      unique(sub[, c("F_key", "M1")]))
+  # The agreement family depends on prevalence only through its mean, so
+  # it interpolates within the logit-normal family; the discrete-mixture
+  # presets are for ICC, whose reference depends on the full shape.
+  if (!identical(metric, "icc") && any(grepl("^LN_", F_keys$F_key)))
+    F_keys <- F_keys[grepl("^LN_", F_keys$F_key), , drop = FALSE]
   fi <- which.min(abs(F_keys$M1 - as.numeric(pi_hat)))
   key0 <- F_keys$F_key[fi]
 

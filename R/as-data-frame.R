@@ -60,7 +60,8 @@ as.data.frame.grass_card <- function(x, row.names = NULL, optional = FALSE, ...)
   # the flag comes from delta_percentile on the matched-null cell).
   d  <- x$delta
   mn <- d$matched_null
-  panel$delta_hat        <- as.numeric(d$delta_hat %||% NA_real_)
+  panel$delta_hat        <- if (identical(d$flag, "not_applicable")) NA_real_ else
+                              as.numeric(d$delta_hat %||% NA_real_)
   panel$delta_percentile <- round(as.numeric(d$delta_percentile %||% NA_real_), 1)
   panel$delta_flag       <- as.character(d$flag %||% NA_character_)
   panel$matched_null_k   <- if (!is.null(mn)) as.integer(mn$k) else NA_integer_

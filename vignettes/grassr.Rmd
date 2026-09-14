@@ -113,9 +113,9 @@ is simulated in.
   value falls among everything this study could have produced, from
   the lowest-quality panels in the reference to the highest. It is
   computed on the thirteen calibrated quality levels, so at large
-  samples it moves in steps between them; read it to the nearest whole
-  percentile. **Panel quality `q`** is the share of cases a rater gets
-  correct. The reference panels assume equal sensitivity and
+  samples it moves in steps between them, and the card prints it as a
+  whole number. **Panel quality `q`** is the share of cases a rater
+  gets correct. The reference panels assume equal sensitivity and
   specificity, so each coefficient traces back to a single quality.
   The estimate `q_hat` is the quality whose panels produce the
   observed coefficient on average. The **consistency band** is every
@@ -605,7 +605,7 @@ pw
 #>   prevalence = 0.10
 #>       pi_hat = 0.18  (implied)
 #>            k = 3
-#>            N = 68  <- solved
+#>            N = 61  <- solved
 #>        power = 0.80
 #> 
 #>   Power is the probability that a study of this size shows panel quality
@@ -639,7 +639,7 @@ grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, prevalence = 0.10,
 #>   prevalence = 0.10
 #>       pi_hat = 0.18  (implied)
 #>            k = 15
-#>            N = 21  <- solved
+#>            N = 20  <- solved
 #>        power = 0.80
 #> 
 #>   Power is the probability that a study of this size shows panel quality
@@ -680,15 +680,15 @@ the band.
 check_asymmetry(ratings = Y1)
 #> GRASS panel asymmetry diagnostic
 #> 
-#>   delta_hat = 0.0 pp  (spread of the implied panel qualities)
+#>   delta_hat = 0.00 pp  (spread of the implied panel qualities)
 #>   flag      = aligned  (36.4 percentile of matched null: k=5, N=1000, q=0.87)
 #> 
 #>   panel:
 #>     coefficient        observed   implied q   pooled pctile   in delta_hat
-#>     pabak              0.54       0.866       73.9            yes
-#>     mean_ac1           0.64       0.866       73.9            yes
-#>     fleiss_kappa       0.36       0.866       73.9            yes
-#>     icc                0.48       0.822       62.5            no [distribution-sensitive]
+#>     pabak              0.54       0.866       73.86            yes
+#>     mean_ac1           0.64       0.866       73.86            yes
+#>     fleiss_kappa       0.36       0.866       73.86            yes
+#>     icc                0.48       0.822       62.50            no [distribution-sensitive]
 #> 
 #>   Surface caveats:
 #>     - Consistency band narrower than the calibrated q-grid spacing; endpoints
@@ -793,7 +793,7 @@ summary(card1)
 #>       grid nodes.
 #> 
 #>   grass version : 0.8.0
-#>   timestamp     : 2026-09-13 21:57:04
+#>   timestamp     : 2026-09-13 22:05:23
 ```
 
 `summary()` prints everything behind the card, the full panel with

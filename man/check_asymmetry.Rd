@@ -4,13 +4,7 @@
 \alias{check_asymmetry}
 \title{Cross-coefficient panel asymmetry diagnostic}
 \usage{
-check_asymmetry(
-  ratings,
-  axis = c("inter", "intra"),
-  occasion = NULL,
-  fit_icc = TRUE,
-  ...
-)
+check_asymmetry(ratings, axis = c("inter", "intra"), fit_icc = TRUE, ...)
 }
 \arguments{
 \item{ratings}{User input: an \verb{N x k} binary matrix, an \code{N} x \code{k}
@@ -20,9 +14,6 @@ start section of \code{vignette("grassr")} lists the accepted shapes.}
 
 \item{axis}{\code{"inter"} (default) or \code{"intra"}. Selects the surface
 family.}
-
-\item{occasion}{Reserved for \code{axis = "intra"} (a vector / factor
-identifying viewing occasion); ignored when \code{axis = "inter"}.}
 
 \item{fit_icc}{If \code{FALSE}, skip the \code{lme4::glmer} fit behind \code{icc} and drop
 ICC from the panel. \code{icc} never enters \code{delta_hat}, and the fit draws no

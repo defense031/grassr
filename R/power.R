@@ -37,7 +37,9 @@
 #'
 #' @section Solving for `N` or `k`:
 #' The smallest value on the calibrated surface at which `power` is
-#' reached. When none reaches it the result carries `NA`,
+#' reached. Below about 25 subjects the curve can step or dip between
+#' adjacent sample sizes, because the coefficient takes few distinct
+#' values there. When none reaches it the result carries `NA`,
 #' `feasible = FALSE`, and the reason, including the best power any
 #' design on the surface reaches.
 #'
@@ -164,11 +166,12 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
     }
   }
   rate_at <- function(qq) if (rate_in == "prevalence") .pw_pi_from_prev(prevalence, qq) else pi_hat
+  k_ref <- if (!is.null(k)) .pw_k_grid[which.min(abs(.pw_k_grid - k))] else NULL
 
   tg <- list(mode = mode, q0 = q0, target = target)
   res <- list(metric = metric, mode = mode, q0 = q0, target = target,
               q = q, pi_hat = pi_hat, prevalence = prevalence, rate_in = rate_in,
-              k = k, N = N, power = power,
+              k = k, k_ref = k_ref, N = N, power = power,
               solved = solved, solution = NA_real_, feasible = TRUE,
               reason = NULL, expected = NA_real_, curve = NULL,
               curve_var = NULL, notes = character())
@@ -286,9 +289,11 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
 .pw_k_grid   <- c(2L, 3L, 5L, 8L, 15L, 25L)
 
 .pw_sweep <- function(metric, cc, pi_hat, k, N) {
-  s <- suppressMessages(suppressWarnings(
+  s <- tryCatch(suppressMessages(suppressWarnings(
     position_on_surface(obs_value = cc, metric = metric,
-                        pi_hat = pi_hat, k = k, N = N)))
+                        pi_hat = pi_hat, k = k, N = N))),
+    error = function(e) NULL)
+  if (is.null(s)) return(list(sweep = NULL, notes = character()))
   list(sweep = s$sweep, notes = s$notes)
 }
 
@@ -403,8 +408,11 @@ print.grass_power <- function(x, digits = 2, ...) {
     if (v == round(v)) format(v, big.mark = ",") else
       formatC(v, digits = d, format = "f")
   }
+  k_row <- fmt(x$k, 0)
+  if (!is.null(x$k_ref) && !is.null(x$k) && !is.na(x$k) && x$k_ref != x$k)
+    k_row <- sprintf("%s (calibrated %d)", k_row, as.integer(x$k_ref))
   rows <- c(q = fmt(x$q), prevalence = fmt(x$prevalence), pi_hat = fmt(x$pi_hat),
-            k = fmt(x$k, 0), N = fmt(x$N, 0), power = fmt(x$power))
+            k = k_row, N = fmt(x$N, 0), power = fmt(x$power))
   other_rate <- if (identical(x$rate_in, "prevalence")) "pi_hat" else "prevalence"
   for (nm in names(rows)) {
     mark <- if (nm == x$solved || (x$solved == "pi_hat" && nm == "prevalence")) "  <- solved"

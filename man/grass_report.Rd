@@ -8,7 +8,6 @@ grass_report(
   ratings,
   axis = c("inter", "intra"),
   metric = "auto",
-  occasion = NULL,
   bootstrap_B = 1000L,
   bootstrap_delta_B = 0L,
   verbose = FALSE,
@@ -26,8 +25,9 @@ subject, and stacking repeated measurements of one subject as rows
 overstates the effective sample size (analyze one card per occasion
 instead; \code{vignette("grassr")}, section "Quick start").}
 
-\item{axis}{One of \code{"inter"} (default) or \code{"intra"}. Selects the surface
-family. The intra-axis path uses \code{occasion} to identify viewings.}
+\item{axis}{One of \code{"inter"} (default) or \code{"intra"}. Both axes use the
+same reference panels; on the intra axis the columns are one rater's
+occasions and ICC is marked primary.}
 
 \item{metric}{One of \code{"auto"} (default; calls \code{pick_primary_coefficient()}
 by prevalence), \code{"pabak"}, \code{"ac1"}, \code{"fleiss_kappa"},
@@ -36,8 +36,6 @@ Card; the full panel is always populated. (Krippendorff's alpha left
 the Report Card panel at v0.6.0; it coincides with Fleiss' kappa in
 the binary fully-crossed case. Use \code{\link[=obs_krippendorff_alpha]{obs_krippendorff_alpha()}} or
 \code{\link[=position_on_surface]{position_on_surface()}} to compute it manually.)}
-
-\item{occasion}{Reserved for \code{axis = "intra"}; ignored when \code{axis = "inter"}.}
 
 \item{bootstrap_B}{Integer; bootstrap replicates for the divergent-branch
 latent-class CIs. Default \code{1000L}. Set lower for fast tests.}
@@ -98,8 +96,9 @@ The body, in order:
 derive \code{pi_hat = mean(Y)}, \code{k = ncol(Y)}, \code{N = nrow(Y)}. Validate
 \code{k >= 2}; warn at \code{N < 10}; note at \code{N < 30}.
 \item Compute the panel of observed coefficients
-(\code{compute_panel()}, internal): at \code{k = 2}, PABAK / AC1 / Cohen's
-kappa; at \code{k >= 3}, PABAK / AC1 / Fleiss kappa / ICC.
+(\code{compute_panel()}, internal): at \code{k = 2}, PABAK / AC1; at
+\code{k >= 3}, PABAK / AC1 / Fleiss kappa / ICC. Cohen's kappa is not on
+the card at any \code{k}; it has no calibrated reference.
 \item For each panel coefficient, position the observed value on its
 DGP-calibrated reference surface via \code{\link[=position_on_surface]{position_on_surface()}}.
 \item Pick the primary coefficient by prevalence (\code{metric = "auto"}) or accept

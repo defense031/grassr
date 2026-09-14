@@ -142,8 +142,6 @@
 #'   start section of `vignette("grassr")` lists the accepted shapes.
 #' @param axis `"inter"` (default) or `"intra"`. Selects the surface
 #'   family.
-#' @param occasion Reserved for `axis = "intra"` (a vector / factor
-#'   identifying viewing occasion); ignored when `axis = "inter"`.
 #' @param fit_icc If `FALSE`, skip the `lme4::glmer` fit behind `icc` and drop
 #'   ICC from the panel. `icc` never enters `delta_hat`, and the fit draws no
 #'   random numbers, so a caller that reports only `delta_hat` and the implied
@@ -186,7 +184,6 @@
 #' check_asymmetry(Y)
 check_asymmetry <- function(ratings,
                             axis = c("inter", "intra"),
-                            occasion = NULL,
                             fit_icc = TRUE,
                             ...) {
   # ---- Soft-deprecation dispatch for OLD `check_asymmetry(se, sp, ...)` ---
@@ -229,7 +226,7 @@ check_asymmetry <- function(ratings,
   # ---- Normal path: ratings-input panel diagnostic -----------------------
   axis <- match.arg(axis)
   Y <- normalize_ratings(ratings)
-  panel_obs <- compute_panel(Y, axis = axis, occasion = occasion,
+  panel_obs <- compute_panel(Y, axis = axis,
                              fit_icc = fit_icc)
 
   # The flag comes from delta_hat's percentile on the matched (k, N, q_hat)
@@ -441,7 +438,7 @@ check_asymmetry <- function(ratings,
 }
 
 #' @export
-print.grass_asymmetry_panel <- function(x, digits = 1, ...) {
+print.grass_asymmetry_panel <- function(x, digits = 2, ...) {
   cat("GRASS panel asymmetry diagnostic\n\n", sep = "")
   cat(sprintf("  delta_hat = %.*f pp  (spread of the implied panel qualities)\n",
               digits, x$delta_hat))

@@ -1,5 +1,4 @@
-# Tests for the new ratings-input check_asymmetry() and the renamed
-# check_rater_asymmetry(). See R/asymmetry.R and design/v0.2.0_paper_alignment.md.
+# Tests for the ratings-input check_asymmetry(). See R/asymmetry.R and design/v0.2.0_paper_alignment.md.
 
 # Helper: simulate an N x k binary matrix from a single shared (Se, Sp)
 # pair against a latent class of prevalence pi.
@@ -128,16 +127,9 @@ test_that("op_strong heterogeneous panel flags divergent on non-ICC spread", {
 # ---------------------------------------------------------------------------
 # Test 3 — soft deprecation on legacy `check_asymmetry(se = ..., sp = ...)`.
 # ---------------------------------------------------------------------------
-test_that("legacy se/sp call routes to check_rater_asymmetry with a hint", {
-  reset_grass_warnings()  # the msg is once-per-session-per-key
-  expect_message(
-    out <- check_asymmetry(se = c(0.9, 0.85), sp = c(0.88, 0.82)),
-    regexp = "check_rater_asymmetry"
-  )
-  # The deprecation routes to the renamed function and still returns a
-  # grass_asymmetry result — the old API stays callable for one cycle.
-  expect_s3_class(out, "grass_asymmetry")
-  expect_true(out$regime %in% c("ok", "caution", "unsafe"))
+test_that("legacy se/sp call errors with a pointer to latent_class_fit", {
+  expect_error(check_asymmetry(se = c(0.9, 0.85), sp = c(0.88, 0.82)),
+               "latent_class_fit")
 })
 
 # ---------------------------------------------------------------------------
@@ -150,28 +142,6 @@ test_that("supplying both ratings and se/sp errors", {
                     sp = c(0.88, 0.82, 0.85)),
     regexp = "both"
   )
-})
-
-# ---------------------------------------------------------------------------
-# Test 5 — check_rater_asymmetry() preserves the v0.1.x check_asymmetry() behaviour.
-# Mirrors `tests/testthat/test-reporting-card.R::"check_asymmetry tiers on
-# delta_hat thresholds"` but pointed at the renamed function.
-# ---------------------------------------------------------------------------
-test_that("check_rater_asymmetry tiers on delta_hat thresholds (v0.1.x parity)", {
-  ok   <- check_rater_asymmetry(se = c(0.86, 0.88, 0.84),
-                                sp = c(0.85, 0.87, 0.86))
-  caut <- check_rater_asymmetry(se = c(0.90, 0.88, 0.92),
-                                sp = c(0.82, 0.86, 0.85))
-  unsf <- check_rater_asymmetry(se = c(0.95, 0.93, 0.94),
-                                sp = c(0.78, 0.80, 0.79))
-
-  expect_s3_class(ok, "grass_asymmetry")
-  expect_equal(ok$regime,   "ok")
-  expect_equal(caut$regime, "caution")
-  expect_equal(unsf$regime, "unsafe")
-  expect_equal(ok$tier,   1L)
-  expect_equal(caut$tier, 2L)
-  expect_equal(unsf$tier, 3L)
 })
 
 # ---------------------------------------------------------------------------

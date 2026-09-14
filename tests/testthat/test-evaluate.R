@@ -6,7 +6,6 @@
 # `test-grass_report-card.R`. See grass/design/v0.2.0_paper_alignment.md.
 #
 # This file retains the substrate-level checks that still apply:
-#   * grass_prevalence() still works (not changed in v0.2.0)
 # and skips the OLD-framework regime / reference / distance assertions.
 
 source(test_path("fixtures", "published-tables.R"))
@@ -29,11 +28,6 @@ test_that("reference = 'none' drops the reference curve and distance", {
 
 test_that("User-supplied prevalence overrides the marginal estimate", {
   skip("v0.2.0: old framework retired; see grass/design/v0.2.0_paper_alignment.md")
-})
-
-test_that("grass_prevalence agrees with the internal estimator", {
-  p <- grass_prevalence(fixture_cohen_1960, format = "matrix")
-  expect_equal(p, 0.5, tolerance = 1e-10)
 })
 
 test_that("Distance column is a signed numeric, not a category", {

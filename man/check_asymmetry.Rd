@@ -137,10 +137,9 @@ those instead.
 
 The new \code{check_asymmetry(ratings, ...)} signature replaces the
 v0.1.x \code{check_asymmetry(se, sp, ...)} per-rater signature. For
-backward compatibility, calling \code{check_asymmetry()} with \code{se = ...}
-and \code{sp = ...} named arguments emits a one-time deprecation hint and
-routes the call to \code{\link[=check_rater_asymmetry]{check_rater_asymmetry()}}. Supplying both
-\code{ratings = ...} and per-rater \verb{se =} / \verb{sp =} is an error.
+Calling \code{check_asymmetry()} with the pre-0.2.0 \code{se = ...} and
+\code{sp = ...} arguments is an error; per-rater sensitivity and
+specificity come from \code{\link[=latent_class_fit]{latent_class_fit()}}.
 }
 
 \examples{
@@ -150,7 +149,6 @@ Y <- matrix(rbinom(5 * 200, 1, 0.30), nrow = 200, ncol = 5)
 check_asymmetry(Y)
 }
 \seealso{
-\code{\link[=check_rater_asymmetry]{check_rater_asymmetry()}} for the per-rater Se/Sp companion;
 \code{\link[=latent_class_fit]{latent_class_fit()}} for the divergent-branch recovery of per-rater
 \verb{(Se, Sp)}; \code{\link[=position_on_surface]{position_on_surface()}} for the underlying surface
 positioning.

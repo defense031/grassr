@@ -121,8 +121,7 @@
 #'   `"mean_ac1"`, `"krippendorff_a"`, `"icc"`.
 #' @param pi_hat Numeric scalar in `(0, 1)`. The panel-identified marginal
 #'   positive rate. Optional when `ratings` is supplied (auto-derived via
-#'   `mean(Y)`); otherwise estimate from the rating matrix via
-#'   `grass_prevalence()` or directly from rater marginals.
+#'   `mean(Y)`); otherwise supply `mean(Y)` from the rating matrix.
 #' @param k Integer >= 2. Number of raters. Optional when `ratings` is
 #'   supplied (auto-derived as `ncol(Y)`).
 #' @param N Integer >= 1. Number of subjects. Optional when `ratings` is

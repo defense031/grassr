@@ -27,8 +27,7 @@ when \code{ratings} is supplied (auto-derived via
 
 \item{pi_hat}{Numeric scalar in \verb{(0, 1)}. The panel-identified marginal
 positive rate. Optional when \code{ratings} is supplied (auto-derived via
-\code{mean(Y)}); otherwise estimate from the rating matrix via
-\code{grass_prevalence()} or directly from rater marginals.}
+\code{mean(Y)}); otherwise supply \code{mean(Y)} from the rating matrix.}
 
 \item{k}{Integer >= 2. Number of raters. Optional when \code{ratings} is
 supplied (auto-derived as \code{ncol(Y)}).}

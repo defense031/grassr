@@ -1,12 +1,11 @@
 # Asymmetry diagnostics for the GRASS framework.
 #
-# Two functions live here:
+# One exported function lives here:
 #
-#   * `check_rater_asymmetry()` -- the old per-rater Se/Sp diagnostic.
-#     Renamed (formerly `check_asymmetry()`). Computes mean / max
-#     `|Se_j - Sp_j|` and tiers by 0.05 / 0.10. Class: `grass_asymmetry`
-#     (unchanged so the existing print method, as.data.frame method,
-#     and reporting-card test fixtures keep working).
+#   * `check_rater_asymmetry()` -- REMOVED in 0.8.0. It shipped in CRAN
+#     0.7.4 with a stipulated three-tier (0.05 / 0.10) scheme the framework
+#     retired. Legacy `check_asymmetry(se =, sp =)` calls now error with a
+#     pointer to latent_class_fit().
 #
 #   * `check_asymmetry(ratings, ...)` -- the new ratings-input diagnostic
 #     defined by Sec.4.3 of the v0.2.0 paper-alignment design doc. Computes
@@ -49,212 +48,9 @@
 # reported on the panel with `in_delta_hat = FALSE`.
 .DELTA_AGREEMENT_COEFS <- c("pabak", "mean_ac1", "fleiss_kappa")
 #
-# Soft-deprecation: if `check_asymmetry()` is called with the OLD signature
-# (`se = ...`, `sp = ...`), we route the call to `check_rater_asymmetry()`
-# and emit a one-time `msg_once()` hint. Supplying both `ratings = ...` and
-# `se =`/`sp =` is an error.
+# If `check_asymmetry()` is called with the pre-0.2.0 signature
+# (`se = ...`, `sp = ...`) it errors with a pointer to latent_class_fit().
 
-# ---------------------------------------------------------------------------
-# (1) Renamed: check_rater_asymmetry()
-# ---------------------------------------------------------------------------
-
-#' Per-rater Se/Sp asymmetry diagnostic
-#'
-#' `check_rater_asymmetry()` is the rater-level companion to
-#' [check_asymmetry()]. It takes per-rater sensitivity and specificity
-#' estimates, computes the per-rater gap `|Se_j - Sp_j|`, reduces them to a
-#' scalar `delta_hat = mean_norm |Se_j - Sp_j|` (or `max`), and assigns the
-#' three-tier model-safety regime that governs whether `q_hat` (the GRASS
-#' operating-quality projection onto the Se = Sp diagonal) is trustworthy
-#' as the primary summary.
-#'
-#' This function is appropriate when the user already has per-rater
-#' Se/Sp estimates -- typically from a Hui-Walter / Dawid-Skene latent-class
-#' fit (see [latent_class_fit()]), a simulation with known truth, or a
-#' reference-standard comparison. It is the function called inside the
-#' divergent branch of the new [check_asymmetry()] / `grass_report()`
-#' workflow when per-rater (Se, Sp) become available.
-#'
-#' For ratings-matrix input (when only the N x k binary ratings are
-#' available, no per-rater Se/Sp), use [check_asymmetry()] instead -- it
-#' computes the cross-coefficient percentile spread without requiring
-#' identifiability of per-rater (Se, Sp).
-#'
-#' Tier thresholds follow the three-tier architecture:
-#'
-#' - **Tier 1 -- `ok`** (`delta_hat < 0.05`): diagonal default. Report
-#'   `q_hat +/- SE` plus EDR and EMR_panel without per-rater disclosure.
-#' - **Tier 2 -- `caution`** (`0.05 <= delta_hat < 0.10`): diagonal +
-#'   diagnostic. Report `q_hat +/- SE` with a caution flag and the
-#'   `delta_hat` value.
-#' - **Tier 3 -- `unsafe`** (`delta_hat >= 0.10`): full latent-class.
-#'   `q_hat` is withheld as primary; report per-rater `(Se_j, Sp_j)` via a
-#'   Hui-Walter / Dawid-Skene fit. PABAK's prevalence-flatness was
-#'   conditional on `Se = Sp`; at Tier 3 that condition is visibly broken.
-#'
-#' `se` and `sp` are not identifiable from a single 2-rater binary table
-#' without external ground truth. Supply them from: (a) a simulation with
-#' known truth, (b) a Hui-Walter / Dawid-Skene latent-class fit under
-#' `k >= 3` and prevalence heterogeneity, or (c) a reference-standard
-#' comparison. Passing raw `table()` off-diagonals as `se` / `sp` is
-#' **wrong** and the function cannot detect the error.
-#'
-#' @param se Numeric vector, one per rater. Per-rater sensitivity estimates
-#'   in `[0, 1]`.
-#' @param sp Numeric vector, one per rater. Per-rater specificity estimates
-#'   in `[0, 1]`. Same length as `se`.
-#' @param rater Optional character vector of rater labels, same length as
-#'   `se`. Defaults to `"R1"`, `"R2"`, ... .
-#' @param threshold_caution Boundary between Tier 1 (`ok`) and Tier 2
-#'   (`caution`). Default `0.05`.
-#' @param threshold_unsafe Boundary between Tier 2 (`caution`) and Tier 3
-#'   (`unsafe`). Default `0.10`.
-#' @param summary How to reduce per-rater gaps to the scalar `delta_hat`.
-#'   `"max"` (default, conservative tripwire -- any single rater above the
-#'   threshold triggers escalation) or `"mean"` (panel-average asymmetry).
-#'   The framework uses `"max"`; `"mean"` is provided for sensitivity
-#'   checks.
-#'
-#' @return An S3 object of class `grass_asymmetry` with fields:
-#' - `per_rater`: data.frame of `rater`, `se`, `sp`, and `gap = |se - sp|`
-#' - `delta_hat`: the scalar `delta_hat` summary
-#' - `summary`: which summary statistic was used (`"max"` or `"mean"`)
-#' - `tier`: integer tier (`1`, `2`, or `3`)
-#' - `regime`: character regime label (`"ok"`, `"caution"`, or `"unsafe"`)
-#' - `thresholds`: named list of the caution and unsafe cutoffs
-#'
-#' @seealso [check_asymmetry()] for the ratings-matrix companion (panel-level
-#'   percentile spread). [latent_class_fit()] for the recommended source of
-#'   `(se, sp)` estimates.
-#' @export
-#'
-#' @examples
-#' # Tier 1: symmetric raters -- safe to use q_hat as primary
-#' check_rater_asymmetry(se = c(0.86, 0.88, 0.84), sp = c(0.85, 0.87, 0.86))
-#'
-#' # Tier 2: one rater pressing the Se = Sp assumption
-#' check_rater_asymmetry(se = c(0.90, 0.88, 0.92), sp = c(0.82, 0.86, 0.85))
-#'
-#' # Tier 3: within-rater Se-favoring regime -- requires latent-class fit
-#' check_rater_asymmetry(se = c(0.95, 0.93, 0.94), sp = c(0.78, 0.80, 0.79))
-check_rater_asymmetry <- function(se, sp,
-                                  rater = NULL,
-                                  threshold_caution = 0.05,
-                                  threshold_unsafe = 0.10,
-                                  summary = c("max", "mean")) {
-  summary <- match.arg(summary)
-
-  if (!is.numeric(se) || !is.numeric(sp)) {
-    stop("`se` and `sp` must be numeric vectors.", call. = FALSE)
-  }
-  if (length(se) != length(sp)) {
-    stop("`se` and `sp` must have the same length (one entry per rater).",
-         call. = FALSE)
-  }
-  if (length(se) < 1L) {
-    stop("Need at least one rater's (se, sp) estimate.", call. = FALSE)
-  }
-  if (any(!is.finite(se)) || any(!is.finite(sp))) {
-    stop("`se` and `sp` must be finite.", call. = FALSE)
-  }
-  if (any(se < 0 | se > 1) || any(sp < 0 | sp > 1)) {
-    stop("`se` and `sp` values must lie in [0, 1].", call. = FALSE)
-  }
-  if (!is.numeric(threshold_caution) || !is.numeric(threshold_unsafe) ||
-      length(threshold_caution) != 1L || length(threshold_unsafe) != 1L ||
-      threshold_caution <= 0 || threshold_unsafe <= threshold_caution) {
-    stop("Thresholds must satisfy 0 < threshold_caution < threshold_unsafe.",
-         call. = FALSE)
-  }
-
-  if (is.null(rater)) {
-    rater <- paste0("R", seq_along(se))
-  } else if (length(rater) != length(se)) {
-    stop("`rater` must be the same length as `se` and `sp`.", call. = FALSE)
-  }
-
-  gap <- abs(se - sp)
-  delta_hat <- if (summary == "max") max(gap) else mean(gap)
-
-  tier <- if (delta_hat < threshold_caution) {
-    1L
-  } else if (delta_hat < threshold_unsafe) {
-    2L
-  } else {
-    3L
-  }
-  regime <- c("ok", "caution", "unsafe")[tier]
-
-  out <- list(
-    per_rater = data.frame(
-      rater = as.character(rater),
-      se = as.numeric(se),
-      sp = as.numeric(sp),
-      gap = as.numeric(gap),
-      stringsAsFactors = FALSE
-    ),
-    delta_hat = as.numeric(delta_hat),
-    summary = summary,
-    tier = tier,
-    regime = regime,
-    thresholds = list(caution = as.numeric(threshold_caution),
-                      unsafe = as.numeric(threshold_unsafe))
-  )
-  class(out) <- c("grass_asymmetry", "list")
-  out
-}
-
-#' @export
-print.grass_asymmetry <- function(x, digits = 3, ...) {
-  cat("grass rater asymmetry diagnostic (per-rater |Se - Sp|)\n",
-      "  raters              : ", nrow(x$per_rater), "\n",
-      "  per-rater gaps |Se-Sp|\n", sep = "")
-  pr <- x$per_rater
-  for (i in seq_len(nrow(pr))) {
-    cat(sprintf("    %-8s  Se = %.*f   Sp = %.*f   gap = %.*f\n",
-                pr$rater[i],
-                digits, pr$se[i],
-                digits, pr$sp[i],
-                digits, pr$gap[i]))
-  }
-  cat(sprintf("  delta_hat (%s)    : %.*f\n",
-              x$summary, digits, x$delta_hat))
-  cat(sprintf("  thresholds           : caution = %.*f,  unsafe = %.*f\n",
-              digits, x$thresholds$caution,
-              digits, x$thresholds$unsafe))
-  cat("  tier                 : ", x$tier,
-      "  (", x$regime, ")\n", sep = "")
-  tier_msg <- switch(
-    x$regime,
-    ok      = "Diagonal default: report q_hat plus EDR / EMR_panel.",
-    caution = "Diagonal + diagnostic: report q_hat with caution flag and delta_hat.",
-    unsafe  = "Full latent-class: withhold q_hat as primary; report per-rater (Se_j, Sp_j)."
-  )
-  cat("  reporting guidance   : ", tier_msg, "\n", sep = "")
-  invisible(x)
-}
-
-#' Coerce a `grass_asymmetry` result to a one-row data.frame
-#'
-#' @param x A `grass_asymmetry` object.
-#' @param row.names,optional,... Standard arguments; ignored except
-#'   `row.names`.
-#' @return A one-row data.frame with `n_raters`, `delta_hat`, `summary`,
-#'   `tier`, and `regime` columns.
-#' @export
-as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE, ...) {
-  data.frame(
-    n_raters = nrow(x$per_rater),
-    delta_hat = x$delta_hat,
-    summary = x$summary,
-    tier = x$tier,
-    regime = x$regime,
-    threshold_caution = x$thresholds$caution,
-    threshold_unsafe = x$thresholds$unsafe,
-    row.names = row.names,
-    stringsAsFactors = FALSE
-  )
-}
 
 # ---------------------------------------------------------------------------
 # (2) New: check_asymmetry(ratings, ...)
@@ -336,10 +132,9 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #'
 #' The new `check_asymmetry(ratings, ...)` signature replaces the
 #' v0.1.x `check_asymmetry(se, sp, ...)` per-rater signature. For
-#' backward compatibility, calling `check_asymmetry()` with `se = ...`
-#' and `sp = ...` named arguments emits a one-time deprecation hint and
-#' routes the call to [check_rater_asymmetry()]. Supplying both
-#' `ratings = ...` and per-rater `se =` / `sp =` is an error.
+#' Calling `check_asymmetry()` with the pre-0.2.0 `se = ...` and
+#' `sp = ...` arguments is an error; per-rater sensitivity and
+#' specificity come from [latent_class_fit()].
 #'
 #' @param ratings User input: an `N x k` binary matrix, an `N` x `k`
 #'   data.frame whose columns are 0/1 / logical / 2-level factor, or a
@@ -378,8 +173,7 @@ as.data.frame.grass_asymmetry <- function(x, row.names = NULL, optional = FALSE,
 #'   surface positioning calls (e.g. nearest-neighbor gaps, ICC
 #'   unavailability, matched-null provenance)
 #'
-#' @seealso [check_rater_asymmetry()] for the per-rater Se/Sp companion;
-#'   [latent_class_fit()] for the divergent-branch recovery of per-rater
+#' @seealso [latent_class_fit()] for the divergent-branch recovery of per-rater
 #'   `(Se, Sp)`; [position_on_surface()] for the underlying surface
 #'   positioning.
 #'
@@ -423,42 +217,13 @@ check_asymmetry <- function(ratings,
       stop("check_asymmetry(): you supplied both `ratings = ...` and ",
            "per-rater `se =` / `sp =`. Pick one. For panel-level percentile ",
            "spread use `check_asymmetry(ratings = Y)`; for the per-rater ",
-           "Se/Sp diagnostic use `check_rater_asymmetry(se, sp, ...)`.",
+           "Se/Sp table use `latent_class_fit()`.",
            call. = FALSE)
     }
-    msg_once(
-      "deprecate_check_asymmetry_se_sp",
-      paste0("grass: `check_asymmetry(se = ..., sp = ...)` is deprecated. ",
-             "Use `check_rater_asymmetry(se, sp, ...)` for the per-rater ",
-             "diagnostic, or `check_asymmetry(ratings = Y)` for the new ",
-             "panel-level percentile-spread diagnostic. Routing this call ",
-             "to `check_rater_asymmetry()`.")
-    )
-
-    # Forward to check_rater_asymmetry. Map both named-arg forms and the
-    # positional form. In the positional form: `ratings` actually held the
-    # per-rater Se vector and `axis` held the per-rater Sp vector (because
-    # those were the OLD positional slots).
-    if (has_se || has_sp) {
-      # Named se / sp form: forward dots as-is.
-      old_args <- dots
-      # The OLD signature also had `summary` and `rater` and threshold args
-      # which may live in dots. Pass them through.
-      return(do.call(check_rater_asymmetry, old_args))
-    } else {
-      # Positional form: ratings = se vector, axis = sp vector.
-      # `axis` may still be the default `c("inter","intra")` if user only
-      # supplied one positional arg. In that case error out -- a single
-      # numeric vector is ambiguous.
-      if (missing(axis) || identical(axis, c("inter", "intra"))) {
-        stop("check_asymmetry(): single numeric vector input is ambiguous. ",
-             "Did you mean `check_rater_asymmetry(se, sp, ...)` (per-rater ",
-             "diagnostic) or `check_asymmetry(ratings = Y)` (ratings ",
-             "matrix)?", call. = FALSE)
-      }
-      old_args <- c(list(se = ratings, sp = axis), dots)
-      return(do.call(check_rater_asymmetry, old_args))
-    }
+    stop("check_asymmetry(se = ..., sp = ...) is no longer supported. ",
+         "check_asymmetry() takes a rating matrix, `check_asymmetry(ratings = Y)`. ",
+         "Per-rater sensitivity and specificity come from `latent_class_fit()`.",
+         call. = FALSE)
   }
 
   # ---- Normal path: ratings-input panel diagnostic -----------------------

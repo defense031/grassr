@@ -483,27 +483,6 @@ grass_report <- function(ratings,
   out
 }
 
-#' Estimate prevalence of the positive class from rater data
-#'
-#' Averages the marginal positive rates of the two raters.
-#'
-#' @inheritParams grass_compute
-#'
-#' @return A single numeric in `[0, 1]`.
-#' @export
-#'
-#' @examples
-#' tab <- matrix(c(88, 10, 14, 88), nrow = 2,
-#'               dimnames = list(R1 = c("0", "1"), R2 = c("0", "1")))
-#' grass_prevalence(tab, format = "matrix")
-grass_prevalence <- function(data, format = c("wide", "matrix", "long", "paired"),
-                             positive = NULL, ...) {
-  format <- match.arg(format)
-  norm <- normalize_input(data, format = format, positive = positive, ...)
-  tab <- if (!is.null(norm$table)) norm$table else build_table(norm$r1, norm$r2)
-  estimate_prevalence(tab)
-}
-
 # Internal: average marginal positive rate from a 2x2 table.
 estimate_prevalence <- function(tab) {
   N <- sum(tab)

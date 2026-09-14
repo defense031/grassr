@@ -10,6 +10,14 @@ prevalence node at 0.875, and a sample-size node at 25 (581 million
 null draws in total, 50,000 per cell). Off-grid Report Card readings
 change; on-node readings are unchanged up to storage quantization.
 
+* Removed: `check_rater_asymmetry()` and `grass_prevalence()`. The first
+  graded per-rater `|Se - Sp|` against fixed 0.05 / 0.10 cut-offs, a
+  stipulated scheme the framework retired, and nothing in the package
+  called it. The second averaged two raters' marginal positive rates
+  under a title that promised a prevalence estimate. Per-rater Se/Sp
+  come from `latent_class_fit()`; the observed rate of any rating matrix
+  is `mean(Y)`. Legacy `check_asymmetry(se =, sp =)` calls now error
+  with that pointer.
 * New `grass_power()` is a planning tool: assume a prevalence and a
   rater quality, and it tells you what a design of a given size can
   show about the panel, and how many more subjects or raters it would

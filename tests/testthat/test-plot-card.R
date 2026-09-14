@@ -234,7 +234,7 @@ test_that("plot_surface with observed pins a marker via closed-form inversion", 
   # PABAK = 0.62 inverts algebraically to q = (1 + sqrt(0.62))/2 ~ 0.894
   p <- plot_surface("pabak", pi_hat = 0.30, observed = 0.62, k = 5, N = 200)
   expect_s3_class(p, "ggplot")
-  expect_match(deparse1(p$labels$subtitle), 'observed == "0.620"')
+  expect_match(deparse1(p$labels$subtitle), "PABAK 0.62 pinned at prevalence")
   # The pin layer (geom_point) carries the data.frame with M1 / q.
   point_layer_idx <- vapply(p$layers, function(l) inherits(l$geom, "GeomPoint"),
                             logical(1L))

@@ -412,16 +412,18 @@ plot.grass_power <- function(x, ...) {
 }
 
 .pw_fixed_label <- function(x) {
+  # Plotmath, in the package-wide subtitle pattern: symbol, value, unit.
   parts <- character()
   if (x$curve_var != "q"      && !is.null(x$q) && !is.na(x$q))
-    parts <- c(parts, sprintf("Assumed panel quality %.2f", x$q))
+    parts <- c(parts, sprintf('"assumed quality" ~ q == "%.2f"', x$q))
   if (x$curve_var != "pi_hat" && !is.null(x$pi_hat) && length(x$pi_hat) == 1L && !is.na(x$pi_hat))
-    parts <- c(parts, sprintf("prevalence %.2f", x$pi_hat))
+    parts <- c(parts, sprintf('"prevalence" ~ hat(pi) == "%.2f"', x$pi_hat))
   if (x$curve_var != "k"      && !is.null(x$k) && !is.na(x$k))
-    parts <- c(parts, sprintf("%d raters", as.integer(x$k)))
+    parts <- c(parts, sprintf('k == %d ~ "raters"', as.integer(x$k)))
   if (x$curve_var != "N"      && !is.null(x$N) && !is.na(x$N))
-    parts <- c(parts, sprintf("%d subjects", as.integer(x$N)))
-  parts <- c(parts, .coef_label(x$metric))
-  lab <- paste(parts, collapse = ", ")
-  paste0(toupper(substr(lab, 1, 1)), substr(lab, 2, nchar(lab)))
+    parts <- c(parts, sprintf('N == %d ~ "subjects"', as.integer(x$N)))
+  parts <- c(parts, sprintf('"%s"', .coef_label(x$metric)))
+  if (startsWith(parts[1], '"'))
+    parts[1] <- paste0('"', toupper(substr(parts[1], 2, 2)), substr(parts[1], 3, nchar(parts[1])))
+  .plotmath_subtitle(parts)
 }

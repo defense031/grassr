@@ -242,19 +242,27 @@ plot_surface <- function(metric,
     }
   }
 
-  title <- sprintf("Expected %s reference surface", .pretty_metric_name(metric))
-  # Plotmath so pi_hat renders as a hatted pi on every device.
+  title <- sprintf("Expected %s by rater quality and prevalence",
+                   .pretty_metric_name(metric))
+  # Plotmath so pi_hat renders as a hatted pi on every device. Pattern
+  # shared by every plot in the package: symbol, value, unit.
   sub_parts <- character(0L)
-  if (!is.null(pi_hat)) sub_parts <- c(sub_parts,
-                                       sprintf('hat(pi) == "%.2f"', pi_hat))
   if (!is.null(k)) sub_parts <- c(sub_parts,
-                                  sprintf("k == %d", as.integer(k)))
+                                  sprintf('k == %d ~ "raters"', as.integer(k)))
   if (!is.null(N)) sub_parts <- c(sub_parts,
-                                  sprintf("N == %d", as.integer(N)))
-  sub_parts <- c(sub_parts, sprintf('axis == "%s"', axis))
-  if (!is.null(observed)) sub_parts <- c(sub_parts,
-                                         sprintf('observed == "%.3f"', observed))
-  subtitle <- .plotmath_subtitle(sub_parts)
+                                  sprintf('N == %d ~ "subjects"', as.integer(N)))
+  sub_parts <- c(sub_parts, sprintf('"%s"', .axis_label(axis)))
+  if (!is.null(observed)) {
+    tail_expr <- sprintf('"%s %.2f pinned at prevalence" ~ hat(pi) == "%.2f"',
+                         .pretty_metric_name(metric), observed, pi_hat)
+    subtitle <- parse(text = paste0(
+      paste(sub_parts, collapse = ' * ", " ~ '),
+      ' * ". " ~ ', tail_expr))[[1]]
+  } else {
+    if (!is.null(pi_hat)) sub_parts <- c(sub_parts,
+                                         sprintf('"prevalence" ~ hat(pi) == "%.2f"', pi_hat))
+    subtitle <- .plotmath_subtitle(sub_parts)
+  }
 
   # na.rm and inherit.aes = FALSE keep ggplot quiet about the grid's NA
   # cells and about carrying `fill` into the contour statistic; both
@@ -299,14 +307,14 @@ plot_surface <- function(metric,
     ggplot2::labs(
       title    = title,
       subtitle = subtitle,
-      x = "Mean prevalence",
-      y = expression("Rater operating quality" ~ (q))
+      x = "Prevalence of the finding",
+      y = "Rater quality (chance each call is right)"
     ) +
     theme_grass() +
     ggplot2::theme(legend.position = "right",
                    legend.direction = "vertical",
                    legend.title = ggplot2::element_text(size = 10),
-                   legend.key.height = ggplot2::unit(1.6, "cm"),
+                   legend.key.height = ggplot2::unit(1.0, "cm"),
                    legend.key.width = ggplot2::unit(0.4, "cm"))
 }
 
@@ -363,17 +371,17 @@ plot_surface <- function(metric,
     paste0(pct_int, .ord_suffix(pct_int))
   } else "--"
   card_summary <- sprintf(
-    "%s = %.2f, %s percentile of what this study context can produce",
+    "%s = %.2f, %s percentile of what this study can produce",
     .pretty_metric_name(primary), obs_val %||% NA_real_, pct_lbl)
   if (!is.null(fallback_note)) {
     card_summary <- paste0(card_summary, "  |  ", fallback_note)
   }
 
   subtitle <- .plotmath_subtitle(c(
-    sprintf("k == %d", as.integer(k)),
-    sprintf("N == %d", as.integer(N)),
-    sprintf('hat(pi) == "%.2f"', as.numeric(pi_hat)),
-    sprintf('axis == "%s"', as.character(axis))))
+    sprintf('k == %d ~ "raters"', as.integer(k)),
+    sprintf('N == %d ~ "subjects"', as.integer(N)),
+    sprintf('"prevalence" ~ hat(pi) == "%.2f"', as.numeric(pi_hat)),
+    sprintf('"%s"', .axis_label(as.character(axis)))))
 
 
   # na.rm and inherit.aes = FALSE keep ggplot quiet about the grid's NA
@@ -410,14 +418,14 @@ plot_surface <- function(metric,
     ggplot2::labs(
       title    = card_summary,
       subtitle = subtitle,
-      x = "Mean prevalence",
-      y = expression("Rater operating quality" ~ (q))
+      x = "Prevalence of the finding",
+      y = "Rater quality (chance each call is right)"
     ) +
     theme_grass() +
     ggplot2::theme(legend.position = "right",
                    legend.direction = "vertical",
                    legend.title = ggplot2::element_text(size = 10),
-                   legend.key.height = ggplot2::unit(1.6, "cm"),
+                   legend.key.height = ggplot2::unit(1.0, "cm"),
                    legend.key.width = ggplot2::unit(0.4, "cm"))
 
   p
@@ -427,6 +435,11 @@ plot_surface <- function(metric,
 # Join plotmath fragments with ", " separators into one expression.
 .plotmath_subtitle <- function(parts) {
   parse(text = paste(parts, collapse = ' * ", " ~ '))[[1]]
+}
+
+# Plain words for the axis argument in subtitles.
+.axis_label <- function(axis) {
+  if (identical(axis, "intra")) "test-retest" else "inter-rater"
 }
 
 .ord_suffix <- function(n) {

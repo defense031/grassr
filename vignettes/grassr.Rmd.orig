@@ -44,7 +44,7 @@ For two raters fixed at quality 0.87, meaning each calls 87% of cases
 correctly, the expected Cohen's kappa crosses three Landis and Koch
 bands as prevalence runs from 2% to 98%.
 
-```{r hook-figure, echo = FALSE, fig.cap = "One panel of raters, three published verdicts.", fig.alt = "Expected Cohen's kappa plotted against prevalence for raters fixed at quality 0.87. The curve rises from near zero at 2 percent prevalence, peaks around 0.55 at balanced prevalence, and falls again toward 98 percent, crossing the slight, fair, and moderate bands on the way."}
+```{r hook-figure, echo = FALSE, fig.cap = "One panel of raters produces different conclusions at different prevalences.", fig.alt = "Expected Cohen's kappa plotted against prevalence for raters fixed at quality 0.87. The curve rises from near zero at 2 percent prevalence, peaks around 0.55 at balanced prevalence, and falls again toward 98 percent, crossing the slight, fair, and moderate bands on the way."}
 q <- 0.87                       # every rater calls 87% of cases correctly
 prev <- seq(0.02, 0.98, 0.005)
 Pa <- q^2 + (1 - q)^2           # P(two such raters agree); prevalence-free
@@ -54,7 +54,7 @@ kappa <- (Pa - (pip^2 + (1 - pip)^2)) / (1 - (pip^2 + (1 - pip)^2))
 op <- par(mar = c(4.2, 4.2, 2.4, 3.2))
 plot(prev, kappa, type = "l", lwd = 2, ylim = c(0, 0.8),
      xlab = "Prevalence of the finding", ylab = "Expected Cohen's kappa",
-     main = "Same raters (q = 0.87) at every prevalence")
+     main = "Same two raters at every prevalence")
 abline(h = c(0.20, 0.40, 0.60), lty = 3, col = "grey55")
 text(rep(0.99, 4), c(0.035, 0.30, 0.50, 0.70), adj = 1, col = "grey40",
      cex = 0.8, labels = c("slight", "fair", "moderate", "substantial"))
@@ -377,13 +377,15 @@ Y_shared <- gen_logitnormal(151L, 5L, 1000L,
                             Sp = rep(0.70, 5), pi = 0.30)
 ```
 
-```{r split-vs-shared-scatter, echo = FALSE, fig.cap = "Two panels with one coefficient value and two different internal structures.", fig.alt = "Sensitivity against specificity for two five-rater panels that both return Fleiss' kappa 0.36. Three raters of the first panel sit together at 0.92 sensitivity and 0.92 specificity while two fall into the shaded low-specificity zone near 0.51. All five raters of the second panel sit together at 0.95 sensitivity and 0.70 specificity."}
-op <- par(mar = c(4.2, 4.2, 2.2, 1))
+```{r split-vs-shared-scatter, echo = FALSE, fig.cap = "Both panels return Fleiss kappa 0.36. The shared panel is five alike raters. The split panel is three strong raters and two that miss half the negatives.", fig.alt = "Sensitivity against specificity for two five-rater panels that both return Fleiss' kappa 0.36. Three raters of the first panel sit together at 0.92 sensitivity and 0.92 specificity while two fall into the shaded low-specificity zone near 0.51. All five raters of the second panel sit together at 0.95 sensitivity and 0.70 specificity."}
+op <- par(mar = c(4.2, 4.2, 3.2, 1))
 plot(NA, xlim = c(0.45, 1.02), ylim = c(0.45, 1.02),
      xlab = "Sensitivity", ylab = "Specificity",
-     main = "True rater operating points; both panels return Fleiss k = 0.36")
+     main = paste("Sensitivity and specificity of each rater",
+                  "in two panels that both return Fleiss kappa 0.36",
+                  sep = "\n"), cex.main = 1)
 rect(0.45, 0.45, 1.02, 0.60, col = "#fdecea", border = NA)
-text(0.47, 0.575, "low-specificity zone", adj = 0, col = "#b04a3a", cex = 0.8)
+text(0.47, 0.575, "specificity below 0.60", adj = 0, col = "#b04a3a", cex = 0.8)
 points(1, 1, pch = 8, cex = 1.6)
 text(0.995, 0.985, "ideal rater", adj = 1, cex = 0.8)
 points(rep(0.92, 3) + c(-0.012, 0, 0.012), rep(0.92, 3), pch = 19,
@@ -467,7 +469,7 @@ sample size. The `observed` argument pins a hypothetical value at the
 planned positive rate. That turns the picture into the planning
 question: what quality would that value mean in this study, and how
 far would the same value drift if the prevalence came in differently.
-The dotted lines mark the quality bands the card uses. A screening
+A screening
 study plans three raters, 80 subjects, and a positive rate near 10%,
 and asks what a Fleiss' kappa of 0.45 would mean.
 

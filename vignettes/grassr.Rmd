@@ -34,7 +34,7 @@ bands as prevalence runs from 2% to 98%.
 
 <div class="figure">
 <img src="grassr-hook-figure-1.png" alt="Expected Cohen's kappa plotted against prevalence for raters fixed at quality 0.87. The curve rises from near zero at 2 percent prevalence, peaks around 0.55 at balanced prevalence, and falls again toward 98 percent, crossing the slight, fair, and moderate bands on the way."  />
-<p class="caption">One panel of raters, three published verdicts.</p>
+<p class="caption">One panel of raters produces different conclusions at different prevalences.</p>
 </div>
 
 A screening study at 5% prevalence reports *slight*, a balanced study
@@ -461,7 +461,7 @@ Y_shared <- gen_logitnormal(151L, 5L, 1000L,
 
 <div class="figure">
 <img src="grassr-split-vs-shared-scatter-1.png" alt="Sensitivity against specificity for two five-rater panels that both return Fleiss' kappa 0.36. Three raters of the first panel sit together at 0.92 sensitivity and 0.92 specificity while two fall into the shaded low-specificity zone near 0.51. All five raters of the second panel sit together at 0.95 sensitivity and 0.70 specificity."  />
-<p class="caption">Two panels with one coefficient value and two different internal structures.</p>
+<p class="caption">Both panels return Fleiss kappa 0.36. The shared panel is five alike raters. The split panel is three strong raters and two that miss half the negatives.</p>
 </div>
 
 This is the case agreement diagnostics miss.
@@ -555,7 +555,7 @@ sample size. The `observed` argument pins a hypothetical value at the
 planned positive rate. That turns the picture into the planning
 question: what quality would that value mean in this study, and how
 far would the same value drift if the prevalence came in differently.
-The dotted lines mark the quality bands the card uses. A screening
+A screening
 study plans three raters, 80 subjects, and a positive rate near 10%,
 and asks what a Fleiss' kappa of 0.45 would mean.
 
@@ -817,7 +817,7 @@ summary(card1)
 #>       grid nodes.
 #> 
 #>   grass version : 0.8.0
-#>   timestamp     : 2026-09-13 20:07:19
+#>   timestamp     : 2026-09-13 20:43:20
 ```
 
 `summary()` prints everything behind the card, the full panel with

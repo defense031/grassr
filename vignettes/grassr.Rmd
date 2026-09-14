@@ -579,26 +579,32 @@ Assume a prevalence and a rough rater quality, and it gives the
 probability that a study of a given size shows panel quality above a
 value you choose, and the size at which that probability reaches the
 level you want. Here the panel is assumed to be 0.90 and the study is
-sized to show it is above 0.80. A panel weaker than assumed returns a band
-that sits lower and is about as wide, so the study reports the quality
-it finds at the precision it was planned for. Fix four of quality,
-positive rate, rater count, sample size, and power, and it solves for
-the fifth. For the screening study above:
+sized to show it is above 0.80. A panel weaker than assumed returns a
+band that sits lower and is about as wide, so the study reports the
+quality it finds at the precision it was planned for. Fix four of
+quality, positive rate, rater count, sample size, and power, and it
+solves for the fifth. The card measures the observed positive rate,
+and a planner has a prevalence instead. Under the reference model a
+panel of quality `q` observes `prevalence * q + (1 - prevalence) * (1
+- q)`, and the function converts, so give `prevalence =` when planning
+and `pi_hat =` when a card is already in hand. For a screening study
+with three raters and a prevalence near 10%:
 
 
 ```r
-pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
+pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, prevalence = 0.10,
                   k = 3, power = 0.80)
 pw
 #> 
-#>      GRASS power analysis: show panel quality above 0.80 (panel assumed 0.90 )
+#>      GRASS power analysis: show panel quality above 0.80 (panel assumed 0.90)
 #>      coefficient: Fleiss kappa
 #> 
-#>          q = 0.90
-#>     pi_hat = 0.10
-#>          k = 3
-#>          N = 129  <- solved
-#>      power = 0.80
+#>            q = 0.90
+#>   prevalence = 0.10
+#>       pi_hat = 0.18  (implied)
+#>            k = 3
+#>            N = 68  <- solved
+#>        power = 0.80
 #> 
 #>   Power is the probability that a study of this size shows panel quality
 #>   above 0.80 when the panel is 0.90.
@@ -607,39 +613,40 @@ plot(pw)
 ```
 
 <div class="figure">
-<img src="grassr-plan-power-1.png" alt="A line chart of the probability that a study shows panel quality above 0.80, when the panel is 0.90, against the number of subjects on a log axis, for three raters at a 10 percent positive rate. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."  />
+<img src="grassr-plan-power-1.png" alt="A line chart of the probability that a study shows panel quality above 0.80, when the panel is 0.90, against the number of subjects on a log axis, for three raters at a prevalence of 10 percent. The curve rises with sample size. A dashed horizontal line marks the requested power of 0.80 and a dotted vertical line with a point marks the smallest sample size that reaches it."  />
 <p class="caption">Power curve over sample size for the planned screening study, with the requested power as a dashed line and the solved N marked.</p>
 </div>
 
 Whether more subjects or more raters raises power depends on
-prevalence. At a 10% positive rate, fifteen raters instead of three
-reduce the sample from 129 subjects to 50, and no rater count reduces
-it to 15, because a sample of fifteen holds one or two positives. At
+prevalence. At 10% prevalence, fifteen raters instead of three reduce
+the sample from 68 subjects to 21, and no rater count reduces it to
+15, because a sample of fifteen holds one or two positives. At
 balanced prevalence, fifteen subjects rated by fifteen raters give
 power 0.97. Rater count snaps to the calibrated grid (2, 3, 5, 8, 15,
 25).
 
 
 ```r
-grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
+grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, prevalence = 0.10,
             k = 15, power = 0.80)
 #> 
-#>      GRASS power analysis: show panel quality above 0.80 (panel assumed 0.90 )
+#>      GRASS power analysis: show panel quality above 0.80 (panel assumed 0.90)
 #>      coefficient: Fleiss kappa
 #> 
-#>          q = 0.90
-#>     pi_hat = 0.10
-#>          k = 15
-#>          N = 50  <- solved
-#>      power = 0.80
+#>            q = 0.90
+#>   prevalence = 0.10
+#>       pi_hat = 0.18  (implied)
+#>            k = 15
+#>            N = 21  <- solved
+#>        power = 0.80
 #> 
 #>   Power is the probability that a study of this size shows panel quality
 #>   above 0.80 when the panel is 0.90.
 #>   See `plot()` for the curve over Number of subjects (N).
 ```
 
-Leave `pi_hat` empty instead and it returns the range of positive
-rates over which a fixed design keeps that power. `target =` sizes a
+Leave the positive rate empty instead and it returns the range of
+prevalences over which a fixed design keeps that power. `target =` sizes a
 study against a fixed coefficient value instead, for a threshold
 imposed from outside. A fixed value means something different at each
 design.
@@ -784,7 +791,7 @@ summary(card1)
 #>       grid nodes.
 #> 
 #>   grass version : 0.8.0
-#>   timestamp     : 2026-09-13 20:54:00
+#>   timestamp     : 2026-09-13 21:31:31
 ```
 
 `summary()` prints everything behind the card, the full panel with

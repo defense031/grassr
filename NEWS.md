@@ -16,7 +16,10 @@ change; on-node readings are unchanged up to storage quantization.
   take to show more. In the `power.t.test()` convention, fix four of
   `q`, `pi_hat`, `k`, `N`, `power` and it solves for the fifth; `q0`
   sets the resolution, the study is sized to show that quality `q` is
-  above `q0`. Power is read from the sweep
+  above `q0`. Planners give `prevalence =`; the function converts it
+  to the observed positive rate the surfaces are indexed by, at each
+  candidate `q` when `q` is solved, and refuses a `pi_hat` no panel of
+  quality `q` can produce. Power is read from the sweep
   `position_on_surface()` already returns; nothing new is calibrated,
   and power rises with sample size at every design. `N` and `k` solve
   to the smallest feasible value or return `NA` with the reason;

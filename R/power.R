@@ -12,8 +12,8 @@
 #' assumed returns a band that sits lower and is about as wide, so the
 #' study reports the quality it finds at the precision it was planned
 #' for. The convention follows [stats::power.t.test()]. Fix four of `q`,
-#' `pi_hat`, `k`, `N`, `power`, leave one `NULL`, and the function solves
-#' for it.
+#' the positive rate (`prevalence` or `pi_hat`), `k`, `N`, `power`, leave
+#' one `NULL`, and the function solves for it.
 #'
 #' Whether more subjects or more raters raises power depends on
 #' prevalence. At balanced prevalence a few more raters do the work of
@@ -41,9 +41,11 @@
 #' `feasible = FALSE`, and the reason, including the best power any
 #' design on the surface reaches.
 #'
-#' @section Solving for `pi_hat`:
-#' The range of observed positive rates over which `power` is reached;
-#' `solution` holds its two endpoints.
+#' @section Solving for the positive rate:
+#' Leave both `pi_hat` and `prevalence` `NULL`. The result is the range of
+#' observed positive rates over which `power` is reached, `solution` holds
+#' its two endpoints, and `prevalence` holds the same range converted at
+#' `q`.
 #'
 #' @param metric One of `"pabak"`, `"fleiss_kappa"`, `"mean_ac1"`, `"icc"`.
 #' @param q Panel quality, the probability of a correct call on the
@@ -53,7 +55,17 @@
 #'   quality `q` is above `q0`. Give `q0` or `target`, not both.
 #' @param target A fixed coefficient value to reach. Give `q0` or `target`,
 #'   not both.
-#' @param pi_hat Observed positive rate in `[0.05, 0.95]`.
+#' @param pi_hat Observed positive rate, the share of all `N x k` ratings
+#'   that are positive, in `[0.05, 0.95]`. This is what the card measures
+#'   and what the surfaces are indexed by. Give `pi_hat` or `prevalence`,
+#'   not both.
+#' @param prevalence True positive rate of the finding, in `[0.01, 0.99]`.
+#'   A planner usually has this rather than `pi_hat`. Under the symmetric
+#'   reference model a panel of quality `q` turns it into
+#'   `pi_hat = prevalence * q + (1 - prevalence) * (1 - q)`, and the
+#'   function does that conversion, at each candidate `q` when `q` is the
+#'   one being solved. The result carries both rates. A `pi_hat` that no
+#'   panel of quality `q` can produce at any prevalence is refused.
 #' @param k Number of raters. Snaps to the nearest calibrated rater count
 #'   (2, 3, 5, 8, 15, 25), as the surfaces do everywhere.
 #' @param N Number of subjects in `[15, 1000]`.
@@ -67,9 +79,9 @@
 #'   the data `plot()` draws), and `notes` from the surface lookup.
 #'
 #' @examples
-#' # Raters assumed near quality 0.90, a 10% positive rate, three raters:
-#' # how many subjects to tell a 0.90 panel from a 0.80 one, 80% power?
-#' pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
+#' # Raters assumed near quality 0.90, prevalence 10%, three raters: how
+#' # many subjects to show the panel is above quality 0.80, 80% power?
+#' pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, prevalence = 0.10,
 #'                   k = 3, power = 0.80)
 #' pw
 #' if (requireNamespace("ggplot2", quietly = TRUE)) plot(pw)
@@ -79,11 +91,12 @@
 #'             power = 0.80)
 #'
 #' # Against a fixed coefficient value imposed from outside:
-#' grass_power("fleiss_kappa", target = 0.61, q = 0.90, pi_hat = 0.50,
+#' grass_power("fleiss_kappa", target = 0.61, q = 0.90, prevalence = 0.50,
 #'             k = 5, N = 200)
 #' @export
 grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
-                        pi_hat = NULL, k = NULL, N = NULL, power = NULL) {
+                        pi_hat = NULL, prevalence = NULL, k = NULL, N = NULL,
+                        power = NULL) {
   allowed <- c("pabak", "fleiss_kappa", "mean_ac1", "icc")
   if (!is.character(metric) || length(metric) != 1L || !metric %in% allowed) {
     stop("`metric` must be one of: ", paste(shQuote(allowed), collapse = ", "),
@@ -104,15 +117,21 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
   if (!is.null(target) && (!is.numeric(target) || length(target) != 1L ||
                            !is.finite(target)))
     stop("`target` must be a finite numeric scalar.", call. = FALSE)
-  args <- list(q = q, pi_hat = pi_hat, k = k, N = N, power = power)
+  if (!is.null(pi_hat) && !is.null(prevalence))
+    stop("Give `prevalence` (the true positive rate) or `pi_hat` (the observed ",
+         "positive rate), not both.", call. = FALSE)
+  rate_in <- if (!is.null(prevalence)) "prevalence" else "pi_hat"
+  args <- list(q = q, pi_hat = if (is.null(pi_hat)) prevalence else pi_hat,
+               k = k, N = N, power = power)
   nulls <- names(args)[vapply(args, is.null, logical(1))]
   if (length(nulls) != 1L) {
-    stop("Exactly one of `q`, `pi_hat`, `k`, `N`, `power` must be NULL ",
-         "(the one to solve for); got ", length(nulls), ".", call. = FALSE)
+    stop("Exactly one of `q`, `pi_hat`/`prevalence`, `k`, `N`, `power` must be ",
+         "NULL (the one to solve for); got ", length(nulls), ".", call. = FALSE)
   }
   solved <- nulls
   .chk(q, "q", .pw_q_range[1], .pw_q_range[2])
   .chk(pi_hat, "pi_hat", .pw_pi_range[1], .pw_pi_range[2])
+  .chk(prevalence, "prevalence", 0.01, 0.99)
   .chk(N, "N", .pw_n_range[1], .pw_n_range[2])
   if (!is.null(k) && (!is.numeric(k) || length(k) != 1L || k < 2 ||
                       k != as.integer(k)))
@@ -124,9 +143,32 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
     stop("`q` (the assumed panel quality) must exceed `q0` (the lower edge of the resolution).",
          call. = FALSE)
 
+  # The surfaces are indexed by the observed positive rate pi_hat. A planner
+  # usually has a prevalence instead; under the symmetric reference model
+  # the panel turns prevalence into pi_hat = prev * q + (1 - prev) * (1 - q).
+  if (!is.null(q)) {
+    if (rate_in == "prevalence") {
+      pi_hat <- .pw_pi_from_prev(prevalence, q)
+      if (pi_hat < .pw_pi_range[1] || pi_hat > .pw_pi_range[2])
+        stop(sprintf(paste0("`prevalence` = %.2f at quality %.2f implies an observed ",
+                            "positive rate of %.3f, outside the calibrated range ",
+                            "[%.2f, %.2f]."), prevalence, q, pi_hat,
+                     .pw_pi_range[1], .pw_pi_range[2]), call. = FALSE)
+    } else if (!is.null(pi_hat)) {
+      prevalence <- .pw_prev_from_pi(pi_hat, q)
+      if (prevalence < 0 || prevalence > 1)
+        stop(sprintf(paste0("`pi_hat` = %.2f cannot arise from a panel of quality %.2f ",
+                            "at any prevalence; such a panel produces observed rates ",
+                            "in [%.2f, %.2f]. Give `prevalence` instead."),
+                     pi_hat, q, 1 - q, q), call. = FALSE)
+    }
+  }
+  rate_at <- function(qq) if (rate_in == "prevalence") .pw_pi_from_prev(prevalence, qq) else pi_hat
+
   tg <- list(mode = mode, q0 = q0, target = target)
   res <- list(metric = metric, mode = mode, q0 = q0, target = target,
-              q = q, pi_hat = pi_hat, k = k, N = N, power = power,
+              q = q, pi_hat = pi_hat, prevalence = prevalence, rate_in = rate_in,
+              k = k, N = N, power = power,
               solved = solved, solution = NA_real_, feasible = TRUE,
               reason = NULL, expected = NA_real_, curve = NULL,
               curve_var = NULL, notes = character())
@@ -157,14 +199,16 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
     }
   } else if (solved == "q") {
     lo <- if (mode == "quality") max(.pw_q_range[1], q0 + 0.005) else .pw_q_range[1]
-    cv <- .pw_curve(metric, tg, NULL, pi_hat, k, N, over = "q", q_lo = lo)
+    cv <- .pw_curve(metric, tg, NULL, pi_hat, k, N, over = "q", q_lo = lo,
+                    prevalence = if (rate_in == "prevalence") prevalence else NULL)
     res$curve <- cv; res$curve_var <- "q"
-    f <- function(qq) .pw_eval(metric, tg, qq, pi_hat, k, N)$power - power
+    f <- function(qq) .pw_eval(metric, tg, qq, rate_at(qq), k, N)$power - power
     if (f(.pw_q_range[2]) < 0) {
       res$q <- NA_real_; res$feasible <- FALSE
       res$reason <- sprintf(
-        "No calibrated panel quality (up to %.2f) reaches power %.2f %s at pi_hat = %.2f, k = %d, N = %d.",
-        .pw_q_range[2], power, .pw_goal(metric, tg), pi_hat, k, N)
+        "No calibrated panel quality (up to %.2f) reaches power %.2f %s at %s, k = %d, N = %d.",
+        .pw_q_range[2], power, .pw_goal(metric, tg),
+        .pw_rate_str(pi_hat, prevalence, rate_in), k, N)
     } else if (f(lo) >= 0) {
       res$q <- res$solution <- lo
       res$notes <- c(res$notes, sprintf(
@@ -174,20 +218,34 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
       res$q <- res$solution <- .pw_refine(f, lo, .pw_q_range[2])
     }
   } else if (solved == "pi_hat") {
-    cv <- .pw_curve(metric, tg, q, NULL, k, N, over = "pi_hat")
+    # Only observed rates a panel of quality q can produce: [1 - q, q].
+    cv <- .pw_curve(metric, tg, q, NULL, k, N, over = "pi_hat",
+                    pi_lo = max(.pw_pi_range[1], 1 - q),
+                    pi_hi = min(.pw_pi_range[2], q))
+    cv$pi_hat <- cv$x
+    cv$x <- pmin(pmax(.pw_prev_from_pi(cv$pi_hat, q), 0), 1)
     res$curve <- cv; res$curve_var <- "pi_hat"
     hit <- !is.na(cv$power) & cv$power >= power
-    ok <- cv$x[hit]
+    ok <- cv$pi_hat[hit]
     if (length(ok)) {
       res$pi_hat <- res$solution <- range(ok)
+      res$prevalence <- pmin(pmax(.pw_prev_from_pi(range(ok), q), 0), 1)
       if (sum(rle(hit)$values) > 1L)
         res$notes <- c(res$notes,
           "The feasible prevalence set is not one contiguous interval; `curve` holds the full profile.")
     } else {
-      res$pi_hat <- NA_real_; res$feasible <- FALSE
+      res$pi_hat <- NA_real_; res$prevalence <- NA_real_; res$feasible <- FALSE
       res$reason <- sprintf(
         "No observed positive rate on the calibrated surface (%.2f to %.2f) reaches power %.2f %s at q = %.2f, k = %d, N = %d.",
         .pw_pi_range[1], .pw_pi_range[2], power, .pw_goal(metric, tg), q, k, N)
+    }
+  }
+  if (solved == "q" && !is.na(res$q)) {
+    if (rate_in == "prevalence") {
+      res$pi_hat <- .pw_pi_from_prev(prevalence, res$q)
+    } else {
+      pr <- .pw_prev_from_pi(pi_hat, res$q)
+      res$prevalence <- if (pr >= 0 && pr <= 1) pr else NA_real_
     }
   }
   # Value mode: the median coefficient a quality-q panel produces at the
@@ -212,6 +270,15 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
 }
 
 # ---- internals -------------------------------------------------------------
+
+# Symmetric reference model: observed positive rate from prevalence at
+# quality q, and back.
+.pw_pi_from_prev <- function(prev, q) prev * q + (1 - prev) * (1 - q)
+.pw_prev_from_pi <- function(pi_hat, q) (pi_hat - (1 - q)) / (2 * q - 1)
+.pw_rate_str <- function(pi_hat, prevalence, rate_in) {
+  if (rate_in == "prevalence") sprintf("prevalence = %.2f", prevalence)
+  else sprintf("pi_hat = %.2f", pi_hat)
+}
 
 .pw_q_range  <- c(0.55, 0.99)
 .pw_pi_range <- c(0.05, 0.95)
@@ -291,17 +358,20 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
 }
 
 # Power across one variable's range; the other four are fixed.
-.pw_curve <- function(metric, tg, q, pi_hat, k, N, over, q_lo = .pw_q_range[1]) {
+.pw_curve <- function(metric, tg, q, pi_hat, k, N, over, q_lo = .pw_q_range[1],
+                      prevalence = NULL, pi_lo = .pw_pi_range[1],
+                      pi_hi = .pw_pi_range[2]) {
   xs <- switch(over,
     N      = sort(unique(c(15L, 20L, 30L, 50L, 75L, 100L, 150L, 200L, 300L, 500L, 1000L,
                           as.integer(round(exp(seq(log(15), log(1000), length.out = 40))))))),
     k      = .pw_k_grid,
     q      = seq(q_lo, .pw_q_range[2], length.out = 45),
-    pi_hat = seq(.pw_pi_range[1], .pw_pi_range[2], by = 0.01))
+    pi_hat = seq(pi_lo, pi_hi, by = 0.01))
   pw <- vapply(xs, function(x) {
     .pw_eval(metric, tg,
              q      = if (over == "q") x else q,
-             pi_hat = if (over == "pi_hat") x else pi_hat,
+             pi_hat = if (over == "pi_hat") x else
+                      if (over == "q" && !is.null(prevalence)) .pw_pi_from_prev(prevalence, x) else pi_hat,
              k      = if (over == "k") x else k,
              N      = if (over == "N") x else N)$power
   }, numeric(1))
@@ -310,7 +380,7 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
 
 .pw_var_label <- function(v) {
   switch(v, N = "Number of subjects (N)", k = "Number of raters (k)",
-         q = "Panel quality (q)", pi_hat = "Observed positive rate (pi_hat)",
+         q = "Panel quality (q)", pi_hat = "Prevalence of the finding",
          power = "Power")
 }
 
@@ -320,7 +390,7 @@ grass_power <- function(metric, q = NULL, q0 = NULL, target = NULL,
 print.grass_power <- function(x, digits = 2, ...) {
   lab <- .coef_label(x$metric)
   hdr <- if (x$mode == "quality")
-    sprintf("show panel quality above %s (%s)", formatC(x$q0, digits = digits, format = "f"), if (is.null(x$q) || is.na(x$q)) "panel quality solved" else paste(if (identical(x$solved, "q")) "panel quality" else "panel assumed", formatC(x$q, digits = digits, format = "f"), if (identical(x$solved, "q")) "solved" else ""))
+    sprintf("show panel quality above %s (%s)", formatC(x$q0, digits = digits, format = "f"), if (is.null(x$q) || is.na(x$q)) "panel quality solved" else trimws(paste(if (identical(x$solved, "q")) "panel quality" else "panel assumed", formatC(x$q, digits = digits, format = "f"), if (identical(x$solved, "q")) "solved" else "")))
   else
     sprintf("reach %s >= %s (fixed value)", lab, formatC(x$target, digits = digits, format = "f"))
   cat(sprintf("\n     GRASS power analysis: %s\n", trimws(hdr)))
@@ -333,11 +403,13 @@ print.grass_power <- function(x, digits = 2, ...) {
     if (v == round(v)) format(v, big.mark = ",") else
       formatC(v, digits = d, format = "f")
   }
-  rows <- c(q = fmt(x$q), pi_hat = fmt(x$pi_hat), k = fmt(x$k, 0),
-            N = fmt(x$N, 0), power = fmt(x$power))
+  rows <- c(q = fmt(x$q), prevalence = fmt(x$prevalence), pi_hat = fmt(x$pi_hat),
+            k = fmt(x$k, 0), N = fmt(x$N, 0), power = fmt(x$power))
+  other_rate <- if (identical(x$rate_in, "prevalence")) "pi_hat" else "prevalence"
   for (nm in names(rows)) {
-    mark <- if (nm == x$solved) "  <- solved" else ""
-    cat(sprintf("  %8s = %s%s\n", nm, rows[[nm]], mark))
+    mark <- if (nm == x$solved || (x$solved == "pi_hat" && nm == "prevalence")) "  <- solved"
+            else if (nm == other_rate) "  (implied)" else ""
+    cat(sprintf("  %10s = %s%s\n", nm, rows[[nm]], mark))
   }
   if (x$mode == "value" && is.finite(x$expected)) {
     cat(sprintf("\n  expected %s at this quality and prevalence: %s\n", lab,
@@ -394,6 +466,7 @@ plot.grass_power <- function(x, ...) {
     if (x$feasible) {
       sol <- x$solution
       if (length(sol) == 2L) {
+        if (identical(x$curve_var, "pi_hat")) sol <- x$prevalence
         p <- p + ggplot2::annotate("rect", xmin = sol[1], xmax = sol[2],
                                    ymin = 0, ymax = 1, alpha = 0.08,
                                    fill = "#377EB8")
@@ -416,8 +489,11 @@ plot.grass_power <- function(x, ...) {
   parts <- character()
   if (x$curve_var != "q"      && !is.null(x$q) && !is.na(x$q))
     parts <- c(parts, sprintf('"assumed quality" ~ q == "%.2f"', x$q))
-  if (x$curve_var != "pi_hat" && !is.null(x$pi_hat) && length(x$pi_hat) == 1L && !is.na(x$pi_hat))
-    parts <- c(parts, sprintf('"prevalence" ~ hat(pi) == "%.2f"', x$pi_hat))
+  if (x$curve_var != "pi_hat" && !is.null(x$pi_hat) && length(x$pi_hat) == 1L && !is.na(x$pi_hat)) {
+    parts <- c(parts, if (identical(x$rate_in, "prevalence"))
+      sprintf('"prevalence" ~ pi == "%.2f"', x$prevalence) else
+      sprintf('"observed rate" ~ hat(pi) == "%.2f"', x$pi_hat))
+  }
   if (x$curve_var != "k"      && !is.null(x$k) && !is.na(x$k))
     parts <- c(parts, sprintf('k == %d ~ "raters"', as.integer(x$k)))
   if (x$curve_var != "N"      && !is.null(x$N) && !is.na(x$N))

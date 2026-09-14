@@ -10,6 +10,7 @@ grass_power(
   q0 = NULL,
   target = NULL,
   pi_hat = NULL,
+  prevalence = NULL,
   k = NULL,
   N = NULL,
   power = NULL
@@ -28,7 +29,18 @@ quality \code{q} is above \code{q0}. Give \code{q0} or \code{target}, not both.}
 \item{target}{A fixed coefficient value to reach. Give \code{q0} or \code{target},
 not both.}
 
-\item{pi_hat}{Observed positive rate in \verb{[0.05, 0.95]}.}
+\item{pi_hat}{Observed positive rate, the share of all \verb{N x k} ratings
+that are positive, in \verb{[0.05, 0.95]}. This is what the card measures
+and what the surfaces are indexed by. Give \code{pi_hat} or \code{prevalence},
+not both.}
+
+\item{prevalence}{True positive rate of the finding, in \verb{[0.01, 0.99]}.
+A planner usually has this rather than \code{pi_hat}. Under the symmetric
+reference model a panel of quality \code{q} turns it into
+\code{pi_hat = prevalence * q + (1 - prevalence) * (1 - q)}, and the
+function does that conversion, at each candidate \code{q} when \code{q} is the
+one being solved. The result carries both rates. A \code{pi_hat} that no
+panel of quality \code{q} can produce at any prevalence is refused.}
 
 \item{k}{Number of raters. Snaps to the nearest calibrated rater count
 (2, 3, 5, 8, 15, 25), as the surfaces do everywhere.}
@@ -59,8 +71,8 @@ returns a 95\% consistency band on quality whose lower edge sits above
 assumed returns a band that sits lower and is about as wide, so the
 study reports the quality it finds at the precision it was planned
 for. The convention follows \code{\link[stats:power.t.test]{stats::power.t.test()}}. Fix four of \code{q},
-\code{pi_hat}, \code{k}, \code{N}, \code{power}, leave one \code{NULL}, and the function solves
-for it.
+the positive rate (\code{prevalence} or \code{pi_hat}), \code{k}, \code{N}, \code{power}, leave
+one \code{NULL}, and the function solves for it.
 
 Whether more subjects or more raters raises power depends on
 prevalence. At balanced prevalence a few more raters do the work of
@@ -92,16 +104,18 @@ reached. When none reaches it the result carries \code{NA},
 design on the surface reaches.
 }
 
-\section{Solving for \code{pi_hat}}{
+\section{Solving for the positive rate}{
 
-The range of observed positive rates over which \code{power} is reached;
-\code{solution} holds its two endpoints.
+Leave both \code{pi_hat} and \code{prevalence} \code{NULL}. The result is the range of
+observed positive rates over which \code{power} is reached, \code{solution} holds
+its two endpoints, and \code{prevalence} holds the same range converted at
+\code{q}.
 }
 
 \examples{
-# Raters assumed near quality 0.90, a 10\% positive rate, three raters:
-# how many subjects to tell a 0.90 panel from a 0.80 one, 80\% power?
-pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.10,
+# Raters assumed near quality 0.90, prevalence 10\%, three raters: how
+# many subjects to show the panel is above quality 0.80, 80\% power?
+pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, prevalence = 0.10,
                   k = 3, power = 0.80)
 pw
 if (requireNamespace("ggplot2", quietly = TRUE)) plot(pw)
@@ -111,6 +125,6 @@ grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, k = 5, N = 100,
             power = 0.80)
 
 # Against a fixed coefficient value imposed from outside:
-grass_power("fleiss_kappa", target = 0.61, q = 0.90, pi_hat = 0.50,
+grass_power("fleiss_kappa", target = 0.61, q = 0.90, prevalence = 0.50,
             k = 5, N = 200)
 }

@@ -69,3 +69,33 @@ test_that("print and plot methods run in both modes", {
   expect_s3_class(plot(vv), "ggplot")
   expect_s3_class(plot(grass_power("pabak", q = 0.9, q0 = 0.8, k = 5, N = 100, power = 0.8)), "ggplot")
 })
+
+test_that("prevalence input converts to pi_hat under the symmetric model", {
+  a <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, prevalence = 0.10,
+                   k = 3, power = 0.80)
+  b <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, pi_hat = 0.18,
+                   k = 3, power = 0.80)
+  expect_equal(a$pi_hat, 0.18)
+  expect_equal(a$N, b$N)
+  expect_equal(b$prevalence, 0.10, tolerance = 1e-8)
+  expect_error(grass_power("fleiss_kappa", q = 0.90, q0 = 0.80,
+                           prevalence = 0.10, pi_hat = 0.18, k = 3, power = 0.8),
+               "not both")
+  expect_error(grass_power("fleiss_kappa", q = 0.88, q0 = 0.80, pi_hat = 0.08,
+                           k = 3, power = 0.8), "cannot arise")
+  expect_output(print(a), "prevalence = 0.10")
+  expect_output(print(a), "pi_hat = 0.18  \\(implied\\)")
+})
+
+test_that("prevalence is held fixed when q is solved, and the range solve reports both rates", {
+  s <- grass_power("fleiss_kappa", q0 = 0.80, prevalence = 0.10, k = 3, N = 80,
+                   power = 0.80)
+  expect_true(is.finite(s$q))
+  expect_equal(s$pi_hat, 0.10 * s$q + 0.90 * (1 - s$q))
+  r <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, k = 5, N = 100,
+                   power = 0.80)
+  expect_length(r$pi_hat, 2L)
+  expect_length(r$prevalence, 2L)
+  expect_true(all(r$prevalence >= 0 & r$prevalence <= 1))
+  expect_true(r$prevalence[1] <= r$pi_hat[1])
+})

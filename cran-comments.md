@@ -49,7 +49,7 @@ against its design, which is what the package is for.
 ## Test posture
 
 Unchanged from 0.7.4. A fast deterministic smoke subset runs on CRAN
-(~2 s); the full suite (819 assertions, 0 failures) runs on every push
+(~2 s); the full suite (874 assertions, 0 failures) runs on every push
 on a five-platform CI matrix
 (https://github.com/defense031/grassr/actions). The vignette is
 precomputed, so CRAN machines render static markdown with no

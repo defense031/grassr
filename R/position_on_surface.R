@@ -979,7 +979,10 @@ lookup_fitted_icc_reference_curve <- function(pi_hat, k, N, q_grid,
   if (as.numeric(N) > max(N_grid) + 1) {
     return(NULL)  # signals caller to use oracle instead
   }
-  N_near <- N_grid[which.min(abs(N_grid - as.numeric(N)))]
+  # Nearest on the log scale, matching the log-N interpolation used by the
+  # agreement-family surfaces and the delta_hat null. On the linear scale
+  # N = 150 ties between 100 and 200; on the log scale 200 is nearer.
+  N_near <- N_grid[which.min(abs(log(N_grid) - log(as.numeric(N))))]
 
   k_grid <- bundle$k_grid
   if (as.numeric(k) > max(k_grid) + 1) {
@@ -1052,7 +1055,7 @@ lookup_fitted_icc_reference_curve <- function(pi_hat, k, N, q_grid,
   }
   if (as.numeric(N) != N_near) {
     notes <- c(notes,
-               sprintf("ICC reference only: N=%s uses the nearest calibrated N=%d. The agreement-family surfaces and the delta_hat null interpolate at N=%s.",
+               sprintf("ICC row: N=%s is not a calibrated ICC size, so its reference uses the nearest on the log scale, N=%d. PABAK, AC1, Fleiss kappa, and delta_hat interpolate at N=%s.",
                        as.character(N), N_near, as.character(N)))
   }
   if (abs(as.numeric(pi_hat) - M1_near) > 0.05 && is.null(ratings)) {

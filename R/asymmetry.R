@@ -87,7 +87,7 @@
 #' Each coefficient is positioned on its reference surface via
 #' [position_on_surface()], which reports its implied `q_hat`. The panel
 #' diagnostic is `delta_hat = max(q_hat) - min(q_hat)` (in pp of quality),
-#' computed over agreement-family coefficients whose observed value sits
+#' computed over agreement-family coefficients whose observed value falls
 #' within the achievable range of their reference surface (see
 #' *Surface-envelope clamp* below).
 #'
@@ -340,7 +340,7 @@ check_asymmetry <- function(ratings,
                function(p) p$q_hat, numeric(1L))
   q_hat_panel <- stats::median(qh[is.finite(qh)])
   # The null grid is indexed by TRUE prevalence; mean(Y) is the APPARENT
-  # positive rate, which sits closer to 0.5 than truth whenever raters
+  # positive rate, which is closer to 0.5 than truth whenever raters
   # err. Under the reference model the two are related by
   #   pi_apparent = pi (2q - 1) + (1 - q),
   # so the lookup conditions on the closed-form inversion at the panel's

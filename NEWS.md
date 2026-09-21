@@ -10,6 +10,13 @@ prevalence node at 0.875, and a sample-size node at 25 (581 million
 null draws in total, 50,000 per cell). Off-grid Report Card readings
 change; on-node readings are unchanged up to storage quantization.
 
+* The fitted-ICC reference now picks its calibrated `N` on the log scale,
+  the scale the agreement-family surfaces and the delta-hat null
+  interpolate on. A sample size halfway between two calibrated sizes on
+  the linear scale (150 between 100 and 200) previously snapped downward
+  by grid order; it now goes to the nearer size in log N. The card note
+  names the size used and says which rows it affects.
+
 * Removed: `check_rater_asymmetry()` and `grass_prevalence()`. The first
   graded per-rater `|Se - Sp|` against fixed 0.05 / 0.10 cut-offs, a
   stipulated scheme the framework retired, and nothing in the package
@@ -53,7 +60,7 @@ change; on-node readings are unchanged up to storage quantization.
   nearest calibrated k or N and that the agreement family interpolates.
   Percentiles are no longer labelled "pp".
 * `plot_surface()`: when `k` and `N` are given, the pinned `observed`
-  value sits at the quality `position_on_surface()` reports for that
+  value is placed at the quality `position_on_surface()` reports for that
   study context (the simulated reference), not at the closed-form
   inversion, so the picture and the printed `q_hat` agree. The two
   ggplot warnings the surface plots used to emit (a dropped `fill`
@@ -75,7 +82,7 @@ change; on-node readings are unchanged up to storage quantization.
 * The card's surface plot titles the pinned point by its percentile of
   the study context and no longer restates the consistency band, which
   stays on the printed card. The colour bar is titled ("Expected
-  PABAK") and sits vertically at the right, aligned with the quality
+  PABAK") and stands vertically at the right, aligned with the quality
   axis it encodes.
 * The printed card no longer repeats the delta_hat definition, the
   matched-null provenance, the k = 2 explanation, or the band

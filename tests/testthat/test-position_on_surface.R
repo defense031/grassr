@@ -74,7 +74,7 @@ test_that("higher PABAK ranks higher on the pooled percentile (monotone)", {
   lo <- position_on_surface(0.20, "pabak", pi_hat = 0.5, k = 15, N = 1000)
   hi <- position_on_surface(0.92, "pabak", pi_hat = 0.5, k = 15, N = 1000)
   expect_lt(lo$percentile, hi$percentile)
-  # High q_hat sits high in the achievable range; its band is on quality.
+  # High q_hat is high in the achievable range; its band is on quality.
   expect_gt(hi$q_hat, 0.90)
   expect_true(is.finite(hi$band$lo) || isTRUE(hi$band$open_low) ||
               is.na(hi$band$lo))
@@ -309,6 +309,19 @@ test_that("icc resolves via bundled sysdata; caller reference_curve wins when su
   expect_s3_class(r_custom, "grass_surface_position")
   expect_true(is.finite(r_custom$q_hat))
   expect_true(any(grepl("supplied by caller", r_custom$notes)))
+})
+
+test_that("icc reference snaps N on the log scale, and the note says so", {
+  # N = 150 ties between 100 and 200 on the linear scale; on the log scale
+  # 200 is nearer. The agreement-family surfaces interpolate in log N, so
+  # the ICC snap follows the same scale (decisions.md 2026-09-21).
+  r <- position_on_surface(0.3, "icc", pi_hat = 0.36, k = 3, N = 150)
+  expect_true(any(grepl("ICC row: N=150 is not a calibrated ICC size", r$notes)))
+  expect_true(any(grepl("N=200\\.", r$notes)))
+  expect_false(any(grepl("N=100", r$notes)))
+  # A calibrated N raises no snap note at all.
+  r_on <- position_on_surface(0.3, "icc", pi_hat = 0.36, k = 3, N = 200)
+  expect_false(any(grepl("not a calibrated ICC size", r_on$notes)))
 })
 
 test_that("as.data.frame() flattens a surface_position into a one-row frame", {

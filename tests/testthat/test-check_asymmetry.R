@@ -109,7 +109,7 @@ test_that("op_strong heterogeneous panel flags divergent on non-ICC spread", {
   out <- check_asymmetry(.op_strong_panel_Y(seed = 6L))
   expect_equal(out$flag, "divergent")
   expect_gte(out$delta_percentile, 99)
-  expect_gt(out$delta_hat, 0.1)   # quality pp; aligned panels sit ~0.01
+  expect_gt(out$delta_hat, 0.1)   # quality pp; aligned panels stay ~0.01
 
   pp <- out$panel
   qs <- pp$implied_q[pp$coefficient != "icc"]

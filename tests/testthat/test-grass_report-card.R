@@ -96,7 +96,7 @@ test_that("grass_report reproduces the paper §4 divergent worked example", {
 
   # The divergent flag must come from real cross-coefficient disagreement,
   # not an ICC-clamp artifact: the non-ICC pooled percentiles also spread
-  # (observed ~2 pp at re-pin; aligned panels sit well under 0.5 pp).
+  # (observed ~2 pp at re-pin; aligned panels stay well under 0.5 pp).
   nonicc <- card$panel$surface_percentile[card$panel$coefficient != "icc"]
   expect_true(diff(range(nonicc, na.rm = TRUE)) >= 1,
               info = sprintf("non-ICC pooled-pct range = %.2f pp; expected >= 1",

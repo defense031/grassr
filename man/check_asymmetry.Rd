@@ -79,7 +79,7 @@ pooled-reference (Se_tilde, Sp_tilde) diagnostic.
 Each coefficient is positioned on its reference surface via
 \code{\link[=position_on_surface]{position_on_surface()}}, which reports its implied \code{q_hat}. The panel
 diagnostic is \code{delta_hat = max(q_hat) - min(q_hat)} (in pp of quality),
-computed over agreement-family coefficients whose observed value sits
+computed over agreement-family coefficients whose observed value falls
 within the achievable range of their reference surface (see
 \emph{Surface-envelope clamp} below).
 }

@@ -538,7 +538,7 @@ plot_surface <- function(metric,
 
   ttl <- expression(hat(delta) ~ "asymmetry gauge")
   # Axis scaled to the matched-null cuts and the observation, not to a
-  # fixed 0-50 range: the cuts sit at a few hundredths of a quality pp.
+  # fixed 0-50 range: the cuts fall at a few hundredths of a quality pp.
   x_max <- max(c(0.05, delta_hat * 1.5,
                  if (has_cuts) div * 1.6 else NA_real_), na.rm = TRUE)
 

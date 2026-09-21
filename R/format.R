@@ -40,7 +40,7 @@
   mn <- delta_list$matched_null
   pct <- delta_list$delta_percentile
   if (!is.null(mn) && is.finite(pct %||% NA_real_)) {
-    sprintf("matched null = (k=%d, N=%d, q=%.2f): delta_hat sits at percentile %.1f of the null%s%s",
+    sprintf("matched null = (k=%d, N=%d, q=%.2f): delta_hat at percentile %.1f of the null%s%s",
             mn$k, mn$N, mn$q, pct,
             if (isTRUE(mn$snapped)) " [design snapped]" else "",
             if (isTRUE(mn$unstable_tail)) " [tail not stably invertible]" else "")

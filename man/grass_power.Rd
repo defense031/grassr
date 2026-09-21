@@ -66,9 +66,9 @@ size can learn about its raters.
 }
 \details{
 A study sized to show that a panel of quality \code{q} is above \code{q0}
-returns a 95\% consistency band on quality whose lower edge sits above
+returns a 95\% consistency band on quality whose lower edge lies above
 \code{q0}. \code{q0} sets the resolution of the plan. A panel weaker than
-assumed returns a band that sits lower and is about as wide, so the
+assumed returns a band that is lower and about as wide, so the
 study reports the quality it finds at the precision it was planned
 for. The convention follows \code{\link[stats:power.t.test]{stats::power.t.test()}}. Fix four of \code{q},
 the positive rate (\code{prevalence} or \code{pi_hat}), \code{k}, \code{N}, \code{power}, leave
@@ -83,7 +83,7 @@ answer is more subjects.
 The function also accepts \code{target}, a fixed coefficient value, for a
 threshold imposed from outside (a journal's or regulator's band). A
 fixed coefficient value means something different at each design.
-When the value a panel of quality \code{q} produces at the design sits
+When the value a panel of quality \code{q} produces at the design is
 below \code{target}, power falls with \code{N}. Give \code{q0} or \code{target}, not both.
 }
 \section{How it is computed}{

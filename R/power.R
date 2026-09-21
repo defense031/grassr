@@ -7,9 +7,9 @@
 #' size can learn about its raters.
 #'
 #' A study sized to show that a panel of quality `q` is above `q0`
-#' returns a 95% consistency band on quality whose lower edge sits above
+#' returns a 95% consistency band on quality whose lower edge lies above
 #' `q0`. `q0` sets the resolution of the plan. A panel weaker than
-#' assumed returns a band that sits lower and is about as wide, so the
+#' assumed returns a band that is lower and about as wide, so the
 #' study reports the quality it finds at the precision it was planned
 #' for. The convention follows [stats::power.t.test()]. Fix four of `q`,
 #' the positive rate (`prevalence` or `pi_hat`), `k`, `N`, `power`, leave
@@ -24,7 +24,7 @@
 #' The function also accepts `target`, a fixed coefficient value, for a
 #' threshold imposed from outside (a journal's or regulator's band). A
 #' fixed coefficient value means something different at each design.
-#' When the value a panel of quality `q` produces at the design sits
+#' When the value a panel of quality `q` produces at the design is
 #' below `target`, power falls with `N`. Give `q0` or `target`, not both.
 #'
 #' @section How it is computed:

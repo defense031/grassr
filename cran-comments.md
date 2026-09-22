@@ -1,5 +1,15 @@
 # cran-comments.md — grassr 0.8.0
 
+## Resubmission
+
+The 2026-09-21 submission of this version was returned by the incoming
+pre-test with one NOTE on r-devel-linux-x86_64-debian-gcc: the
+`grass_power()` example took 5.1 s elapsed. Windows was OK. The example
+ran three solves; the two secondary ones (the prevalence-range solve
+and the `target =` mode) are removed from the example and pointed to
+the vignette, leaving one solve and its plot, which runs in under 1 s
+locally and about a third of the previous total. Nothing else changed.
+
 ## Update
 
 This is an update to grassr 0.7.4, currently on CRAN. It is the first

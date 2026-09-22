@@ -121,12 +121,7 @@ pw <- grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, prevalence = 0.10,
                   k = 3, power = 0.80)
 pw
 if (requireNamespace("ggplot2", quietly = TRUE)) plot(pw)
-
-# Over what positive rates does a fixed design keep that power?
-grass_power("fleiss_kappa", q = 0.90, q0 = 0.80, k = 5, N = 100,
-            power = 0.80)
-
-# Against a fixed coefficient value imposed from outside:
-grass_power("fleiss_kappa", target = 0.61, q = 0.90, prevalence = 0.50,
-            k = 5, N = 200)
+# Leave `prevalence` out to get the range of positive rates over which
+# a fixed design keeps that power; give `target =` instead of `q0` to
+# size against a fixed coefficient value. Both are shown in the vignette.
 }
